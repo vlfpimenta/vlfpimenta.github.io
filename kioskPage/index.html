@@ -146,14 +146,16 @@
             font-size: 1.5rem;
             font-weight: 700;
             color: #ffffff;
-            flex-shrink: 0;
+            flex-shrink: 1;
             margin-right: 1rem;
+            text-align: left;
         }
         .bus-line {
             font-size: 1rem;
             font-weight: 500;
             color: #d1d5db;
             text-align: right;
+            flex-shrink: 0;
         }
         
         .bus-item.next-departure {
@@ -189,6 +191,43 @@
         #app-footer img {
             height: 40px;
             margin: 0 auto;
+        }
+
+        .forecast-item {
+            display: grid;
+            grid-template-columns: 150px 1fr 100px;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            gap: 1rem;
+            font-size: 0.875rem;
+        }
+        .forecast-item:last-child {
+            border-bottom: none;
+        }
+        .forecast-date {
+            font-weight: 600;
+            text-align: left;
+        }
+        .forecast-weather {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        .forecast-icon img {
+            width: 32px;
+            height: 32px;
+        }
+        .forecast-desc {
+            color: #d1d5db;
+        }
+        .forecast-range {
+            font-weight: 500;
+            color: #d1d5db;
+            text-align: right;
         }
 
     </style>
@@ -240,13 +279,20 @@
             </div>
             
             <div class="w-1/2 holiday-list">
-                 <h3 class="text-lg font-semibold mb-2 text-center">Próximos Feriados</h3>
+                 <h3 class="text-lg font-semibold mb-2 text-center">Feriados do Mês</h3>
                  <div id="holiday-list-content">
                      <div class="text-center text-gray-400 text-sm">Carregando feriados...</div>
                  </div>
             </div>
         </div>
         
+        <div id="forecast-card" class="info-card flex-col">
+            <h3 class="text-lg font-semibold mb-2 text-center">Previsão para os Próximos Dias</h3>
+            <div id="forecast-list" class="flex flex-col">
+                <div class="text-center text-gray-400 text-sm">Carregando previsão...</div>
+            </div>
+        </div>
+
         <div class="flex-1"></div>
 
         <div id="bus-schedule-card" class="info-card flex flex-col hidden">
@@ -278,6 +324,7 @@
         const busScheduleListEl = document.getElementById('bus-schedule-list');
         const holidayListEl = document.getElementById('holiday-list-content');
         const footerEl = document.getElementById('app-footer');
+        const forecastListEl = document.getElementById('forecast-list');
         
         const bg1 = document.getElementById('bg-image-1');
         const bg2 = document.getElementById('bg-image-2');
@@ -314,6 +361,10 @@
             99: { desc: "Trovoada com Granizo Forte", icon: "11" },
         };
         
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+        
         function updateClock() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
@@ -321,7 +372,7 @@
             
             const options = { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' };
             let dateString = now.toLocaleDateString('pt-BR', options);
-            dateString = dateString.charAt(0).toUpperCase() + dateString.slice(1);
+            dateString = capitalizeFirstLetter(dateString);
             
             clockTimeEl.textContent = `${hours}:${minutes}`;
             clockDateEl.textContent = dateString;
@@ -334,16 +385,16 @@
                     const lon = position.coords.longitude;
                     getWeatherData(lat, lon);
                 }, () => {
-                    getWeatherData(-23.55, -46.63);
+                    getWeatherData(-22.9068, -43.1729);
                 });
             } else {
-                getWeatherData(-23.55, -46.63);
+                getWeatherData(-22.9068, -43.1729);
             }
         }
 
         async function getWeatherData(lat, lon) {
             try {
-                const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
+                const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`;
                 const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error('Falha ao buscar clima');
                 
@@ -363,9 +414,44 @@
                 const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
                 weatherIconEl.innerHTML = `<img src="${iconUrl}" alt="${weatherInfo.desc}" style="background-color: rgba(255, 255, 255, 0.1); border-radius: 50%;">`;
 
+                updateForecastList(daily);
+
             } catch (error) {
                 console.error("Erro ao buscar clima:", error);
                 weatherDescEl.textContent = "Erro no clima";
+            }
+        }
+        
+        function updateForecastList(daily) {
+            forecastListEl.innerHTML = '';
+            
+            for (let i = 1; i <= 4; i++) {
+                const dateParts = daily.time[i].split('-');
+                const date = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2]));
+                
+                let dayName = date.toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'UTC' });
+                dayName = capitalizeFirstLetter(dayName.split(',')[0]);
+                
+                const dayMonth = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
+                const fullDateStr = `${dayName}, ${dayMonth}`;
+                
+                const weatherInfo = wmoToOwmIconMap[daily.weathercode[i]] || { desc: "Indefinido", icon: "03" };
+                const iconUrl = `https://openweathermap.org/img/wn/${weatherInfo.icon}d.png`;
+                
+                const maxTemp = Math.round(daily.temperature_2m_max[i]);
+                const minTemp = Math.round(daily.temperature_2m_min[i]);
+
+                const item = document.createElement('div');
+                item.classList.add('forecast-item');
+                item.innerHTML = `
+                    <div class="forecast-date">${fullDateStr}</div>
+                    <div class="forecast-weather">
+                        <span class="forecast-icon"><img src="${iconUrl}" alt=""></span>
+                        <span class="forecast-desc">${weatherInfo.desc}</span>
+                    </div>
+                    <div class="forecast-range">Mín. ${minTemp}° / Máx. ${maxTemp}°</div>
+                `;
+                forecastListEl.appendChild(item);
             }
         }
 
@@ -376,7 +462,7 @@
             const today = now.getDate();
 
             const monthYearString = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-            calendarMonthYearEl.textContent = monthYearString.charAt(0).toUpperCase() + monthYearString.slice(1);
+            calendarMonthYearEl.textContent = capitalizeFirstLetter(monthYearString);
 
             calendarGridEl.innerHTML = '';
 
@@ -404,7 +490,7 @@
         
         async function fetchHolidays() {
             const year = new Date().getFullYear();
-            const apiUrl = `https://date.nager.at/api/v3/NextPublicHolidays/${HOLIDAY_COUNTRY_CODE}`;
+            const apiUrl = `https://date.nager.at/api/v3/PublicHolidays/${year}/${HOLIDAY_COUNTRY_CODE}`;
             
             try {
                 const response = await fetch(apiUrl);
@@ -412,25 +498,30 @@
                 
                 const holidays = await response.json();
                 
+                const currentMonth = new Date().getMonth();
+                const holidaysThisMonth = holidays.filter(holiday => {
+                    const holidayDate = new Date(holiday.date);
+                    return holidayDate.getUTCMonth() === currentMonth;
+                });
+                
                 holidayListEl.innerHTML = ''; 
                 
-                if (holidays.length === 0) {
-                     holidayListEl.innerHTML = '<div class="text-gray-400 text-sm">Nenhum feriado próximo.</div>';
+                if (holidaysThisMonth.length === 0) {
+                     holidayListEl.innerHTML = '<div class="text-gray-400 text-sm text-center">Nenhum feriado este mês.</div>';
                      return;
                 }
                 
-                const nextHolidays = holidays.slice(0, 4);
-                
-                const formatter = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short' });
+                const nextHolidays = holidaysThisMonth.slice(0, 4);
                 
                 nextHolidays.forEach(holiday => {
                     const holidayDate = new Date(holiday.date);
-                    const dateString = formatter.format(holidayDate).replace('.', ''); 
+                    const day = holiday.date.split('-')[2];
+                    const month = holiday.date.split('-')[1];
                     
                     const item = document.createElement('div');
                     item.classList.add('holiday-item');
                     item.innerHTML = `
-                        <div class="holiday-date">${holiday.date.split('-')[2]}/${holiday.date.split('-')[1]}</div>
+                        <div class="holiday-date">${day}/${month}</div>
                         <div class="holiday-name">${holiday.localName}</div>
                     `;
                     holidayListEl.appendChild(item);
@@ -438,7 +529,7 @@
                 
             } catch (error) {
                 console.error("Erro ao buscar feriados:", error);
-                holidayListEl.innerHTML = '<div class="text-gray-400 text-sm">Erro ao carregar feriados.</div>';
+                holidayListEl.innerHTML = '<div class="text-gray-400 text-sm text-center">Erro ao carregar feriados.</div>';
             }
         }
         
@@ -496,8 +587,8 @@
                 }
                 
                 itemEl.innerHTML = `
-                    <span class="bus-time">${item.time}</span>
-                    <span class="bus-line">${item.line}</span>
+                    <span class="bus-time">${item.line}</span>
+                    <span class="bus-line">${item.time}</span>
                 `;
                 busScheduleListEl.appendChild(itemEl);
             });
