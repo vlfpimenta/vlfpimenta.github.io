@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiosque Display - Socima</title>
+    <!-- 
+      Este layout agora é otimizado para visualização em retrato (celular).
+    -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Define a fonte Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Container principal */
+        body {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: white;
+            overflow: hidden; /* Impede rolagem */
+        }
+
+        /* Container para as imagens de fundo com fade */
+        .bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            transition: opacity 1.5s ease-in-out; /* Efeito de fade */
+            z-index: 1; /* Fica atrás do conteúdo */
+        }
+
+        /* Container principal do conteúdo (não mais rotacionado) */
+        #main-content {
+            width: 100%;
+            height: 100vh; /* Ocupa a tela inteira */
+            
+            /* Layout interno (Flex) */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Topo, Meio, Fundo */
+            align-items: center;
+            padding: 2rem; /* Reduzido para celular */
+            box-sizing: border-box; 
+            
+            position: relative; 
+            z-index: 2; /* Conteúdo fica sobre as imagens de fundo */
+        }
+        
+        /* Container do Topo (Data/Hora e Clima) */
+        .top-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column; /* Empilhado verticalmente */
+            align-items: stretch; /* Ocupa largura total */
+            gap: 1.5rem; 
+        }
+        
+        /* Container de Data e Hora */
+        .datetime-container {
+            width: 100%;
+            text-align: center; /* Centralizado */
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 1.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        
+        /* Container do Clima */
+        .weather-container {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 1.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        /* Estilo da Hora */
+        #time {
+            font-size: 5rem; /* Reduzido */
+            font-weight: 900;
+            line-height: 1;
+        }
+        
+        /* Estilo do Dia da Semana */
+        #day-of-week {
+            font-size: 2rem; /* Reduzido */
+            font-weight: 700;
+            line-height: 1.1;
+            text-transform: capitalize;
+        }
+        
+        /* Estilo da Data */
+        #date {
+            font-size: 1.5rem; /* Reduzido */
+            font-weight: 400;
+            line-height: 1.1;
+        }
+        
+        /* Clima Atual (Icone e Temp) */
+        .weather-now {
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Centralizado */
+            gap: 2rem;
+        }
+        
+        /* Ícone do Clima */
+        #weather-icon svg {
+            width: 7rem; /* Aumentado de 6rem para 7rem */
+            height: 7rem; /* Aumentado de 6rem para 7rem */
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+        }
+
+/* ... existing code ... -->
+        /* Container do Horário de Ônibus */
+        #bus-schedule-container {
+            width: 100%;
+            padding: 1rem;
+            background-color: rgba(0, 0, 0, 0.6); 
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            margin-top: 1.5rem; /* Espaço entre o calendário e este bloco */
+            display: none; /* Inicia oculto por padrão */
+        }
+
+        .bus-schedule-header {
+            font-size: 2rem; /* Mesmo tamanho do calendário */
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        #bus-schedule-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem; /* Espaço entre os horários */
+        }
+
+        .bus-time-item {
+            display: flex; /* Flex layout para alinhar hora e linha */
+            justify-content: space-between; /* Hora na esquerda, linha na direita */
+            align-items: center; /* Centralizado verticalmente */
+            font-weight: 700;
+            text-align: left;
+            background-color: rgba(0, 0, 0, 0.25);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .bus-time-time {
+            font-size: 2.5rem; /* Fonte grande para a hora */
+            font-weight: 900;
+            margin-right: 1rem; /* Espaço entre hora e linha */
+        }
+        
+        .bus-time-line {
+            font-size: 1.5rem; /* Fonte menor para a linha */
+            font-weight: 500;
+            text-align: right;
+            color: #f0f0f0;
+        }
+
+        .bus-time-item.no-buses {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: #aaa; /* Cinza para "sem saídas" */
+            justify-content: center; /* Centraliza a mensagem "sem saídas" */
+        }
+
+        /* Rodapé */
+        .footer {
+            width: 100%;
+            text-align: center;
+            font-size: 1.25rem; /* Reduzido */
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+    </style>
+</head>
+<body>
+    
+    <!-- Divs de Imagem de Fundo para Efeito de Fade -->
+    <!-- Movidos para fora do main-content para cobrir a tela toda -->
+    <div id="bg-image-1" class="bg-image" style="opacity: 1;"></div>
+    <div id="bg-image-2" class="bg-image" style="opacity: 0;"></div>
+
+    <!-- Container principal que segura todo o conteúdo visível -->
+    <div id="main-content">
+    
+        <!-- Container do Topo -->
+        <div class="top-container">
+            <!-- Container para as informações de Data e Hora -->
+            <div class="datetime-container">
+                <div id="time">--:--</div>
+                <div id="day-of-week">----------</div>
+                <div id="date">--/--/----</div>
+            </div>
+            
+            <!-- Container para o Clima -->
+            <div class="weather-container">
+                <div class="weather-now">
+                    <div id="weather-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="#FFFFFF" stroke-width="3">
+                            <circle cx="32" cy="32" r="17.5" stroke-linecap="round" stroke-linejoin="round" />
+                            <line x1="32" y1="1.5" x2="32" y2="6.5" stroke-linecap="round" stroke-linejoin="round" />
+                            <line x1="32" y1="57.5" x2="32" y2="62.5" stroke-linecap="round" stroke-linejoin="round" />
+                            <line x1="62.5" y1="32" x2="57.5" y2="32" stroke-linecap="round" stroke-linejoin="round" />
+                            <line x1="6.5" y1="32" x2="1.5" y2="32" stroke-linecap="round" stroke-linejoin="round" />
+                            <line x1="51.19" y1="12.81" x2="47.65" y2="16.35" stroke-linecap="round" stroke-linejoin="round" />
+                            <line x1="16.35" y1="47.65" x2="12.81" y2="51.19" stroke-linecap="round" stroke-linejoin="round" />
+                            <line x1="51.19" y1="51.19" x2="47.65" y2="47.65" stroke-linecap="round" stroke-linejoin="round" />
+                            <line x1="16.35" y1="16.35" x2="12.81" y2="12.81" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div class="weather-details">
+                        <div id="weather-temp">--°</div>
+                        <div id="weather-desc">Carregando...</div>
+                        <div id="weather-range">Máx: --° Mín: --°</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Container para o Calendário -->
+        <div id="calendar-container">
+            <!-- Conteúdo do calendário será gerado por JS -->
+        </div>
+        
+        <!-- Container para as Próximas Saídas de Ônibus -->
+        <!-- Este container começa oculto e só é exibido se horarios.txt for carregado -->
+        <div id="bus-schedule-container">
+            <div class="bus-schedule-header">Próximas Saídas</div>
+            <div id="bus-schedule-list">
+                <!-- Horários serão inseridos pelo JS -->
+                <div class="bus-time-item no-buses">Carregando...</div>
+            </div>
+        </div>
+        
+        <!-- Rodapé -->
+        <div class="footer">
+            Socima
+        </div>
+        
+    </div>
+
+    <script>
+        // --- DADOS DO HORÁRIO DE ÔNIBUS ---
+        // Os horários serão carregados de 'horarios.txt'
+        let BUS_SCHEDULE = []; // Inicia como um array de objetos { time, line }
+        
+        // --- ÍCONES DE CLIMA (SVG) ---
+        // (Baseado nos códigos WMO do Open-Meteo)
+        const WEATHER_ICONS = {
+            // Sol (0)
+            0: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="#FFFFFF" stroke-width="3">
+                  <circle cx="32" cy="32" r="17.5" stroke-linecap="round" stroke-linejoin="round" fill="#FFD700" />
+                  <line x1="32" y1="1.5" x2="32" y2="6.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <line x1="32" y1="57.5" x2="32" y2="62.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <line x1="62.5" y1="32" x2="57.5" y2="32" stroke-linecap="round" stroke-linejoin="round" />
+                  <line x1="6.5" y1="32" x2="1.5" y2="32" stroke-linecap="round" stroke-linejoin="round" />
+                  <line x1="51.19" y1="12.81" x2="47.65" y2="16.35" stroke-linecap="round" stroke-linejoin="round" />
+                  <line x1="16.35" y1="47.65" x2="12.81" y2="51.19" stroke-linecap="round" stroke-linejoin="round" />
+                  <line x1="51.19" y1="51.19" x2="47.65" y2="47.65" stroke-linecap="round" stroke-linejoin="round" />
+                  <line x1="16.35" y1="16.35" x2="12.81" y2="12.81" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>`,
+            // Parcialmente Nublado (1, 2, 3)
+            1: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="#FFFFFF" stroke-width="3">
+                  <path d="M47.79,46.85A12,12,0,1,0,32.26,30.34a17.48,17.48,0,0,0-20.73-8.86,17.21,17.21,0,0,0-5,34" stroke-linecap="round" stroke-linejoin="round" fill="#C2C2C2"/>
+                  <path d="M29,14.26A12,12,0,0,0,14.1,20.8a12.18,12.18,0,0,0-3.37,1,12,12,0,0,0-8.23,17.16A11.83,11.83,0,0,0,6.07,40" stroke-linecap="round" stroke-linejoin="round" fill="#FFD700"/>
+                  <path d="M32.26,30.34a17.48,17.48,0,0,1,20.73,8.86,17.21,17.21,0,0,1,5-34" stroke-linecap="round" stroke-linejoin="round" fill="#FFD700"/>
+                  <path d="M47.79,46.85A12,12,0,0,1,32.26,30.34" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>`,
+            // Nublado (45, 48)
+            45: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="#FFFFFF" stroke-width="3">
+                   <path d="M47.79,46.85A12,12,0,1,0,32.26,30.34a17.48,17.48,0,0,0-20.73-8.86,17.21,17.21,0,0,0-5,34" stroke-linecap="round" stroke-linejoin="round" fill="#C2C2C2"/>
+                 </svg>`,
+            // Chuva (51, 53, 55, 61, 63, 65, 80, 81, 82)
+            51: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="#FFFFFF" stroke-width="3">
+                   <path d="M47.79,46.85A12,12,0,1,0,32.26,30.34a17.48,17.48,0,0,0-20.73-8.86,17.21,17.21,0,0,0-5,34" stroke-linecap="round" stroke-linejoin="round" fill="#C2C2C2"/>
+                   <line x1="32.5" y1="46.5" x2="32.5" y2="60.5" stroke-linecap="round" stroke-linejoin="round" stroke="#378de7"/>
+                   <line x1="24.5" y1="46.5" x2="24.5" y2="60.5" stroke-linecap="round" stroke-linejoin="round" stroke="#378de7"/>
+                   <line x1="40.5" y1="46.5" x2="40.5" y2="60.5" stroke-linecap="round" stroke-linejoin="round" stroke="#378de7"/>
+                 </svg>`,
+            // Tempestade (95, 96, 99)
+            95: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="#FFFFFF" stroke-width="3">
+                   <path d="M47.79,46.85A12,12,0,1,0,32.26,30.34a17.48,17.48,0,0,0-20.73-8.86,17.21,17.21,0,0,0-5,34" stroke-linecap="round" stroke-linejoin="round" fill="#C2C2C2"/>
+                   <polygon points="34.13 44.5 25.88 51 29.88 41.5 21.63 35 32 32.5 40.25 26 36.25 35.5 44.5 42 34.13 44.5" stroke-linecap="round" stroke-linejoin="round" fill="#FFD700" stroke="#FFD700"/>
+                 </svg>`
+        };
+
+        // Mapeamento de Códigos WMO
+        function getWeatherDetails(wmoCode) {
+            const code = parseInt(wmoCode);
+            if (code === 0) return { icon: WEATHER_ICONS[0], desc: "Céu Limpo" };
+            if (code >= 1 && code <= 3) return { icon: WEATHER_ICONS[1], desc: "Parcialmente Nublado" };
+            if (code >= 45 && code <= 48) return { icon: WEATHER_ICONS[45], desc: "Nublado" };
+            if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return { icon: WEATHER_ICONS[51], desc: "Chuva" };
+            if (code >= 95 && code <= 99) return { icon: WEATHER_ICONS[95], desc: "Tempestade" };
+            // Fallback
+            return { icon: WEATHER_ICONS[0], desc: "Ensolarado" };
+        }
+
+        // --- ELEMENTOS DO DOM ---
+        const timeEl = document.getElementById('time');
+        const dateEl = document.getElementById('date');
+        const dayOfWeekEl = document.getElementById('day-of-week');
+        const calendarEl = document.getElementById('calendar-container');
+        
+        // Elementos do Clima
+        const weatherIconEl = document.getElementById('weather-icon');
+        const weatherTempEl = document.getElementById('weather-temp');
+        const weatherDescEl = document.getElementById('weather-desc');
+        const weatherRangeEl = document.getElementById('weather-range');
+        
+        // Elementos do Horário de Ônibus
+        const busContainerEl = document.getElementById('bus-schedule-container');
+        const busListEl = document.getElementById('bus-schedule-list');
+        
+        // Elementos de Fundo
+        const bg1 = document.getElementById('bg-image-1');
+        const bg2 = document.getElementById('bg-image-2');
+        let currentBgToggle = true; 
+        
+        let currentDisplayedDay = -1; 
+        let currentDisplayedMinute = -1; // Para controlar atualização do ônibus
+
+        // --- ATUALIZAÇÃO DE HORA E CALENDÁRIO ---
+        
+        function updateTime() {
+            const now = new Date();
+
+            const timeString = now.toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const dayString = now.toLocaleDateString('pt-BR', { weekday: 'long' });
+            
+            const dateString = now.toLocaleDateString('pt-BR', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric' 
+            });
+
+            timeEl.textContent = timeString;
+            dayOfWeekEl.textContent = dayString;
+            dateEl.textContent = dateString;
+            
+            // Verifica se o dia mudou para atualizar o calendário
+            if (now.getDate() !== currentDisplayedDay) {
+                updateCalendar(now);
+                currentDisplayedDay = now.getDate();
+            }
+            
+            // Verifica se o MINUTO mudou para atualizar o ônibus
+            // (Não precisa atualizar a cada segundo, só a cada minuto)
+            if (now.getMinutes() !== currentDisplayedMinute) {
+                updateBusSchedule(now);
+                currentDisplayedMinute = now.getMinutes();
+            }
+        }
+
+        function updateCalendar(date) {
+            const weekdays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+            const monthName = date.toLocaleDateString('pt-BR', { month: 'long' });
+            const year = date.getFullYear();
+            const today = date.getDate();
+
+            const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+            const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+            const startingDayOfWeek = firstDayOfMonth.getDay();
+
+            let html = `<div class="calendar-header">${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}</div>`;
+            
+            // Fontes do calendário reduzidas (text-lg e text-xl)
+            html += `<div class="grid grid-cols-7 gap-1 text-center text-lg font-bold text-gray-300 mb-2">`;
+            for (const day of weekdays) {
+                html += `<div>${day}</div>`;
+            }
+            html += `</div>`;
+
+            html += `<div class="grid grid-cols-7 gap-1 text-center text-xl">`;
+            
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                html += `<div></div>`;
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                let classes = "calendar-day p-1 rounded-lg";
+                if (day === today) {
+                    classes += " bg-blue-500 text-white font-bold"; 
+                } else {
+                    classes += " bg-black bg-opacity-25";
+                }
+                html += `<div class="${classes}">${day}</div>`;
+            }
+            html += `</div>`; 
+
+            calendarEl.innerHTML = html;
+        }
+        
+        // --- ATUALIZAÇÃO DO HORÁRIO DE ÔNIBUS ---
+        
+        /**
+         * Encontra e exibe as 3 próximas saídas de ônibus.
+         */
+        function updateBusSchedule(now) {
+            if (BUS_SCHEDULE.length === 0) {
+                // Se o array está vazio (arquivo não carregado ou vazio), não faz nada
+                return; 
+            }
+            
+            // 1. Cria objetos Date para cada horário do dia de hoje
+            const todayBusTimes = BUS_SCHEDULE.map(item => {
+                const [hours, minutes] = item.time.split(':').map(Number);
+                const d = new Date(now); // Começa com a data de 'agora'
+                d.setHours(hours, minutes, 0, 0); // Define a hora e o minuto
+                return {
+                    dateObj: d,
+                    time: item.time, // "06:00"
+                    line: item.line  // "Linha 1"
+                };
+            });
+
+            // 2. Filtra a lista para pegar apenas horários futuros
+            const upcomingBuses = todayBusTimes.filter(bus => bus.dateObj > now);
+
+            // 3. Pega os 3 primeiros (ou menos, se houver menos)
+            const nextThreeBuses = upcomingBuses.slice(0, 3);
+            
+            // 4. Renderiza no HTML
+            if (nextThreeBuses.length === 0) {
+                // Caso não haja mais ônibus hoje
+                busListEl.innerHTML = `<div class="bus-time-item no-buses">Sem mais saídas hoje</div>`;
+                return;
+            }
+            
+            let html = '';
+            for (const bus of nextThreeBuses) {
+                html += `<div class="bus-time-item">
+                            <span class="bus-time-time">${bus.time}</span>
+                            <span class="bus-time-line">${bus.line}</span>
+                         </div>`;
+            }
+            busListEl.innerHTML = html;
+        }
+
+        // --- ATUALIZAÇÃO DE IMAGEM DE FUNDO ---
+        
+        function updateImage() {
+            // Corrigido: Pega a largura e altura da tela na orientação correta
+            const w = Math.floor(window.innerWidth * 1.2); 
+            const h = Math.floor(window.innerHeight * 1.2);  
+            
+            const imageUrl = `https://picsum.photos/${w}/${h}?random=${Math.random()}`;
+            
+            if (currentBgToggle) {
+                bg2.style.backgroundImage = `url(${imageUrl})`;
+                bg2.style.opacity = 1;
+                bg1.style.opacity = 0;
+            } else {
+                bg1.style.backgroundImage = `url(${imageUrl})`;
+                bg1.style.opacity = 1;
+                bg2.style.opacity = 0;
+            }
+            currentBgToggle = !currentBgToggle;
+        }
+
+        // --- LÓGICA DO CLIMA ---
+        
+        function fetchWeather(lat, lon) {
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
+            
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.current && data.daily) {
+                        const currentTemp = Math.round(data.current.temperature_2m);
+                        const weatherCode = data.current.weather_code;
+                        const maxTemp = Math.round(data.daily.temperature_2m_max[0]);
+                        const minTemp = Math.round(data.daily.temperature_2m_min[0]);
+                        
+                        const details = getWeatherDetails(weatherCode);
+                        
+                        weatherIconEl.innerHTML = details.icon;
+                        weatherTempEl.textContent = `${currentTemp}°`;
+                        weatherDescEl.textContent = details.desc;
+                        weatherRangeEl.textContent = `Máx: ${maxTemp}° Mín: ${minTemp}°`;
+                    }
+                })
+                .catch(error => {
+                    console.error("Erro ao buscar clima:", error);
+                    weatherDescEl.textContent = "Erro no clima";
+                });
+        }
+        
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        fetchWeather(position.coords.latitude, position.coords.longitude);
+                    },
+                    () => {
+                        console.warn("Geolocalização negada. Usando localização padrão (São Paulo).");
+                        fetchWeather(-23.55, -46.63); // Coordenadas de São Paulo
+                    }
+                );
+            } else {
+                console.warn("Geolocalização não suportada. Usando localização padrão (São Paulo).");
+                fetchWeather(-23.55, -46.63); // Coordenadas de São Paulo
+            }
+        }
+
+        // --- FUNÇÃO DE CARREGAMENTO DO HORÁRIO DE ÔNIBUS ---
+        /**
+         * Busca o arquivo horarios.txt e preenche o array BUS_SCHEDULE.
+         */
+        async function fetchBusSchedule() {
+            const scheduleURL = 'horarios.txt'; // O arquivo deve estar no mesmo diretório
+            try {
+                const response = await fetch(scheduleURL);
+                if (!response.ok) {
+                    // Lança um erro se o arquivo não for encontrado (ex: 404)
+                    throw new Error('Arquivo horarios.txt não encontrado.');
+                }
+                const text = await response.text();
+                
+                BUS_SCHEDULE = text
+                    .split('\n')                // Quebra o texto por linha
+                    .map(line => line.trim())   // Remove espaços em branco (inicio/fim)
+                    .filter(line => line.length > 0 && line.includes('=')) // Ignora linhas vazias/inválidas
+                    .map(line => {
+                        const parts = line.split('=');
+                        const time = parts[0].trim();
+                        const lineName = parts[1] ? parts[1].trim() : 'Linha'; // Nome da linha
+                        return { time, line: lineName };
+                    });
+                
+                if (BUS_SCHEDULE.length === 0) {
+                    throw new Error('Arquivo de horários está vazio ou em formato inválido.');
+                }
+
+                console.log('Horários de ônibus carregados:', BUS_SCHEDULE);
+                
+                // SUCESSO: Mostra o container e atualiza o display
+                busContainerEl.style.display = 'block'; 
+                updateBusSchedule(new Date()); 
+                
+            } catch (error) {
+                console.warn(error.message);
+                // ERRO: Garante que o container fique oculto
+                busContainerEl.style.display = 'none'; 
+            }
+        }
+
+        // --- INICIALIZAÇÃO ---
+
+        updateTime(); // Roda 1x para carregar data/hora/calendário
+        setInterval(updateTime, 1000); // Roda a cada segundo (e atualiza o ônibus a cada minuto)
+
+        updateImage();
+        setInterval(updateImage, 40000);
+        
+        getLocation();
+        setInterval(getLocation, 1800000); // Atualiza o clima a cada 30 minutos
+        
+        fetchBusSchedule(); // Carrega os horários de ônibus do arquivo .txt
+
+    </script>
+
+</body>
+</html>

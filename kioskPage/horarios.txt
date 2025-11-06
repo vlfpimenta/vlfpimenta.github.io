@@ -1,0 +1,5 @@
+13:00=Gardenia azul
+14:10=Centro
+16:00=Centro via Niemeyer
+17:30=Centro via Zona sul
+17:45=Metrô
