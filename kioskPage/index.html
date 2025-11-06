@@ -182,6 +182,14 @@
             color: #d1d5db;
         }
         
+        #app-footer {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(128, 128, 128, 0.5);
+        }
+        #app-footer img {
+            height: 40px;
+            margin: 0 auto;
+        }
 
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -242,14 +250,13 @@
         <div class="flex-1"></div>
 
         <div id="bus-schedule-card" class="info-card flex flex-col hidden">
-            <h2 class="text-xl font-semibold text-center mb-4">Próximas Saídas</h2>
+            <h2 class="text-xl font-semibold text-center mb-4">Próximas saídas previstas</h2>
             <div id="bus-schedule-list" class="flex-1 overflow-y-auto">
                 <div class="text-center text-gray-400">Carregando horários...</div>
             </div>
         </div>
         
-        <footer class="text-center text-sm text-gray-400 py-2">
-            Socima
+        <footer id="app-footer" class="text-center text-sm py-2">
         </footer>
     </div>
 
@@ -270,6 +277,7 @@
         const busScheduleCardEl = document.getElementById('bus-schedule-card');
         const busScheduleListEl = document.getElementById('bus-schedule-list');
         const holidayListEl = document.getElementById('holiday-list-content');
+        const footerEl = document.getElementById('app-footer');
         
         const bg1 = document.getElementById('bg-image-1');
         const bg2 = document.getElementById('bg-image-2');
@@ -509,12 +517,24 @@
             currentBgToggle = !currentBgToggle;
         }
 
+        function loadFooterContent() {
+            const logoImg = new Image();
+            logoImg.onload = function() {
+                footerEl.innerHTML = '<img src="logo.png" alt="SOCIMA Logo">';
+            }
+            logoImg.onerror = function() {
+                footerEl.textContent = 'SOCIMA - Sociedade Civil Mandala';
+            }
+            logoImg.src = 'logo.png';
+        }
+
         function init() {
             updateClock();
             fetchWeather();
             updateCalendar();
             fetchHolidays();
             fetchBusSchedule(); 
+            loadFooterContent();
             
             setInterval(updateClock, 1000); 
             setInterval(fetchWeather, 600000); 
