@@ -6,28 +6,27 @@
     <title>Quiosque Display - Socima</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        html, body {
+            overflow: hidden;
+            background-color: #000;
+        }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000;
             color: white;
             cursor: none;
-            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        #rotated-wrapper {
             width: 100vh;
             height: 100vw;
             transform-origin: top left;
             transform: rotate(-90deg) translateX(-100vh);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        .card {
-            background-color: rgba(0, 0, 0, 0.6);
-            border-radius: 1.5rem;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            position: relative;
         }
         #background-container, #background-image-1, #background-image-2 {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
@@ -42,6 +41,15 @@
         #main-content {
             position: relative;
             z-index: 1;
+            width: 100%;
+            height: 100%;
+        }
+        .card {
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 1.5rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         #calendar-grid {
             display: grid;
@@ -83,6 +91,7 @@
             border-bottom: none;
         }
         .forecast-day-info {
+            flex-basis: 30%;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
@@ -97,43 +106,48 @@
             opacity: 0.7;
         }
         .forecast-icon-desc {
+            flex-basis: 40%;
+            flex-grow: 1;
             display: flex;
             align-items: center;
+            justify-content: flex-start;
             gap: 0.75rem;
-            min-width: 150px;
+            padding: 0 1rem;
         }
         .forecast-icon-desc img {
             width: 40px;
             height: 40px;
+            flex-shrink: 0;
         }
         .forecast-icon-desc span {
             font-size: 0.9rem;
             opacity: 0.9;
         }
         .forecast-temp {
+            flex-basis: 30%;
+            flex-grow: 1;
             font-size: 0.9rem;
             font-weight: 500;
             text-align: right;
-            min-width: 110px;
         }
         .bus-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.75rem 0;
+            padding: 0.35rem 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         .bus-item:last-child {
             border-bottom: none;
         }
         .bus-line {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             color: #ffffff;
             text-align: left;
         }
         .bus-time {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: 500;
             color: #d1d5db;
             text-align: right;
@@ -155,64 +169,66 @@
 </head>
 <body class="h-full">
 
-    <div id="background-container">
-        <div id="background-image-1" style="background-image: url('https://picsum.photos/seed/kiosk1/1920/1080'); opacity: 1;"></div>
-        <div id="background-image-2" style="background-image: url('https://picsum.photos/seed/kiosk2/1920/1080'); opacity: 0;"></div>
-    </div>
+    <div id="rotated-wrapper">
+        <div id="background-container">
+            <div id="background-image-1" style="background-image: url('https://picsum.photos/seed/kiosk1/1920/1080'); opacity: 1;"></div>
+            <div id="background-image-2" style="background-image: url('https://picsum.photos/seed/kiosk2/1920/1080'); opacity: 0;"></div>
+        </div>
 
-    <div id="main-content" class="h-full flex flex-col p-6 gap-4">
+        <div id="main-content" class="h-full flex flex-col p-3 gap-2">
 
-        <div class="flex gap-4">
-            <div class="card p-6 flex-1">
-                <div id="clock" class="text-7xl font-bold">--:--</div>
-                <div id="date" class="text-2xl opacity-80">--/--/----</div>
-                <div id="day-of-week" class="text-2xl opacity-80">--------</div>
+            <div class="flex gap-3">
+                <div class="card p-5 flex-1">
+                    <div id="clock" class="text-7xl font-bold">--:--</div>
+                    <div id="date" class="text-2xl opacity-80">--/--/----</div>
+                    <div id="day-of-week" class="text-2xl opacity-80">--------</div>
+                </div>
+                
+                <div class="card p-5 flex-1 weather-container flex items-center justify-between gap-4">
+                    <div class="text-left">
+                        <div id="temperature" class="text-7xl font-bold">--°</div>
+                        <div id="weather-description" class="text-xl opacity-80">Carregando...</div>
+                        <div id="temp-range" class="text-lg opacity-70">Mín: --° Máx: --°</div>
+                    </div>
+                    <div id="weather-icon" class="w-24 h-24 flex-shrink-0 flex items-center justify-center">
+                        <img src="https://openweathermap.org/img/wn/01d@2x.png" alt="Ícone do tempo" style="width: 100%; height: 100%; display: none;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-5 flex items-start gap-5">
+                <div class="flex-1">
+                    <h2 class="text-2xl font-bold mb-3">Calendário</h2>
+                    <div id="calendar-header" class="text-xl font-semibold mb-2 text-center">-------- ----</div>
+                    <div id="calendar-grid"></div>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-2xl font-bold mb-3">Próximos Feriados</h2>
+                    <div id="holiday-list" class="space-y-1 pr-2 overflow-y-auto max-h-[200px]">
+                        <div class="text-gray-400">Carregando...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-5">
+                <h2 class="text-2xl font-bold mb-2">Previsão para os Próximos Dias</h2>
+                <div id="forecast-list" class="space-y-0">
+                    <div class="text-gray-400">Carregando previsão...</div>
+                </div>
             </div>
             
-            <div class="card p-6 flex-1 weather-container flex items-center justify-between gap-4">
-                <div class="text-left">
-                    <div id="temperature" class="text-7xl font-bold">--°</div>
-                    <div id="weather-description" class="text-xl opacity-80">Carregando...</div>
-                    <div id="temp-range" class="text-lg opacity-70">Mín: --° Máx: --°</div>
-                </div>
-                <div id="weather-icon" class="w-24 h-24 flex-shrink-0 flex items-center justify-center">
-                    <img src="https://openweathermap.org/img/wn/01d@2x.png" alt="Ícone do tempo" style="width: 100%; height: 100%; display: none;">
+            <div class="flex-1"></div>
+
+            <div class="card p-5" id="bus-schedule-container" style="display: none;">
+                <h2 class="text-2xl font-bold mb-2">Próximas saídas previstas</h2>
+                <div id="bus-schedule-list">
+                    <div class="text-gray-400">Carregando horários...</div>
                 </div>
             </div>
-        </div>
 
-        <div class="card p-6 flex items-start gap-6">
-            <div class="flex-1">
-                <h2 class="text-2xl font-bold mb-4">Calendário</h2>
-                <div id="calendar-header" class="text-xl font-semibold mb-3 text-center">-------- ----</div>
-                <div id="calendar-grid"></div>
-            </div>
-            <div class="flex-1">
-                <h2 class="text-2xl font-bold mb-4">Próximos Feriados</h2>
-                <div id="holiday-list" class="space-y-2 pr-2 overflow-y-auto max-h-[220px]">
-                    <div class="text-gray-400">Carregando...</div>
-                </div>
-            </div>
+            <footer id="footer" class="w-full text-center py-1">
+            </footer>
         </div>
-
-        <div class="card p-6">
-            <h2 class="text-2xl font-bold mb-4">Previsão para os Próximos Dias</h2>
-            <div id="forecast-list" class="space-y-1">
-                <div class="text-gray-400">Carregando previsão...</div>
-            </div>
-        </div>
-        
-        <div class="flex-1"></div>
-
-        <div class="card p-6" id="bus-schedule-container" style="display: none;">
-            <h2 class="text-2xl font-bold mb-4">Próximas saídas previstas</h2>
-            <div id="bus-schedule-list">
-                <div class="text-gray-400">Carregando horários...</div>
-            </div>
-        </div>
-
-        <footer id="footer" class="w-full text-center py-2">
-        </footer>
     </div>
 
     <script>
@@ -375,9 +391,6 @@
             const monthName = now.toLocaleDateString('pt-BR', { month: 'long' });
             calendarHeaderEl.textContent = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
 
-            const firstDayOfMonth = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-
             const daysHeaders = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
             daysHeaders.forEach(day => {
                 const headerEl = document.createElement('div');
@@ -385,6 +398,9 @@
                 headerEl.textContent = day;
                 calendarGridEl.appendChild(headerEl);
             });
+
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
 
             for (let i = 0; i < firstDayOfMonth; i++) {
                 const emptyCell = document.createElement('div');
@@ -413,8 +429,9 @@
                 const holidays = await response.json();
                 
                 const currentMonth = new Date().getMonth();
+                
                 const holidaysThisMonth = holidays.filter(holiday => {
-                    const holidayDate = new Date(holiday.date);
+                    const holidayDate = new Date(holiday.date + 'T00:00:00-03:00');
                     return holidayDate.getMonth() === currentMonth;
                 });
                 
@@ -527,12 +544,13 @@
             let seed = 2;
 
             function changeBackground() {
-                const w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-                const h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+                const wrapper = document.getElementById('rotated-wrapper');
+                const w = wrapper.clientWidth;
+                const h = wrapper.clientHeight;
                 
                 const newImg = new Image();
                 const newSeed = 'kiosk' + (seed++);
-                newImg.src = `https://picsum.photos/seed/${newSeed}/${h}/${w}`;
+                newImg.src = `https://picsum.photos/seed/${newSeed}/${w}/${h}`;
                 
                 newImg.onload = () => {
                     if (currentBg === 1) {
@@ -550,6 +568,8 @@
             }
             
             setInterval(changeBackground, 40000);
+            
+            window.dispatchEvent(new Event('resize'));
         })();
 
         updateTime();
