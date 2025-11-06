@@ -62,31 +62,40 @@
         .top-container {
             width: 100%;
             display: flex;
-            flex-direction: column; /* Empilhado verticalmente */
-            align-items: stretch; /* Ocupa largura total */
+            flex-direction: row; /* MUDANÇA: Lado a lado */
+            align-items: stretch; /* Ocupa altura total igual */
             gap: 1.5rem; 
         }
         
         /* Container de Data e Hora */
         .datetime-container {
-            width: 100%;
+            flex-basis: 55%; /* Ocupa 55% da largura */
+            flex-shrink: 0;
             text-align: center; /* Centralizado */
             background-color: rgba(0, 0, 0, 0.6);
             padding: 1.5rem;
             border-radius: 1.5rem;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            
+            /* Adicionado para centralizar verticalmente */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         
         /* Container do Clima */
         .weather-container {
-            width: 100%;
+            flex-basis: 45%; /* Ocupa 45% da largura */
+            flex-shrink: 0;
             background-color: rgba(0, 0, 0, 0.6);
             padding: 1.5rem;
             border-radius: 1.5rem;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             display: flex;
-            flex-direction: column;
-            gap: 1rem;
+            flex-direction: column; /* MUDANÇA: Conteúdo empilhado */
+            align-items: center; /* MUDANÇA: Conteúdo centralizado */
+            justify-content: center;
+            gap: 0.5rem; /* Espaço entre os itens */
         }
         
         /* Estilo da Hora */
@@ -114,26 +123,139 @@
         /* Clima Atual (Icone e Temp) */
         .weather-now {
             display: flex;
+            flex-direction: column; /* MUDANÇA: Ícone em cima, texto embaixo */
             align-items: center;
-            justify-content: center; /* Centralizado */
-            gap: 2rem;
+            justify-content: center; 
+            gap: 0.5rem; /* Espaço menor */
         }
         
         /* Ícone do Clima */
         #weather-icon svg {
-            width: 7rem; /* Aumentado de 6rem para 7rem */
-            height: 7rem; /* Aumentado de 6rem para 7rem */
+            width: 5rem; /* MUDANÇA: Reduzido para caber no card menor */
+            height: 5rem; /* MUDANÇA: Reduzido para caber no card menor */
             filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
         }
         
         /* Adicionado para corrigir corte do ícone */
         #weather-icon {
             flex-shrink: 0; 
-            min-width: 7rem;
+            min-width: 5rem; /* MUDANÇA: Reduzido */
         }
 
         /* Clima Atual (Temperatura) */
         #weather-temp {
+            font-size: 3rem; /* MUDANÇA: Reduzido */
+            font-weight: 700;
+            line-height: 1;
+            color: white;
+            margin-top: 0; /* MUDANÇA: Resetado */
+        }
+
+        /* Detalhes do Clima (Descrição e Faixa) */
+        .weather-details {
+            text-align: center;
+        }
+
+        #weather-desc {
+            font-size: 1.25rem; /* MUDANÇA: Reduzido */
+            font-weight: 500;
+            line-height: 1.2;
+        }
+        
+        #weather-range {
+            font-size: 1rem; /* MUDANÇA: Reduzido */
+            font-weight: 400;
+            line-height: 1.2;
+            color: #ddd;
+        }
+
+        /* Container do Calendário (agora com Feriados) */
+        .calendar-holiday-container {
+            width: 100%;
+            display: flex;
+            flex-direction: row; /* Lado a lado: Calendário | Feriados */
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 1.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Calendário (Grid) */
+        #calendar-container {
+            flex-basis: 60%; /* Calendário ocupa 60% */
+            flex-shrink: 0;
+            background-color: transparent; /* MUDANÇA: Fundo agora é no pai */
+            padding: 0; /* MUDANÇA: Resetado */
+            box-shadow: none; /* MUDANÇA: Resetado */
+        }
+
+        .calendar-header {
+            font-size: 1.5rem; /* Reduzido */
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 0.75rem;
+        }
+
+        /* Container de Feriados */
+        #holiday-container {
+            flex-basis: 40%; /* Feriados ocupam 40% */
+            flex-shrink: 0;
+            padding-left: 1.5rem;
+            border-left: 2px solid rgba(255, 255, 255, 0.2);
+            max-height: 290px; /* Altura máxima para evitar estouro */
+            overflow-y: auto; /* Adiciona scroll se a lista for longa */
+        }
+        
+        .holiday-header {
+            font-size: 1.5rem; /* Mesmo tamanho do calendário */
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        #holiday-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .holiday-item {
+            background-color: rgba(0, 0, 0, 0.25);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+        }
+        
+        .holiday-date {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #87CEFA; /* Azul claro */
+        }
+        
+        .holiday-name {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #f0f0f0;
+        }
+        
+        .holiday-loading {
+            font-size: 1rem;
+            font-style: italic;
+            color: #aaa;
+            text-align: center;
+        }
+
+        /* Container do Horário de Ônibus */
+        #bus-schedule-container {
+            width: 100%;
+            padding: 1rem;
+            background-color: rgba(0, 0, 0, 0.6); 
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             margin-top: 1.5rem; /* Espaço entre o calendário e este bloco */
             display: none; /* Inicia oculto por padrão */
         }
@@ -217,8 +339,9 @@
             <div class="weather-container">
                 <div class="weather-now">
                     <div id="weather-icon">
+                        <!-- SVG Padrão (Sol) -->
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="#FFFFFF" stroke-width="3">
-                            <circle cx="32" cy="32" r="17.5" stroke-linecap="round" stroke-linejoin="round" />
+                            <circle cx="32" cy="32" r="17.5" stroke-linecap="round" stroke-linejoin="round" fill="#FFD700" />
                             <line x1="32" y1="1.5" x2="32" y2="6.5" stroke-linecap="round" stroke-linejoin="round" />
                             <line x1="32" y1="57.5" x2="32" y2="62.5" stroke-linecap="round" stroke-linejoin="round" />
                             <line x1="62.5" y1="32" x2="57.5" y2="32" stroke-linecap="round" stroke-linejoin="round" />
@@ -229,19 +352,29 @@
                             <line x1="16.35" y1="16.35" x2="12.81" y2="12.81" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                     </div>
-                    <div class="weather-details">
-                        <div id="weather-temp">--°</div>
-                        <div id="weather-desc">Carregando...</div>
-                        <div id="weather-range">Máx: --° Mín: --°</div>
-                    </div>
+                    <div id="weather-temp">--°</div>
+                </div>
+                <div class="weather-details">
+                    <div id="weather-desc">Carregando...</div>
+                    <div id="weather-range">Máx: --° Mín: --°</div>
                 </div>
             </div>
         </div>
         
-        <!-- Container para o Calendário -->
-        <!-- Aplicado o mesmo estilo de background dos outros blocos -->
-        <div id="calendar-container" class="bg-black bg-opacity-60 p-6 rounded-3xl shadow-2xl">
-            <!-- Conteúdo do calendário será gerado por JS -->
+        <!-- Container do Meio (Calendário e Feriados) -->
+        <div class="calendar-holiday-container">
+            <!-- Container para o Calendário (Grid) -->
+            <div id="calendar-container">
+                <!-- Conteúdo do calendário será gerado por JS -->
+            </div>
+            
+            <!-- Container para os Feriados -->
+            <div id="holiday-container">
+                <div class="holiday-header">Próximos Feriados</div>
+                <ul id="holiday-list">
+                    <li class="holiday-loading">Carregando feriados...</li>
+                </ul>
+            </div>
         </div>
         
         <!-- Container para as Próximas Saídas de Ônibus -->
@@ -330,6 +463,9 @@
         const weatherDescEl = document.getElementById('weather-desc');
         const weatherRangeEl = document.getElementById('weather-range');
         
+        // Elementos dos Feriados (NOVO)
+        const holidayListEl = document.getElementById('holiday-list');
+        
         // Elementos do Horário de Ônibus
         const busContainerEl = document.getElementById('bus-schedule-container');
         const busListEl = document.getElementById('bus-schedule-list');
@@ -391,13 +527,13 @@
             let html = `<div class="calendar-header">${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}</div>`;
             
             // Fontes do calendário reduzidas (text-lg e text-xl)
-            html += `<div class="grid grid-cols-7 gap-1 text-center text-lg font-bold text-gray-300 mb-2">`;
+            html += `<div class="grid grid-cols-7 gap-1 text-center text-md font-bold text-gray-300 mb-2">`; // text-md
             for (const day of weekdays) {
                 html += `<div>${day}</div>`;
             }
             html += `</div>`;
 
-            html += `<div class="grid grid-cols-7 gap-1 text-center text-xl">`;
+            html += `<div class="grid grid-cols-7 gap-1 text-center text-lg">`; // text-lg
             
             for (let i = 0; i < startingDayOfWeek; i++) {
                 html += `<div></div>`;
@@ -429,108 +565,18 @@
                 return; 
             }
             
-            // 1. Cria objetos Date para cada horário do dia de hoje
-            const todayBusTimes = BUS_SCHEDULE.map(item => {
-                const [hours, minutes] = item.time.split(':').map(Number);
-                const d = new Date(now); // Começa com a data de 'agora'
-                d.setHours(hours, minutes, 0, 0); // Define a hora e o minuto
-                return {
-                    dateObj: d,
-                    time: item.time, // "06:00"
-                    line: item.line  // "Linha 1"
-                };
-            });
-
-            // 2. Filtra a lista para pegar apenas horários futuros
-            const upcomingBuses = todayBusTimes.filter(bus => bus.dateObj > now);
-
-            // 3. Pega os 3 primeiros (ou menos, se houver menos)
-            const nextThreeBuses = upcomingBuses.slice(0, 3);
-            
-            // 4. Renderiza no HTML
-            if (nextThreeBuses.length === 0) {
-                // Caso não haja mais ônibus hoje
-                busListEl.innerHTML = `<div class="bus-time-item no-buses">Sem mais saídas hoje</div>`;
-                return;
+            for (let day = 1; day <= daysInMonth; day++) {
+                let classes = "calendar-day p-1 rounded-lg";
+                if (day === today) {
+                    classes += " bg-blue-500 text-white font-bold"; 
+                } else {
+                    classes += ""; 
+                }
+                html += `<div class="${classes}">${day}</div>`;
             }
             
-            let html = '';
-            for (const bus of nextThreeBuses) {
-                html += `<div class="bus-time-item">
-                            <span class="bus-time-time">${bus.time}</span>
-                            <span class="bus-time-line">${bus.line}</span>
-                         </div>`;
-            }
-            busListEl.innerHTML = html;
-        }
-
-        // --- ATUALIZAÇÃO DE IMAGEM DE FUNDO ---
+        // --- ATUALIZAÇÃO DO HORÁRIO DE ÔNIBUS ---
         
-        function updateImage() {
-            // Corrigido: Pega a largura e altura da tela na orientação correta
-            const w = Math.floor(window.innerWidth * 1.2); 
-            const h = Math.floor(window.innerHeight * 1.2);  
-            
-            const imageUrl = `https://picsum.photos/${w}/${h}?random=${Math.random()}`;
-            
-            if (currentBgToggle) {
-                bg2.style.backgroundImage = `url(${imageUrl})`;
-                bg2.style.opacity = 1;
-                bg1.style.opacity = 0;
-            } else {
-                bg1.style.backgroundImage = `url(${imageUrl})`;
-                bg1.style.opacity = 1;
-                bg2.style.opacity = 0;
-            }
-            currentBgToggle = !currentBgToggle;
-        }
-
-        // --- LÓGICA DO CLIMA ---
-        
-        function fetchWeather(lat, lon) {
-            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
-            
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.current && data.daily) {
-                        const currentTemp = Math.round(data.current.temperature_2m);
-                        const weatherCode = data.current.weather_code;
-                        const maxTemp = Math.round(data.daily.temperature_2m_max[0]);
-                        const minTemp = Math.round(data.daily.temperature_2m_min[0]);
-                        
-                        const details = getWeatherDetails(weatherCode);
-                        
-                        weatherIconEl.innerHTML = details.icon;
-                        weatherTempEl.textContent = `${currentTemp}°`;
-                        weatherDescEl.textContent = details.desc;
-                        weatherRangeEl.textContent = `Máx: ${maxTemp}° Mín: ${minTemp}°`;
-                    }
-                })
-                .catch(error => {
-                    console.error("Erro ao buscar clima:", error);
-                    weatherDescEl.textContent = "Erro no clima";
-                });
-        }
-        
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        fetchWeather(position.coords.latitude, position.coords.longitude);
-                    },
-                    () => {
-                        console.warn("Geolocalização negada. Usando localização padrão (São Paulo).");
-                        fetchWeather(-23.55, -46.63); // Coordenadas de São Paulo
-                    }
-                );
-            } else {
-                console.warn("Geolocalização não suportada. Usando localização padrão (São Paulo).");
-                fetchWeather(-23.55, -46.63); // Coordenadas de São Paulo
-            }
-        }
-
-        // --- FUNÇÃO DE CARREGAMENTO DO HORÁRIO DE ÔNIBUS ---
         /**
          * Busca o arquivo horarios.txt e preenche o array BUS_SCHEDULE.
          */
@@ -554,8 +600,11 @@
                     // Lança um erro se o arquivo não for encontrado (ex: 404)
                     throw new Error('Arquivo horarios.txt não encontrado.');
                 }
-                const text = await response.text();
-                
+            busListEl.innerHTML = html;
+        }
+
+        // --- ATUALIZAÇÃO DE IMAGEM DE FUNDO ---
+        
                 BUS_SCHEDULE = text
                     .split('\n')                // Quebra o texto por linha
                     .map(line => line.trim())   // Remove espaços em branco (inicio/fim)
@@ -570,9 +619,11 @@
                 if (BUS_SCHEDULE.length === 0) {
                     throw new Error('Arquivo de horários está vazio ou em formato inválido.');
                 }
+            currentBgToggle = !currentBgToggle;
+        }
 
-                console.log('Horários de ônibus carregados:', BUS_SCHEDULE);
-                
+        // --- LÓGICA DO CLIMA ---
+        
                 // SUCESSO: Mostra o container e atualiza o display
                 busContainerEl.style.display = 'block'; 
                 updateBusSchedule(new Date()); 
@@ -587,20 +638,52 @@
             }
         }
 
-        // --- INICIALIZAÇÃO ---
-
-        updateTime(); // Roda 1x para carregar data/hora/calendário
-        setInterval(updateTime, 1000); // Roda a cada segundo (e atualiza o ônibus a cada minuto)
-
-        updateImage();
-        setInterval(updateImage, 40000);
+        // --- LÓGICA DE FERIADOS (NOVO) ---
         
-        getLocation();
-        setInterval(getLocation, 1800000); // Atualiza o clima a cada 30 minutos
-        
-        fetchBusSchedule(); // Carrega os horários de ônibus do arquivo .txt
+        async function fetchHolidays() {
+            const year = new Date().getFullYear();
+            const apiUrl = `https://date.nager.at/api/v3/PublicHolidays/${year}/BR`;
+            
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error('Falha ao buscar feriados.');
+                }
+                const holidays = await response.json();
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // Zera a hora para comparar apenas a data
 
-    </script>
+                // Filtra feriados futuros e pega os próximos 4
+                const upcomingHolidays = holidays
+                    .filter(h => new Date(h.date) >= today)
+                    .slice(0, 4); 
 
-</body>
-</html>
+                if (upcomingHolidays.length === 0) {
+                    holidayListEl.innerHTML = `<li class="holiday-loading">Sem próximos feriados este ano.</li>`;
+                    return;
+                }
+                
+                let html = '';
+                for (const holiday of upcomingHolidays) {
+                    const holidayDate = new Date(holiday.date);
+                    const dateString = holidayDate.toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit'
+                    });
+                    
+                    html += `<li class="holiday-item">
+                                <div class="holiday-date">${dateString}</div>
+                                <div class="holiday-name">${holiday.localName}</div>
+                             </li>`;
+                }
+                holidayListEl.innerHTML = html;
+
+            } catch (error) {
+                console.error("Erro ao buscar feriados:", error);
+                holidayListEl.innerHTML = `<li class="holiday-loading">Não foi possível carregar os feriados.</li>`;
+            }
+        }
+
+        // --- FUNÇÃO DE CARREGAMENTO DO HORÁRIO DE ÔNIBUS ---
+        /**
