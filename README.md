@@ -1,1 +1,311 @@
-# vlfpimenta.github.io
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiosque Display - Socima</title>
+    <!-- 
+      Para usar com o Screenly:
+      1. Salve este arquivo .html em um local acessível (por exemplo, em um servidor web).
+      2. Adicione a URL deste arquivo (ex: "http://seu-servidor.com/kiosk.html") como um "Asset" do tipo "URL" no Screenly.
+    -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Define a fonte Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Container principal que rotaciona o conteúdo.
+          - Ocupa a tela inteira.
+          - Esconde qualquer overflow.
+          - Centraliza o container de conteúdo.
+        */
+        body {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Container para as imagens de fundo com fade */
+        .bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            transition: opacity 1.5s ease-in-out; /* Efeito de fade */
+            z-index: 1; /* Fica atrás do conteúdo */
+        }
+
+        /* Este é o container que realmente gira.
+          - `transform: rotate(-90deg)` gira o conteúdo 90 graus para a esquerda.
+          - As dimensões são trocadas (largura vira altura, altura vira largura)
+            usando vh e vw para preencher a tela rotacionada.
+        */
+        #rotated-content {
+            width: 100vh;
+            height: 100vw;
+            transform: rotate(-90deg);
+            transform-origin: center;
+            
+            /* Layout interno (Flex) */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Coloca data/hora em cima, calendário no meio, rodapé embaixo */
+            align-items: center;
+            padding: 4rem; /* Espaçamento interno */
+            box-sizing: border-box; /* Garante que o padding não estoure o tamanho */
+            
+            /* Posição relativa para z-index funcionar */
+            position: relative; 
+        }
+        
+        /* Container para data e hora */
+        .datetime-container {
+            width: 100%;
+            text-align: center;
+            /* Fundo escuro semitransparente para legibilidade */
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 2rem;
+            border-radius: 1.5rem; /* Bordas arredondadas */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); /* Sombra para destacar */
+            position: relative; /* Garante que fique sobre a imagem */
+            z-index: 2;
+        }
+        
+        /* Estilo para a Hora */
+        #time {
+            font-size: 10rem; /* Tamanho bem grande */
+            font-weight: 900; /* Mais pesado */
+            line-height: 1;
+        }
+        
+        /* Estilo para o Dia da Semana */
+        #day-of-week {
+            font-size: 5rem;
+            font-weight: 700;
+            line-height: 1.1;
+            text-transform: capitalize; /* Primeira letra maiúscula */
+        }
+        
+        /* Estilo para a Data */
+        #date {
+            font-size: 3.5rem;
+            font-weight: 400;
+            line-height: 1.1;
+        }
+        
+        /* Container do Calendário */
+        #calendar-container {
+            width: 100%;
+            max-width: 90vh; /* Limita a largura do calendário */
+            padding: 1.5rem;
+            background-color: rgba(0, 0, 0, 0.6); /* Mesmo fundo */
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            position: relative; /* Garante que fique sobre a imagem */
+            z-index: 2;
+        }
+        
+        .calendar-header {
+            font-size: 4rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            text-transform: capitalize;
+        }
+
+        /* Rodapé */
+        .footer {
+            width: 100%;
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            position: relative; /* Garante que fique sobre a imagem */
+            z-index: 2;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Container rotacionado que segura todo o conteúdo visível -->
+    <div id="rotated-content">
+
+        <!-- Divs de Imagem de Fundo para Efeito de Fade -->
+        <div id="bg-image-1" class="bg-image" style="opacity: 1;"></div>
+        <div id="bg-image-2" class="bg-image" style="opacity: 0;"></div>
+    
+        <!-- Container para as informações de Data e Hora -->
+        <div class="datetime-container">
+            <div id="time">--:--</div>
+            <div id="day-of-week">----------</div>
+            <div id="date">--/--/----</div>
+        </div>
+        
+        <!-- Container para o Calendário -->
+        <div id="calendar-container">
+            <!-- Conteúdo do calendário será gerado por JS -->
+        </div>
+        
+        <!-- Rodapé -->
+        <div class="footer">
+            Socima
+        </div>
+        
+    </div>
+
+    <script>
+        // Elementos do DOM
+        const timeEl = document.getElementById('time');
+        const dateEl = document.getElementById('date');
+        const dayOfWeekEl = document.getElementById('day-of-week');
+        const calendarEl = document.getElementById('calendar-container');
+        
+        // Elementos de Fundo
+        const bg1 = document.getElementById('bg-image-1');
+        const bg2 = document.getElementById('bg-image-2');
+        let currentBgToggle = true; // Controla qual div de bg está ativa
+        
+        // Variável para controlar atualização do calendário
+        let currentDisplayedDay = -1; 
+
+        /**
+         * Atualiza as informações de data e hora na tela.
+         */
+        function updateTime() {
+            const now = new Date();
+
+            // Formata a HORA (ex: 14:05) - SEM SEGUNDOS
+            const timeString = now.toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Formata o DIA DA SEMANA (ex: quinta-feira)
+            const dayString = now.toLocaleDateString('pt-BR', { weekday: 'long' });
+            
+            // Formata a DATA (ex: 06/11/2025)
+            const dateString = now.toLocaleDateString('pt-BR', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric' 
+            });
+
+            // Atualiza o HTML
+            timeEl.textContent = timeString;
+            dayOfWeekEl.textContent = dayString;
+            dateEl.textContent = dateString;
+            
+            // Verifica se o dia mudou para atualizar o calendário
+            if (now.getDate() !== currentDisplayedDay) {
+                updateCalendar(now);
+                currentDisplayedDay = now.getDate();
+            }
+        }
+
+        /**
+         * Gera e atualiza o calendário do mês atual.
+         */
+        function updateCalendar(date) {
+            const weekdays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']; // Dom, Seg, Ter, Qua, Qui, Sex, Sáb
+            const monthName = date.toLocaleDateString('pt-BR', { month: 'long' });
+            const year = date.getFullYear();
+            const today = date.getDate();
+
+            const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+            const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+            const startingDayOfWeek = firstDayOfMonth.getDay(); // 0 = Domingo
+
+            // Cabeçalho do Mês
+            let html = `<div class="calendar-header">${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}</div>`;
+            
+            // Cabeçalho dos Dias da Semana
+            html += `<div class="grid grid-cols-7 gap-2 text-center text-2xl font-bold text-gray-300 mb-2">`;
+            for (const day of weekdays) {
+                html += `<div>${day}</div>`;
+            }
+            html += `</div>`;
+
+            // Grid dos Dias
+            html += `<div class="grid grid-cols-7 gap-2 text-center text-4xl">`;
+            
+            // Células vazias antes do dia 1
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                html += `<div></div>`;
+            }
+
+            // Células dos dias
+            for (let day = 1; day <= daysInMonth; day++) {
+                let classes = "calendar-day p-2 rounded-lg";
+                if (day === today) {
+                    // Destaca o dia atual
+                    classes += " bg-blue-500 text-white font-bold"; 
+                } else {
+                    classes += " bg-black bg-opacity-25"; // Dias normais
+                }
+                html += `<div class="${classes}">${day}</div>`;
+            }
+            html += `</div>`; // Fim do grid dos dias
+
+            calendarEl.innerHTML = html;
+        }
+
+        /**
+         * Atualiza a imagem de fundo aleatória com efeito de fade.
+         * Usa o serviço picsum.photos para obter imagens aleatórias.
+         */
+        function updateImage() {
+            // Gera uma URL de imagem aleatória com base no tamanho da tela rotacionada.
+            const w = Math.floor(window.innerHeight * 1.2); // Pega a altura da tela (que é a nova largura)
+            const h = Math.floor(window.innerWidth * 1.2);  // Pega a largura da tela (que é a nova altura)
+            
+            const imageUrl = `https://picsum.photos/${w}/${h}?random=${Math.random()}`;
+            
+            if (currentBgToggle) {
+                // Prepara a bg2 (escondida) e faz fade in
+                bg2.style.backgroundImage = `url(${imageUrl})`;
+                bg2.style.opacity = 1;
+                // Faz fade out da bg1 (visível)
+                bg1.style.opacity = 0;
+            } else {
+                // Prepara a bg1 (escondida) e faz fade in
+                bg1.style.backgroundImage = `url(${imageUrl})`;
+                bg1.style.opacity = 1;
+                // Faz fade out da bg2 (visível)
+                bg2.style.opacity = 0;
+            }
+            // Inverte o controle
+            currentBgToggle = !currentBgToggle;
+        }
+
+        // --- INICIALIZAÇÃO ---
+
+        // Atualiza a hora e o calendário imediatamente ao carregar
+        updateTime();
+        // Define um intervalo para atualizar a hora a cada segundo
+        setInterval(updateTime, 1000);
+
+        // Atualiza a imagem imediatamente ao carregar
+        updateImage();
+        // Define um intervalo para atualizar a imagem a cada 40 segundos (40000 ms)
+        setInterval(updateImage, 40000);
+
+    </script>
+
+</body>
+</html>
