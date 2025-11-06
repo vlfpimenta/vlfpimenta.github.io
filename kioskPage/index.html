@@ -131,15 +131,22 @@
         
         /* Ícone do Clima */
         #weather-icon svg {
-            width: 5rem; /* MUDANÇA: Reduzido para caber no card menor */
-            height: 5rem; /* MUDANÇA: Reduzido para caber no card menor */
+            /* MUDANÇA: Removido width e height daqui */
             filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+            /* Garante que o SVG se ajuste ao contêiner */
+            width: 100%;
+            height: 100%;
+            overflow: visible; /* MUDANÇA: Força o SVG a não se cortar */
         }
         
         /* Adicionado para corrigir corte do ícone */
         #weather-icon {
             flex-shrink: 0; 
-            min-width: 5rem; /* MUDANÇA: Reduzido */
+            /* MUDANÇA: Tamanho aplicado ao contêiner, não ao SVG */
+            width: 5rem;
+            height: 5rem;
+            min-width: 0; /* Resetado */
+            overflow: visible; /* MUDANÇA: Garante que o contêiner não corte o SVG */
         }
 
         /* Clima Atual (Temperatura) */
@@ -221,12 +228,12 @@
             margin: 0;
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0.5rem; /* MUDANÇA: Reduzido de 0.75rem */
         }
         
         .holiday-item {
             background-color: rgba(0, 0, 0, 0.25);
-            padding: 0.75rem;
+            padding: 0.6rem; /* MUDANÇA: Reduzido de 0.75rem */
             border-radius: 0.5rem;
         }
         
@@ -237,7 +244,7 @@
         }
         
         .holiday-name {
-            font-size: 1rem;
+            font-size: 0.9rem; /* MUDANÇA: Reduzido de 1rem */
             font-weight: 500;
             color: #f0f0f0;
         }
@@ -283,6 +290,14 @@
             padding: 1rem;
             border-radius: 0.75rem;
             line-height: 1.2;
+            border-left: 4px solid transparent; /* Borda padrão (transparente) */
+            transition: all 0.3s ease;
+        }
+
+        /* MUDANÇA: Estilo para o próximo ônibus (frisado) */
+        .bus-time-item.is-next-bus {
+            border-left: 4px solid #3b82f6; /* Borda azul (Tailwind blue-500) */
+            background-color: rgba(59, 130, 246, 0.1); /* Fundo azul leve */
         }
 
         .bus-time-time {
@@ -320,7 +335,8 @@
     
     <!-- Divs de Imagem de Fundo para Efeito de Fade -->
     <!-- Movidos para fora do main-content para cobrir a tela toda -->
-    <div id="bg-image-1" class="bg-image" style="opacity: 1;"></div>
+    <!-- MUDANÇA: Pré-carrega a primeira imagem para evitar tela preta -->
+    <div id="bg-image-1" class="bg-image" style="opacity: 1; background-image: url('https://source.unsplash.com/1080x1920/?nature,city');"></div>
     <div id="bg-image-2" class="bg-image" style="opacity: 0;"></div>
 
     <!-- Container principal que segura todo o conteúdo visível -->
@@ -591,8 +607,15 @@
             }
             
             let html = '';
-            for (const bus of nextThreeBuses) {
-                html += `<div class="bus-time-item">
+            
+            // MUDANÇA: Itera com índice para saber qual é o primeiro
+            for (let i = 0; i < nextThreeBuses.length; i++) {
+                const bus = nextThreeBuses[i];
+                
+                // Adiciona a classe 'is-next-bus' apenas ao primeiro item (i === 0)
+                const itemClass = (i === 0) ? "bus-time-item is-next-bus" : "bus-time-item";
+                
+                html += `<div class="${itemClass}">
                             <span class="bus-time-time">${bus.time}</span>
                             <span class="bus-time-line">${bus.line}</span>
                          </div>`;
@@ -607,7 +630,8 @@
          */
         function updateBackground() {
             // Usa o Unsplash Source para imagens aleatórias (formato retrato)
-            const randomImageUrl = 'https://source.unsplash.com/random/1080x1920/?nature,city,landscape,abstract,architecture';
+            // MUDANÇA: URL ajustada para formato mais direto
+            const randomImageUrl = `https://source.unsplash.com/1080x1920/?nature,city,landscape,abstract,architecture&t=${new Date().getTime()}`;
             
             // Determina qual div está "ativa" e qual está "oculta"
             const activeBg = currentBgToggle ? bg1 : bg2;
@@ -784,7 +808,7 @@
         setInterval(updateTime, 1000); // Depois, a cada 1 segundo
 
         // 2. Inicia a troca de imagens (atualiza a cada 40 segundos)
-        updateBackground(); // Chama imediatamente
+        // MUDANÇA: Não chama mais updateBackground() imediatamente, pois a 1ª imagem já foi pré-carregada
         setInterval(updateBackground, 40000); // 40 segundos
         
         // 3. Busca a localização e o clima
