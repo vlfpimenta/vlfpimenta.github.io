@@ -323,37 +323,34 @@
         
         function updateForecastList(daily) {
             forecastListEl.innerHTML = '';
-            let daysAdded = 0;
-            const maxDays = 5;
+            
+            for (let i = 1; i <= 3; i++) {
+                const dateParts = daily.time[i].split('-');
+                const date = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2]));
+                
+                let dayName = date.toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'UTC' });
+                dayName = capitalizeFirstLetter(dayName.split(',')[0]);
+                
+                const dayMonth = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
+                const fullDateStr = `${dayName}, ${dayMonth}`;
+                
+                const weatherInfo = wmoToOwmIconMap[daily.weathercode[i]] || { desc: "Indefinido", icon: "03" };
+                const iconUrl = `https://openweathermap.org/img/wn/${weatherInfo.icon}d.png`;
+                
+                const maxTemp = Math.round(daily.temperature_2m_max[i]);
+                const minTemp = Math.round(daily.temperature_2m_min[i]);
 
-            for (let i = 1; i < daily.time.length && daysAdded < maxDays; i++) {
-                
-                const forecastDate = new Date(daily.time[i] + 'T00:00:00-00:00');
-                
-                daysAdded++;
-                
-                const dayName = forecastDate.toLocaleDateString('pt-BR', { weekday: 'long' });
-                const formattedDate = forecastDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-                const weatherInfo = wmoToOwmIconMap[daily.weather_code[i]] || wmoToOwmIconMap[0];
-                const iconCode = weatherInfo.d; 
-
-                const itemEl = document.createElement('div');
-                itemEl.className = 'forecast-item';
-                itemEl.innerHTML = `
-                    <div class="forecast-day-info">
-                        <span class="forecast-day">${dayName.charAt(0).toUpperCase() + dayName.slice(1)}</span>
-                        <span class="forecast-date">${formattedDate}</span>
+                const item = document.createElement('div');
+                item.classList.add('forecast-item');
+                item.innerHTML = `
+                    <div class="forecast-date">${fullDateStr}</div>
+                    <div class="forecast-weather">
+                        <span class="forecast-icon"><img src="${iconUrl}" alt=""></span>
+                        <span class="forecast-desc">${weatherInfo.desc}</span>
                     </div>
-                    <div class="forecast-icon-desc">
-                        <img src="https://openweathermap.org/img/wn/${iconCode}.png" alt="${weatherInfo.desc}">
-                        <span>${weatherInfo.desc}</span>
-                    </div>
-                    <div class="forecast-temp">
-                        <span>Mín. ${Math.round(daily.temperature_2m_min[i])}°</span> / 
-                        <span>Máx. ${Math.round(daily.temperature_2m_max[i])}°</span>
-                    </div>
+                    <div class="forecast-range">Mín. ${minTemp}° / Máx. ${maxTemp}°</div>
                 `;
-                forecastListEl.appendChild(itemEl);
+                forecastListEl.appendChild(item);
             }
         }
 
@@ -584,3 +581,4 @@
     </script>
 </body>
 </html>
+
