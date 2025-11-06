@@ -84,21 +84,21 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0.75rem 0;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         .forecast-item:last-child {
             border-bottom: none;
         }
         .forecast-day-info {
-            flex-basis: 30%;
+            flex-basis: 28%;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            margin-right: 0.5rem;
         }
         .forecast-day {
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
         }
         .forecast-date {
@@ -106,27 +106,26 @@
             opacity: 0.7;
         }
         .forecast-icon-desc {
-            flex-basis: 40%;
+            flex-basis: 37%;
             flex-grow: 1;
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            gap: 0.75rem;
-            padding: 0 1rem;
+            gap: 0.5rem;
         }
         .forecast-icon-desc img {
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
             flex-shrink: 0;
         }
         .forecast-icon-desc span {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             opacity: 0.9;
         }
         .forecast-temp {
-            flex-basis: 30%;
+            flex-basis: 35%;
             flex-grow: 1;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 500;
             text-align: right;
         }
@@ -178,7 +177,7 @@
         <div id="main-content" class="h-full flex flex-col p-3 gap-2">
 
             <div class="flex gap-3">
-                <div class="card p-5 flex-1">
+                <div class="card p-5 flex-1 flex flex-col justify-center items-center">
                     <div id="clock" class="text-7xl font-bold">--:--</div>
                     <div id="date" class="text-2xl opacity-80">--/--/----</div>
                     <div id="day-of-week" class="text-2xl opacity-80">--------</div>
@@ -226,7 +225,7 @@
                 </div>
             </div>
 
-            <footer id="footer" class="w-full text-center py-1">
+            <footer id="footer" class="w-full text-center py-1 flex items-center justify-center gap-4">
             </footer>
         </div>
     </div>
@@ -294,7 +293,7 @@
         }
 
         function getWeatherData(latitude, longitude) {
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,is_day,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4`;
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,is_day,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=6`;
 
             fetch(url)
                 .then(response => response.json())
@@ -328,7 +327,7 @@
             today.setHours(0, 0, 0, 0);
 
             let daysAdded = 0;
-            const maxDays = 3;
+            const maxDays = 5;
 
             for (let i = 0; i < daily.time.length && daysAdded < maxDays; i++) {
                 const forecastDate = new Date(daily.time[i] + 'T00:00:00-00:00');
@@ -442,8 +441,6 @@
                      return;
                 }
                 
-                const formatter = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short' });
-                
                 holidaysThisMonth.forEach(holiday => {
                     const itemEl = document.createElement('div');
                     itemEl.className = 'text-sm flex justify-between';
@@ -451,7 +448,7 @@
                     const holidayDate = new Date(holiday.date + 'T00:00:00-03:00');
                     
                     itemEl.innerHTML = `
-                        <span class="font-semibold">${formatter.format(holidayDate)}:</span>
+                        <span class="font-semibold">${holidayDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}:</span>
                         <span class="text-gray-300 ml-2 truncate">${holiday.localName}</span>
                     `;
                     holidayListEl.appendChild(itemEl);
@@ -525,11 +522,19 @@
         }
         
         function setupFooter() {
+            footerEl.innerHTML = ''; 
+
             const logoImg = new Image();
             logoImg.onload = function() {
-                footerEl.innerHTML = '';
-                logoImg.className = 'h-10 w-auto mx-auto';
+                logoImg.className = 'h-10 w-auto';
                 footerEl.appendChild(logoImg);
+                
+                const devLogoImg = new Image();
+                devLogoImg.onload = function() {
+                    devLogoImg.className = 'h-10 w-auto';
+                    footerEl.appendChild(devLogoImg);
+                };
+                devLogoImg.src = 'devlogo.png';
             };
             logoImg.onerror = function() {
                 footerEl.innerHTML = '<span class="footer-text">SOCIMA - Sociedade Civil Mandala</span>';
