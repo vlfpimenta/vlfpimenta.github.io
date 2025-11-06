@@ -125,15 +125,15 @@
             height: 7rem; /* Aumentado de 6rem para 7rem */
             filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
         }
+        
+        /* Adicionado para corrigir corte do ícone */
+        #weather-icon {
+            flex-shrink: 0; 
+            min-width: 7rem;
+        }
 
-/* ... existing code ... -->
-        /* Container do Horário de Ônibus */
-        #bus-schedule-container {
-            width: 100%;
-            padding: 1rem;
-            background-color: rgba(0, 0, 0, 0.6); 
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        /* Clima Atual (Temperatura) */
+        #weather-temp {
             margin-top: 1.5rem; /* Espaço entre o calendário e este bloco */
             display: none; /* Inicia oculto por padrão */
         }
@@ -239,7 +239,8 @@
         </div>
         
         <!-- Container para o Calendário -->
-        <div id="calendar-container">
+        <!-- Aplicado o mesmo estilo de background dos outros blocos -->
+        <div id="calendar-container" class="bg-black bg-opacity-60 p-6 rounded-3xl shadow-2xl">
             <!-- Conteúdo do calendário será gerado por JS -->
         </div>
         
@@ -407,7 +408,8 @@
                 if (day === today) {
                     classes += " bg-blue-500 text-white font-bold"; 
                 } else {
-                    classes += " bg-black bg-opacity-25";
+                    // Removido o bg-black daqui, pois o container principal já tem
+                    classes += ""; 
                 }
                 html += `<div class="${classes}">${day}</div>`;
             }
@@ -533,6 +535,18 @@
          * Busca o arquivo horarios.txt e preenche o array BUS_SCHEDULE.
          */
         async function fetchBusSchedule() {
+            /*
+              NOTA IMPORTANTE SOBRE O ERRO 'CORS policy':
+              Para que esta função (fetch) funcione e carregue o 'horarios.txt',
+              você NÃO PODE abrir este arquivo HTML diretamente do seu computador (ex: file:///D:/...).
+              Você DEVE executá-lo a partir de um servidor local.
+
+              A forma mais fácil é usar a extensão "Live Server" no Visual Studio Code.
+              Se não usar o VS Code, pode usar o Python:
+              1. Abra o terminal na pasta deste projeto.
+              2. Digite: python -m http.server
+              3. Abra o navegador em: http://localhost:8000/kiosk.html
+            */
             const scheduleURL = 'horarios.txt'; // O arquivo deve estar no mesmo diretório
             try {
                 const response = await fetch(scheduleURL);
@@ -567,6 +581,9 @@
                 console.warn(error.message);
                 // ERRO: Garante que o container fique oculto
                 busContainerEl.style.display = 'none'; 
+                
+                // Adiciona uma mensagem de erro no console para o usuário
+                console.error("FALHA AO CARREGAR HORÁRIOS: Verifique se você está rodando um servidor local (ex: 'Live Server' no VSCode) e se o arquivo 'horarios.txt' existe.");
             }
         }
 
