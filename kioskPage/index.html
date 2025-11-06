@@ -348,7 +348,7 @@
                 weatherDescEl.textContent = weatherInfo.desc;
                 weatherRangeEl.textContent = `Máx: ${Math.round(daily.temperature_2m_max[0])}° Mín: ${Math.round(daily.temperature_2m_min[0])}°`;
                 
-                const iconUrl = `https://cdn.jsdelivr.net/gh/amcharts/amcharts4-icons@4.10.3/animated/${weatherInfo.icon}`;
+                const iconUrl = `https://unpkg.com/amcharts4-icons@4.10.3/animated/${weatherInfo.icon}`;
                 weatherIconEl.innerHTML = `<img src="${iconUrl}" alt="${weatherInfo.desc}">`;
 
             } catch (error) {
