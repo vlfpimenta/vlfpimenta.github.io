@@ -92,10 +92,11 @@
             border-bottom: none;
         }
         .forecast-day-info {
-            flex-basis: 28%;
+            flex-basis: 32%;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
+            justify-content: center;
         }
         .forecast-day {
             font-size: 0.95rem;
@@ -106,7 +107,7 @@
             opacity: 0.7;
         }
         .forecast-icon-desc {
-            flex-basis: 37%;
+            flex-basis: 36%;
             flex-grow: 1;
             display: flex;
             align-items: center;
@@ -123,30 +124,31 @@
             opacity: 0.9;
         }
         .forecast-temp {
-            flex-basis: 35%;
+            flex-basis: 32%;
             flex-grow: 1;
             font-size: 0.85rem;
             font-weight: 500;
             text-align: right;
+            padding-right: 0.25rem;
         }
         .bus-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.35rem 0;
+            padding: 0.3rem 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         .bus-item:last-child {
             border-bottom: none;
         }
         .bus-line {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 600;
             color: #ffffff;
             text-align: left;
         }
         .bus-time {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 500;
             color: #d1d5db;
             text-align: right;
@@ -323,34 +325,35 @@
         
         function updateForecastList(daily) {
             forecastListEl.innerHTML = '';
-            
-            for (let i = 1; i <= 3; i++) {
-                const dateParts = daily.time[i].split('-');
-                const date = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2]));
-                
-                let dayName = date.toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'UTC' });
-                dayName = capitalizeFirstLetter(dayName.split(',')[0]);
-                
-                const dayMonth = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
-                const fullDateStr = `${dayName}, ${dayMonth}`;
-                
-                const weatherInfo = wmoToOwmIconMap[daily.weathercode[i]] || { desc: "Indefinido", icon: "03" };
-                const iconUrl = `https://openweathermap.org/img/wn/${weatherInfo.icon}d.png`;
-                
-                const maxTemp = Math.round(daily.temperature_2m_max[i]);
-                const minTemp = Math.round(daily.temperature_2m_min[i]);
+            const maxDays = 5;
 
-                const item = document.createElement('div');
-                item.classList.add('forecast-item');
-                item.innerHTML = `
-                    <div class="forecast-date">${fullDateStr}</div>
-                    <div class="forecast-weather">
-                        <span class="forecast-icon"><img src="${iconUrl}" alt=""></span>
-                        <span class="forecast-desc">${weatherInfo.desc}</span>
+            for (let i = 1; i <= maxDays; i++) {
+                if (i >= daily.time.length) break;
+                
+                const forecastDate = new Date(daily.time[i] + 'T12:00:00');
+                
+                const dayName = forecastDate.toLocaleDateString('pt-BR', { weekday: 'long' });
+                const formattedDate = forecastDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                const weatherInfo = wmoToOwmIconMap[daily.weather_code[i]] || wmoToOwmIconMap[0];
+                const iconCode = weatherInfo.d; 
+
+                const itemEl = document.createElement('div');
+                itemEl.className = 'forecast-item';
+                itemEl.innerHTML = `
+                    <div class="forecast-day-info">
+                        <span class="forecast-day">${dayName.charAt(0).toUpperCase() + dayName.slice(1)}</span>
+                        <span class="forecast-date">${formattedDate}</span>
                     </div>
-                    <div class="forecast-range">Mín. ${minTemp}° / Máx. ${maxTemp}°</div>
+                    <div class="forecast-icon-desc">
+                        <img src="https://openweathermap.org/img/wn/${iconCode}.png" alt="${weatherInfo.desc}">
+                        <span>${weatherInfo.desc}</span>
+                    </div>
+                    <div class="forecast-temp">
+                        <span>Mín. ${Math.round(daily.temperature_2m_min[i])}°</span> / 
+                        <span>Máx. ${Math.round(daily.temperature_2m_max[i])}°</span>
+                    </div>
                 `;
-                forecastListEl.appendChild(item);
+                forecastListEl.appendChild(itemEl);
             }
         }
 
@@ -421,7 +424,7 @@
                 const currentMonth = new Date().getMonth();
                 
                 const holidaysThisMonth = holidays.filter(holiday => {
-                    const holidayDate = new Date(holiday.date + 'T00:00:00-03:00');
+                    const holidayDate = new Date(holiday.date + 'T12:00:00');
                     return holidayDate.getMonth() === currentMonth;
                 });
                 
@@ -436,7 +439,7 @@
                     const itemEl = document.createElement('div');
                     itemEl.className = 'text-sm flex justify-between';
                     
-                    const holidayDate = new Date(holiday.date + 'T00:00:00-03:00');
+                    const holidayDate = new Date(holiday.date + 'T12:00:00');
                     
                     itemEl.innerHTML = `
                         <span class="font-semibold">${holidayDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}:</span>
@@ -555,7 +558,7 @@
                         bg2.style.opacity = 1;
                         currentBg = 2;
                     } else {
-                        bg1.style.backgroundImage = `url(${newImg.src})`;
+                        bg1.style.backgroundImage = `url(${newMmg.src})`;
                         bg1.style.opacity = 1;
                         bg2.style.opacity = 0;
                         currentBg = 1;
@@ -581,4 +584,3 @@
     </script>
 </body>
 </html>
-
