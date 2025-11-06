@@ -3,4 +3,6 @@
 16:30=Centro via Niemeyer
 17:30=Centro via Zona sul
 17:45=Metrô
-
+18:00=Centro
+19:00=Zona Sul
+19:45=Gardenia
