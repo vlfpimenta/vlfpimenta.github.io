@@ -143,7 +143,7 @@
             border-bottom: none;
         }
         .bus-time {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
             color: #ffffff;
             flex-shrink: 1;
@@ -151,7 +151,7 @@
             text-align: left;
         }
         .bus-line {
-            font-size: 1rem;
+            font-size: 0.875rem;
             font-weight: 500;
             color: #d1d5db;
             text-align: right;
@@ -394,7 +394,7 @@
 
         async function getWeatherData(lat, lon) {
             try {
-                const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`;
+                const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4`;
                 const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error('Falha ao buscar clima');
                 
@@ -425,7 +425,7 @@
         function updateForecastList(daily) {
             forecastListEl.innerHTML = '';
             
-            for (let i = 1; i <= 4; i++) {
+            for (let i = 1; i <= 3; i++) {
                 const dateParts = daily.time[i].split('-');
                 const date = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2]));
                 
