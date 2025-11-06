@@ -239,7 +239,9 @@
             </div>
         </div>
         
-        <div id="bus-schedule-card" class="info-card flex-1 flex flex-col hidden">
+        <div class="flex-1"></div>
+
+        <div id="bus-schedule-card" class="info-card flex flex-col hidden">
             <h2 class="text-xl font-semibold text-center mb-4">Próximas Saídas</h2>
             <div id="bus-schedule-list" class="flex-1 overflow-y-auto">
                 <div class="text-center text-gray-400">Carregando horários...</div>
@@ -273,35 +275,35 @@
         const bg2 = document.getElementById('bg-image-2');
         let currentBgToggle = true; 
 
-        const weatherCodes = {
-            0: { desc: "Céu Limpo", icon: "clear-day.svg" },
-            1: { desc: "Quase Limpo", icon: "partly-cloudy-day.svg" },
-            2: { desc: "Parcialmente Nublado", icon: "partly-cloudy-day.svg" },
-            3: { desc: "Nublado", icon: "cloudy.svg" },
-            45: { desc: "Nevoeiro", icon: "fog.svg" },
-            48: { desc: "Nevoeiro Congelante", icon: "fog.svg" },
-            51: { desc: "Garoa Leve", icon: "drizzle.svg" },
-            53: { desc: "Garoa Moderada", icon: "drizzle.svg" },
-            55: { desc: "Garoa Forte", icon: "drizzle.svg" },
-            56: { desc: "Garoa Congelante Leve", icon: "sleet.svg" },
-            57: { desc: "Garoa Congelante Forte", icon: "sleet.svg" },
-            61: { desc: "Chuva Leve", icon: "rain.svg" },
-            63: { desc: "Chuva Moderada", icon: "rain.svg" },
-            65: { desc: "Chuva Forte", icon: "rain.svg" },
-            66: { desc: "Chuva Congelante Leve", icon: "sleet.svg" },
-            67: { desc: "Chuva Congelante Forte", icon: "sleet.svg" },
-            71: { desc: "Neve Leve", icon: "snow.svg" },
-            73: { desc: "Neve Moderada", icon: "snow.svg" },
-            75: { desc: "Neve Forte", icon: "snow.svg" },
-            77: { desc: "Grãos de Neve", icon: "snow.svg" },
-            80: { desc: "Aguaceiros Leves", icon: "showers.svg" },
-            81: { desc: "Aguaceiros Moderados", icon: "showers.svg" },
-            82: { desc: "Aguaceiros Violentos", icon: "showers.svg" },
-            85: { desc: "Neve Leve", icon: "snow.svg" },
-            86: { desc: "Neve Forte", icon: "snow.svg" },
-            95: { desc: "Trovoada", icon: "thunderstorms.svg" },
-            96: { desc: "Trovoada com Granizo Leve", icon: "thunderstorms-rain.svg" },
-            99: { desc: "Trovoada com Granizo Forte", icon: "thunderstorms-rain.svg" },
+        const wmoToOwmIconMap = {
+            0: { desc: "Céu Limpo", icon: "01" },
+            1: { desc: "Quase Limpo", icon: "02" },
+            2: { desc: "Parcialmente Nublado", icon: "03" },
+            3: { desc: "Nublado", icon: "04" },
+            45: { desc: "Nevoeiro", icon: "50" },
+            48: { desc: "Nevoeiro Congelante", icon: "50" },
+            51: { desc: "Garoa Leve", icon: "09" },
+            53: { desc: "Garoa Moderada", icon: "09" },
+            55: { desc: "Garoa Forte", icon: "09" },
+            56: { desc: "Garoa Congelante Leve", icon: "13" },
+            57: { desc: "Garoa Congelante Forte", icon: "13" },
+            61: { desc: "Chuva Leve", icon: "10" },
+            63: { desc: "Chuva Moderada", icon: "10" },
+            65: { desc: "Chuva Forte", icon: "10" },
+            66: { desc: "Chuva Congelante Leve", icon: "13" },
+            67: { desc: "Chuva Congelante Forte", icon: "13" },
+            71: { desc: "Neve Leve", icon: "13" },
+            73: { desc: "Neve Moderada", icon: "13" },
+            75: { desc: "Neve Forte", icon: "13" },
+            77: { desc: "Grãos de Neve", icon: "13" },
+            80: { desc: "Aguaceiros Leves", icon: "09" },
+            81: { desc: "Aguaceiros Moderados", icon: "09" },
+            82: { desc: "Aguaceiros Violentos", icon: "09" },
+            85: { desc: "Neve Leve", icon: "13" },
+            86: { desc: "Neve Forte", icon: "13" },
+            95: { desc: "Trovoada", icon: "11" },
+            96: { desc: "Trovoada com Granizo Leve", icon: "11" },
+            99: { desc: "Trovoada com Granizo Forte", icon: "11" },
         };
         
         function updateClock() {
@@ -342,14 +344,16 @@
                 const current = data.current_weather;
                 const daily = data.daily;
                 
-                const weatherInfo = weatherCodes[current.weathercode] || { desc: "Indefinido", icon: "cloudy.svg" };
+                const weatherInfo = wmoToOwmIconMap[current.weathercode] || { desc: "Indefinido", icon: "03" };
+                const dayNight = current.is_day ? 'd' : 'n';
+                const iconCode = `${weatherInfo.icon}${dayNight}`;
                 
                 weatherTempEl.textContent = `${Math.round(current.temperature)}°`;
                 weatherDescEl.textContent = weatherInfo.desc;
                 weatherRangeEl.textContent = `Máx: ${Math.round(daily.temperature_2m_max[0])}° Mín: ${Math.round(daily.temperature_2m_min[0])}°`;
                 
-                const iconUrl = `https://unpkg.com/amcharts4-icons@4.10.3/animated/${weatherInfo.icon}`;
-                weatherIconEl.innerHTML = `<img src="${iconUrl}" alt="${weatherInfo.desc}">`;
+                const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+                weatherIconEl.innerHTML = `<img src="${iconUrl}" alt="${weatherInfo.desc}" style="background-color: rgba(255, 255, 255, 0.1); border-radius: 50%;">`;
 
             } catch (error) {
                 console.error("Erro ao buscar clima:", error);
@@ -418,7 +422,7 @@
                     const item = document.createElement('div');
                     item.classList.add('holiday-item');
                     item.innerHTML = `
-                        <div class="holiday-date">${dateString}</div>
+                        <div class="holiday-date">${holiday.date.split('-')[2]}/${holiday.date.split('-')[1]}</div>
                         <div class="holiday-name">${holiday.localName}</div>
                     `;
                     holidayListEl.appendChild(item);
