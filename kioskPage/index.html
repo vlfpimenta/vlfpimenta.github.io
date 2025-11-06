@@ -323,19 +323,13 @@
         
         function updateForecastList(daily) {
             forecastListEl.innerHTML = '';
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
             let daysAdded = 0;
             const maxDays = 5;
 
-            for (let i = 0; i < daily.time.length && daysAdded < maxDays; i++) {
+            for (let i = 1; i < daily.time.length && daysAdded < maxDays; i++) {
+                
                 const forecastDate = new Date(daily.time[i] + 'T00:00:00-00:00');
                 
-                if (forecastDate <= today) {
-                    continue;
-                }
-
                 daysAdded++;
                 
                 const dayName = forecastDate.toLocaleDateString('pt-BR', { weekday: 'long' });
