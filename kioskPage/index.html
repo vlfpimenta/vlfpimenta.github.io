@@ -6,6 +6,9 @@
     <title>Quiosque Display - Socima</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        html {
+            font-size: clamp(13.66px, 1vh, 18px);
+        }
         html, body {
             overflow: hidden;
             background-color: #000;
@@ -333,7 +336,8 @@
             for (let i = 1; i <= maxDays; i++) {
                 if (i >= daily.time.length) break;
                 
-                const forecastDate = new Date(daily.time[i] + 'T12:00:00');
+                const dateStr = daily.time[i] + 'T12:00:00';
+                const forecastDate = new Date(dateStr);
                 
                 const dayName = forecastDate.toLocaleDateString('pt-BR', { weekday: 'long' });
                 const formattedDate = forecastDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
