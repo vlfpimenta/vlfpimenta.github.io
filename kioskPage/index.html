@@ -249,6 +249,9 @@
         const busScheduleListEl = document.getElementById('bus-schedule-list');
         const footerEl = document.getElementById('footer');
 
+        const KIOSK_LATITUDE = -23.001917;
+        const KIOSK_LONGITUDE = -43.376583;
+
         const wmoToOwmIconMap = {
             0: { d: '01d', n: '01n', desc: 'Céu Limpo' },
             1: { d: '02d', n: '02n', desc: 'Principalmente Limpo' },
@@ -357,21 +360,8 @@
             }
         }
 
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        getWeatherData(position.coords.latitude, position.coords.longitude);
-                    },
-                    (error) => {
-                        console.warn('Geolocalização negada, usando Rio de Janeiro.', error.message);
-                        getWeatherData(-22.9068, -43.1729);
-                    },
-                    { timeout: 10000 }
-                );
-            } else {
-                getWeatherData(-22.9068, -43.1729);
-            }
+        function fetchAndDisplayWeather() {
+            getWeatherData(KIOSK_LATITUDE, KIOSK_LONGITUDE);
         }
 
         function updateCalendar() {
@@ -528,7 +518,7 @@
                     devLogoImg.className = 'h-10 w-auto';
                     footerEl.appendChild(devLogoImg);
                 };
-                devLogoImg.src = 'devlogo.png';
+                devLogoImg.src = 'https://vlfpimenta.github.io/devlogo.png';
             };
             logoImg.onerror = function() {
                 footerEl.innerHTML = '<span class="footer-text">SOCIMA - Sociedade Civil Mandala</span>';
@@ -558,7 +548,7 @@
                         bg2.style.opacity = 1;
                         currentBg = 2;
                     } else {
-                        bg1.style.backgroundImage = `url(${newMmg.src})`;
+                        bg1.style.backgroundImage = `url(${newImg.src})`;
                         bg1.style.opacity = 1;
                         bg2.style.opacity = 0;
                         currentBg = 1;
@@ -573,12 +563,12 @@
 
         updateTime();
         updateCalendar();
-        getLocation();
+        fetchAndDisplayWeather();
         fetchHolidays();
         fetchBusSchedule();
         setupFooter();
         setInterval(updateTime, 1000);
-        setInterval(getLocation, 600000); 
+        setInterval(fetchAndDisplayWeather, 600000); 
         setInterval(fetchHolidays, 3600000); 
 
     </script>
