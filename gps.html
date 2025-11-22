@@ -3,358 +3,456 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GPS Pro + Telemetria</title>
+    <title>GPS Pro UI Moderna</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Leaflet CSS -->
+    <!-- Leaflet & Plugins -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script src="https://cdn.osmbuildings.org/4.1.1/OSMBuildings.js"></script>
     
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- OSM Buildings -->
-    <script src="https://cdn.osmbuildings.org/4.1.1/OSMBuildings.js"></script>
-
     <style>
+        /* --- Tema e Variáveis --- */
         :root {
-            --bg-glass: rgba(15, 23, 42, 0.95);
-            --text-primary: white;
-            --accent: #3b82f6;
+            --bg-panel: rgba(15, 23, 42, 0.95);
+            --text-main: white;
         }
-        body { margin: 0; padding: 0; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: white; }
+        body.light-mode {
+            --bg-panel: rgba(255, 255, 255, 0.95);
+            --text-main: #1e293b;
+        }
         
+        body { margin: 0; padding: 0; overflow: hidden; font-family: system-ui, sans-serif; background: #0f172a; }
+        
+        /* Mapa com Viewport Extendida para 3D */
         #map-container { 
             position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; 
-            z-index: 0; transition: transform 0.3s ease-out; 
+            z-index: 0; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
         }
 
+        /* UI Components */
         .glass-panel {
-            background: var(--bg-glass);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            background: var(--bg-panel);
+            backdrop-filter: blur(12px);
+            color: var(--text-main);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(128, 128, 128, 0.2);
+            transition: background 0.3s, color 0.3s;
         }
 
-        /* Painéis Deslizantes */
-        .slide-panel {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+        /* Menu Lateral (Drawer) */
+        #sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 100;
         }
-        .panel-hidden-top { transform: translateY(-150%); opacity: 0; pointer-events: none; }
-        .panel-visible { transform: translateY(0); opacity: 1; pointer-events: auto; }
-        .panel-hidden-bottom { transform: translateY(150%); opacity: 0; pointer-events: none; }
-
-        /* Ocultar UI na navegação */
-        body.navigating #search-container,
-        body.navigating #bottom-controls { opacity: 0; pointer-events: none; }
-
-        /* Botões */
-        .btn-icon {
-            width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
-            border-radius: 50%; background: var(--bg-glass); border: 1px solid rgba(255,255,255,0.1);
-            transition: transform 0.1s;
+        #sidebar.open { transform: translateX(0); }
+        
+        /* Overlay Escuro quando menu abre */
+        #overlay-bg {
+            opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 90;
         }
-        .btn-icon:active { transform: scale(0.9); }
-        .btn-active { color: var(--accent); border-color: var(--accent); background: rgba(59, 130, 246, 0.15); }
+        #overlay-bg.active { opacity: 1; pointer-events: auto; }
 
-        /* Painel de Telemetria (Overlay Total) */
-        #telemetry-overlay {
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px);
+        /* Toggle Switch Customizado */
+        .toggle-checkbox:checked {
+            right: 0; border-color: #3b82f6;
         }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #3b82f6;
+        }
+        
+        /* Painel de Navegação (Topo) */
+        #nav-instruction-panel {
+            transform: translateY(-150%); transition: transform 0.3s; z-index: 80;
+        }
+        #nav-instruction-panel.active { transform: translateY(0); }
 
-        /* Bússola Visual */
-        .compass-ring {
-            width: 80px; height: 80px; border: 2px solid #555; border-radius: 50%;
-            position: relative; display: flex; justify-content: center; align-items: center;
-            background: radial-gradient(circle, #222 0%, #000 100%);
-        }
-        .compass-arrow {
-            width: 0; height: 0;
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-bottom: 30px solid red;
-            position: absolute; top: 10px;
-            transform-origin: bottom center;
-        }
-        .compass-north { position: absolute; top: -20px; color: red; font-weight: bold; font-size: 12px; }
+        /* Telemetria Overlay */
+        #telemetry-overlay { z-index: 110; }
 
-        /* Leaflet Overrides */
+        /* Leaflet Fixes */
         .leaflet-routing-container { display: none !important; }
-        .leaflet-popup-content-wrapper { background: #1e293b; color: white; }
-        .leaflet-popup-tip { background: #1e293b; }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip { 
+            background: var(--bg-panel); color: var(--text-main); 
+        }
+        
+        /* Marcadores */
+        .heading-arrow { transition: transform 0.2s linear; }
     </style>
 </head>
-<body class="bg-slate-900">
+<body class="bg-slate-900 transition-colors duration-300">
 
+    <!-- Mapa Fundo -->
     <div id="map-container">
         <div id="map" class="w-full h-full"></div>
     </div>
 
-    <!-- 1. Painel Instruções Navegação -->
-    <div id="nav-instruction-panel" class="absolute top-0 left-0 right-0 z-40 bg-green-700 p-4 m-2 rounded-xl shadow-xl flex items-center gap-3 panel-hidden-top slide-panel">
-        <div class="text-3xl w-10 text-center"><i class="fa-solid fa-arrow-up" id="nav-icon"></i></div>
-        <div class="flex-1 overflow-hidden">
-            <div id="nav-text" class="text-lg font-bold leading-tight truncate">Iniciando...</div>
-            <div class="flex gap-3 text-sm font-mono opacity-90 mt-1">
-                <span id="nav-dist">0 m</span> 
-                <span class="border-l border-white/30 pl-3" id="gps-status">GPS: OK</span>
-            </div>
-        </div>
-        <button onclick="stopNavigation()" class="bg-black/20 hover:bg-black/40 px-3 py-2 rounded font-bold text-xs uppercase tracking-wider">Sair</button>
-    </div>
+    <!-- Overlay Escuro (Para fechar menu) -->
+    <div id="overlay-bg" class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="toggleMenu()"></div>
 
-    <!-- 2. Busca -->
-    <div id="search-container" class="absolute top-4 left-4 right-4 z-20 transition-opacity duration-300">
-        <div class="glass-panel p-2 flex items-center gap-2">
-            <i class="fa-solid fa-location-dot text-blue-500 ml-2"></i>
-            <input type="text" id="search-input" placeholder="Para onde vamos?" class="w-full bg-transparent border-none outline-none h-10 px-2 text-white">
-            <button onclick="searchLocation()" class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center"><i class="fa-solid fa-magnifying-glass"></i></button>
+    <!-- MENU LATERAL (SIDEBAR) -->
+    <div id="sidebar" class="fixed top-0 left-0 bottom-0 w-72 glass-panel flex flex-col pointer-events-auto h-full">
+        <div class="p-5 border-b border-gray-500/20 flex justify-between items-center">
+            <h2 class="font-bold text-xl tracking-tight">Configurações</h2>
+            <button onclick="toggleMenu()" class="text-gray-400 hover:text-blue-500"><i class="fa-solid fa-chevron-left"></i></button>
         </div>
-    </div>
-
-    <!-- 3. Controles Laterais -->
-    <div class="absolute right-4 top-24 z-20 flex flex-col gap-3">
-        <button onclick="toggleTelemetry()" class="btn-icon text-yellow-400" title="Dados GPS"><i class="fa-solid fa-circle-info text-xl"></i></button>
-        <button onclick="toggle3D()" id="btn-3d" class="btn-icon"><i class="fa-solid fa-cubes-stacked"></i></button>
-        <button onclick="recenterMap()" class="btn-icon text-green-400"><i class="fa-solid fa-location-crosshairs"></i></button>
         
-        <div class="glass-panel w-12 h-14 flex flex-col items-center justify-center text-xs font-mono mt-2">
-            <div id="speed-val" class="text-lg font-bold">0</div><div class="text-[8px] text-gray-400">km/h</div>
+        <div class="p-4 flex-1 overflow-y-auto space-y-6">
+            
+            <!-- Grupo Visual -->
+            <div>
+                <div class="text-xs font-bold uppercase opacity-60 mb-3 tracking-wider">Visualização</div>
+                
+                <!-- Toggle Tema -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-circle-half-stroke text-lg w-6 text-center"></i>
+                        <span>Modo Claro</span>
+                    </div>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" name="toggle" id="toggle-theme" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" onclick="toggleTheme()"/>
+                        <label for="toggle-theme" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                    </div>
+                </div>
+
+                <!-- Toggle 3D -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-cubes-stacked text-lg w-6 text-center"></i>
+                        <span>Mapa 3D</span>
+                    </div>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" name="toggle" id="toggle-3d" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" onclick="toggle3D()"/>
+                        <label for="toggle-3d" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                    </div>
+                </div>
+
+                <!-- Toggle Trânsito -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-road text-lg w-6 text-center"></i>
+                        <span>Trânsito</span>
+                    </div>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" name="toggle" id="toggle-traffic" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" onclick="toggleTraffic()"/>
+                        <label for="toggle-traffic" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="h-px bg-gray-500/20 w-full"></div>
+
+            <!-- Grupo Dados -->
+            <div>
+                <div class="text-xs font-bold uppercase opacity-60 mb-3 tracking-wider">Dados</div>
+                <!-- Toggle GPS Info -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-satellite-dish text-lg w-6 text-center"></i>
+                        <span>Telemetria GPS</span>
+                    </div>
+                    <button onclick="toggleTelemetry(); toggleMenu()" class="text-xs bg-blue-600 text-white px-3 py-1 rounded-full">Abrir</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="p-4 border-t border-gray-500/20 text-center text-xs opacity-50">
+            GPS Pro v2.1
         </div>
     </div>
 
-    <!-- 4. Painel de Rota (Bottom) -->
-    <div id="bottom-controls" class="absolute bottom-8 left-4 right-4 z-20 panel-hidden-bottom slide-panel">
-        <div class="glass-panel p-4 flex flex-col gap-3">
-            <div class="flex justify-between text-center border-b border-white/10 pb-2">
-                <div><div class="text-[10px] opacity-60">TEMPO</div><div id="route-time" class="font-bold">--</div></div>
-                <div><div class="text-[10px] opacity-60">DISTÂNCIA</div><div id="route-dist" class="font-bold text-blue-400">--</div></div>
-                <button onclick="clearRoute()" class="text-red-400 px-2"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <button onclick="startNavigation()" class="bg-blue-600 w-full py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2">
-                <i class="fa-solid fa-location-arrow"></i> INICIAR
+    <!-- BARRA DE BUSCA SUPERIOR -->
+    <div id="search-bar-container" class="absolute top-4 left-4 right-4 z-40 pointer-events-auto">
+        <div class="glass-panel rounded-xl flex items-center p-1 pr-2 shadow-lg">
+            <!-- Botão Menu -->
+            <button onclick="toggleMenu()" class="w-12 h-10 text-gray-400 hover:text-blue-500 transition-colors flex items-center justify-center border-r border-gray-500/20">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+            
+            <!-- Input Busca -->
+            <input type="text" id="search-input" placeholder="Buscar local..." 
+                   class="flex-1 bg-transparent border-none outline-none px-3 h-10 text-base placeholder-gray-500"
+                   onkeypress="handleEnter(event)">
+            
+            <!-- Botão Buscar -->
+            <button onclick="searchLocation()" class="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center transition-colors shadow-md">
+                <i class="fa-solid fa-magnifying-glass"></i>
             </button>
         </div>
     </div>
 
-    <!-- 5. OVERLAY DE TELEMETRIA (GPS INFO) -->
-    <div id="telemetry-overlay" class="fixed inset-0 z-[60] hidden flex-col items-center justify-center p-6 text-center">
-        <div class="glass-panel w-full max-w-sm p-6 relative">
-            <button onclick="toggleTelemetry()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-times text-xl"></i></button>
-            
-            <h2 class="text-xl font-bold mb-6 flex items-center justify-center gap-2 text-yellow-400">
-                <i class="fa-solid fa-satellite-dish"></i> Dados do GPS
-            </h2>
+    <!-- PAINEL DE NAVEGAÇÃO (TOPO) - Aparece ao iniciar rota -->
+    <div id="nav-instruction-panel" class="absolute top-0 left-0 right-0 z-50 bg-green-600 text-white p-4 m-2 rounded-xl shadow-2xl flex items-center gap-4">
+        <div class="text-3xl"><i class="fa-solid fa-arrow-up" id="nav-icon"></i></div>
+        <div class="flex-1 overflow-hidden">
+            <div id="nav-text" class="font-bold text-lg leading-tight truncate">Siga a rota</div>
+            <div class="text-sm opacity-90 mt-1 font-mono" id="nav-dist">0 m</div>
+        </div>
+        <button onclick="stopNavigation()" class="bg-black/20 px-3 py-2 rounded font-bold text-xs uppercase">Sair</button>
+    </div>
 
-            <!-- Bússola Visual -->
-            <div class="flex justify-center mb-6">
-                <div class="compass-ring">
-                    <div class="compass-north">N</div>
-                    <div id="compass-needle" class="compass-arrow"></div>
-                    <div class="absolute text-[10px] font-mono bottom-2 text-gray-400">MAG</div>
-                </div>
+    <!-- OVERLAY TELEMETRIA -->
+    <div id="telemetry-overlay" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden flex-col items-center justify-center p-6 text-white">
+        <button onclick="toggleTelemetry()" class="absolute top-6 right-6 text-2xl"><i class="fa-solid fa-times"></i></button>
+        <h2 class="text-2xl font-bold mb-8 text-blue-400"><i class="fa-solid fa-satellite-dish"></i> Dados GPS</h2>
+        
+        <div class="grid grid-cols-2 gap-6 w-full max-w-md text-center font-mono">
+            <div class="bg-white/10 p-4 rounded-xl">
+                <div class="text-xs text-gray-400 mb-1">LATITUDE</div>
+                <div id="tel-lat" class="font-bold text-lg">--</div>
             </div>
+            <div class="bg-white/10 p-4 rounded-xl">
+                <div class="text-xs text-gray-400 mb-1">LONGITUDE</div>
+                <div id="tel-lon" class="font-bold text-lg">--</div>
+            </div>
+            <div class="bg-white/10 p-4 rounded-xl">
+                <div class="text-xs text-gray-400 mb-1">VELOCIDADE</div>
+                <div id="tel-spd" class="font-bold text-2xl text-green-400">0</div>
+                <div class="text-[10px]">km/h</div>
+            </div>
+            <div class="bg-white/10 p-4 rounded-xl">
+                <div class="text-xs text-gray-400 mb-1">PRECISÃO</div>
+                <div id="tel-acc" class="font-bold text-lg text-yellow-400">--</div>
+                <div class="text-[10px]">metros</div>
+            </div>
+        </div>
+        <div class="mt-8 text-sm text-gray-500">Bússola: <span id="tel-head">--</span>°</div>
+    </div>
 
-            <!-- Grid de Dados -->
-            <div class="grid grid-cols-2 gap-4 text-sm font-mono text-left">
-                <div class="bg-white/5 p-2 rounded">
-                    <div class="text-[10px] text-gray-400">LATITUDE</div>
-                    <div id="tel-lat" class="font-bold">Aguardando...</div>
-                </div>
-                <div class="bg-white/5 p-2 rounded">
-                    <div class="text-[10px] text-gray-400">LONGITUDE</div>
-                    <div id="tel-lon" class="font-bold">Aguardando...</div>
-                </div>
-                <div class="bg-white/5 p-2 rounded">
-                    <div class="text-[10px] text-gray-400">ALTITUDE (Elev.)</div>
-                    <div id="tel-alt" class="font-bold text-blue-400">--</div>
-                </div>
-                <div class="bg-white/5 p-2 rounded">
-                    <div class="text-[10px] text-gray-400">PRECISÃO SINAL</div>
-                    <div id="tel-acc" class="font-bold text-green-400">--</div>
-                </div>
-                <div class="bg-white/5 p-2 rounded">
-                    <div class="text-[10px] text-gray-400">DIREÇÃO (Heading)</div>
-                    <div id="tel-head" class="font-bold">--°</div>
-                </div>
-                <div class="bg-white/5 p-2 rounded">
-                    <div class="text-[10px] text-gray-400">VELOCIDADE</div>
-                    <div id="tel-spd" class="font-bold">0 km/h</div>
-                </div>
-            </div>
-
-            <div class="mt-4 text-[10px] text-gray-500 text-center italic">
-                * Contagem de satélites não disponível via Web API.<br>Use a "Precisão" como indicador de sinal.
-            </div>
+    <!-- CONTROLES FLUTUANTES (Velocímetro e Centralizar) -->
+    <div id="floating-controls" class="absolute right-4 top-24 z-30 flex flex-col gap-3 pointer-events-auto transition-opacity duration-300">
+        <button onclick="recenterMap()" class="w-12 h-12 glass-panel rounded-full flex items-center justify-center text-green-500 hover:scale-110 transition shadow-lg">
+            <i class="fa-solid fa-location-crosshairs text-xl"></i>
+        </button>
+        
+        <div class="glass-panel w-14 h-16 rounded-2xl flex flex-col items-center justify-center font-mono shadow-lg">
+            <div id="speed-val" class="text-xl font-bold">0</div>
+            <div class="text-[9px] opacity-60">km/h</div>
         </div>
     </div>
 
-    <div id="toast-container" class="absolute top-24 left-1/2 transform -translate-x-1/2 z-50 w-64 pointer-events-none flex flex-col gap-2"></div>
+    <!-- PAINEL DE ROTA (Fundo) -->
+    <div id="bottom-route-panel" class="absolute bottom-0 left-0 right-0 z-40 p-4 transform translate-y-full transition-transform duration-300 pointer-events-none">
+        <div class="glass-panel p-5 rounded-t-2xl pointer-events-auto pb-8">
+            <div class="flex justify-between items-end mb-4 border-b border-gray-500/20 pb-2">
+                <div>
+                    <div class="text-2xl font-bold text-blue-500" id="route-time">-- min</div>
+                    <div class="text-sm opacity-70" id="route-dist">-- km</div>
+                </div>
+                <button onclick="clearRoute()" class="text-red-500 p-2"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            <button onclick="startNavigation()" class="bg-blue-600 text-white w-full py-4 rounded-xl font-bold text-lg shadow-xl flex items-center justify-center gap-2 active:scale-95 transition">
+                <i class="fa-solid fa-location-arrow"></i> INICIAR NAVEGAÇÃO
+            </button>
+        </div>
+    </div>
 
-    <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-    
+    <!-- TOAST -->
+    <div id="toast-container" class="absolute top-24 left-1/2 transform -translate-x-1/2 z-[60] pointer-events-none w-full max-w-xs flex flex-col items-center gap-2"></div>
+
     <script>
-        const TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-        let map, routingControl, osmb;
-        let userMarker = null, endMarker = null;
+        // --- Configuração Mapa ---
+        const TILES = {
+            DARK: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+            LIGHT: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+        };
         
-        // Estado
-        let isNavigating = false;
-        let is3D = false;
+        let map, baseLayer, trafficLayer, routingControl, osmb;
+        let userMarker, endMarker;
+        let isNavigating = false, is3D = false, isTraffic = false;
         let wakeLock = null;
-        let telemetryOpen = false;
-        
-        // Dados de GPS
-        let lastCoords = { lat: 0, lng: 0 };
 
         const icons = {
             user: L.divIcon({className:'bg-transparent', html:'<div class="w-4 h-4 bg-blue-500 border-2 border-white rounded-full shadow relative"><div class="absolute -inset-3 border-4 border-blue-500 rounded-full opacity-30 animate-ping"></div></div>'}),
-            arrow: L.divIcon({className:'user-heading-marker', html:'<div class="w-8 h-8 bg-blue-500 border-2 border-white rounded-full shadow-lg flex justify-center relative" style="transition:transform 0.2s"><div class="absolute -top-1 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[10px] border-b-white"></div></div>', iconSize:[32,32], iconAnchor:[16,16]}),
-            end: L.divIcon({html:'<i class="fa-solid fa-location-dot text-red-500 text-4xl drop-shadow-lg"></i>', className:'bg-transparent', iconAnchor:[10,38]})
+            arrow: L.divIcon({className:'heading-arrow', html:'<div class="w-10 h-10 bg-blue-600 border-2 border-white rounded-full shadow-xl flex items-center justify-center"><div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[12px] border-b-white mb-1"></div></div>', iconSize:[40,40], iconAnchor:[20,20]}),
+            dest: L.divIcon({html:'<i class="fa-solid fa-location-dot text-red-500 text-4xl drop-shadow-lg"></i>', className:'bg-transparent', iconAnchor:[10,38]})
         };
 
         window.onload = () => {
             map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-23.55, -46.63], 15);
-            L.tileLayer(TILES, { maxZoom: 21 }).addTo(map);
-            
+            baseLayer = L.tileLayer(TILES.DARK, { maxZoom: 21 }).addTo(map);
+            trafficLayer = L.tileLayer('https://mt0.google.com/vt?lyrs=h@159000000,traffic|seconds_into_week:-1&style=3&x={x}&y={y}&z={z}', { maxZoom: 21, opacity: 0 }).addTo(map);
+
             startGPS();
-            startCompass(); // Tenta iniciar magnetômetro
             
-            map.on('click', handleMapClick);
+            // Evento clique mapa
+            map.on('click', async (e) => {
+                if(isNavigating) return;
+                const popup = L.popup().setLatLng(e.latlng).setContent('<div class="text-center"><i class="fa-solid fa-spinner fa-spin"></i></div>').openOn(map);
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`);
+                    const data = await res.json();
+                    popup.setContent(`
+                        <div class="min-w-[150px]">
+                            <div class="font-bold text-blue-400 truncate mb-2">${data.address.road||"Local"}</div>
+                            <button onclick="setDestination(${e.latlng.lat}, ${e.latlng.lng})" class="bg-blue-600 w-full py-2 rounded text-xs font-bold text-white">IR PARA CÁ</button>
+                        </div>
+                    `);
+                } catch(err) { popup.close(); }
+            });
         };
 
-        // --- TELEMETRIA & GPS ---
+        // --- UI INTERFACE ---
+
+        function toggleMenu() {
+            const sb = document.getElementById('sidebar');
+            const ov = document.getElementById('overlay-bg');
+            if(sb.classList.contains('open')) {
+                sb.classList.remove('open');
+                ov.classList.remove('active');
+            } else {
+                sb.classList.add('open');
+                ov.classList.add('active');
+            }
+        }
+
+        function handleEnter(e) {
+            if(e.key === 'Enter') searchLocation();
+        }
+
+        // --- FUNÇÕES TOGGLE (Menu) ---
+
+        function toggleTheme() {
+            const body = document.body;
+            const checkbox = document.getElementById('toggle-theme');
+            if(checkbox.checked) {
+                body.classList.add('light-mode');
+                baseLayer.setUrl(TILES.LIGHT);
+            } else {
+                body.classList.remove('light-mode');
+                baseLayer.setUrl(TILES.DARK);
+            }
+        }
+
+        function toggle3D() {
+            const checkbox = document.getElementById('toggle-3d');
+            const container = document.getElementById('map-container');
+            is3D = checkbox.checked;
+            
+            if(is3D) {
+                container.style.transform = "perspective(600px) rotateX(50deg)";
+                if(!osmb) osmb = new OSMBuildings(map).load('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
+                osmb.show();
+            } else {
+                container.style.transform = "none";
+                if(osmb) osmb.hide();
+            }
+        }
+
+        function toggleTraffic() {
+            const checkbox = document.getElementById('toggle-traffic');
+            isTraffic = checkbox.checked;
+            trafficLayer.setOpacity(isTraffic ? 1 : 0);
+            showToast(isTraffic ? "Trânsito Ativado" : "Trânsito Desativado");
+        }
 
         function toggleTelemetry() {
             const el = document.getElementById('telemetry-overlay');
-            telemetryOpen = !telemetryOpen;
-            if(telemetryOpen) {
-                el.classList.remove('hidden');
-                el.classList.add('flex');
-            } else {
-                el.classList.add('hidden');
-                el.classList.remove('flex');
+            el.style.display = (el.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        // --- BUSCA (CORRIGIDA) ---
+
+        async function searchLocation() {
+            const input = document.getElementById('search-input');
+            const query = input.value;
+            
+            if(!query) return showToast("Digite um local!");
+            
+            // Feedback visual
+            input.disabled = true;
+            showToast("Buscando...");
+
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                
+                if(data && data.length > 0) {
+                    setDestination(parseFloat(data[0].lat), parseFloat(data[0].lon));
+                    // Fecha menu se aberto
+                    document.getElementById('sidebar').classList.remove('open');
+                    document.getElementById('overlay-bg').classList.remove('active');
+                    input.blur();
+                } else {
+                    showToast("Local não encontrado.");
+                }
+            } catch(e) {
+                showToast("Erro de conexão.");
+                console.error(e);
+            } finally {
+                input.disabled = false;
             }
         }
+
+        // --- GPS LOGIC ---
 
         function startGPS() {
             if (!navigator.geolocation) return alert("GPS não suportado");
-
-            navigator.geolocation.watchPosition(
-                updatePosition,
-                err => console.warn("GPS Erro", err),
-                { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
-            );
+            navigator.geolocation.watchPosition(updatePos, err => console.log(err), {enableHighAccuracy:true, maximumAge:0});
         }
 
-        function updatePosition(pos) {
-            const { latitude: lat, longitude: lng, speed, heading, altitude, accuracy, altitudeAccuracy } = pos.coords;
-            lastCoords = { lat, lng };
+        function updatePos(pos) {
+            const { latitude, longitude, speed, heading, accuracy } = pos.coords;
+            const ll = [latitude, longitude];
+            const spd = speed ? Math.round(speed * 3.6) : 0;
 
-            // Atualiza Mapa
-            const ll = [lat, lng];
-            if (!userMarker) userMarker = L.marker(ll, {icon: icons.user, zIndexOffset:1000}).addTo(map);
+            document.getElementById('speed-val').innerText = spd;
+            document.getElementById('tel-lat').innerText = latitude.toFixed(5);
+            document.getElementById('tel-lon').innerText = longitude.toFixed(5);
+            document.getElementById('tel-spd').innerText = spd;
+            document.getElementById('tel-acc').innerText = Math.round(accuracy);
+            document.getElementById('tel-head').innerText = heading ? Math.round(heading) : '--';
+
+            if(!userMarker) userMarker = L.marker(ll, {icon: icons.user, zIndexOffset:1000}).addTo(map);
             else userMarker.setLatLng(ll);
 
-            // Atualiza Rotação do Ícone na Navegação
             if(isNavigating) {
                 userMarker.setIcon(icons.arrow);
-                map.setView(ll, 19, {animate: true});
-                const iconEl = document.querySelector('.user-heading-marker > div');
-                if(iconEl && heading) iconEl.style.transform = `rotate(${heading}deg)`;
-                
-                document.getElementById('gps-status').innerText = `GPS: ±${Math.round(accuracy)}m`;
+                map.setView(ll, 19, {animate:true});
+                const el = document.querySelector('.heading-arrow');
+                if(el && heading) el.style.transform = `rotate(${heading}deg)`;
             } else {
                 userMarker.setIcon(icons.user);
             }
-
-            // --- POPULAR DADOS DO PAINEL DE TELEMETRIA ---
-            document.getElementById('speed-val').innerText = speed ? Math.round(speed * 3.6) : 0;
-            
-            if(telemetryOpen) {
-                document.getElementById('tel-lat').innerText = lat.toFixed(6);
-                document.getElementById('tel-lon').innerText = lng.toFixed(6);
-                document.getElementById('tel-alt').innerText = altitude ? `${Math.round(altitude)}m (±${Math.round(altitudeAccuracy||0)}m)` : "N/A";
-                document.getElementById('tel-acc').innerText = `± ${Math.round(accuracy)} metros`;
-                document.getElementById('tel-head').innerText = heading ? `${Math.round(heading)}°` : "N/A";
-                document.getElementById('tel-spd').innerText = speed ? `${(speed*3.6).toFixed(1)} km/h` : "0 km/h";
-            }
+        }
+        
+        function recenterMap() {
+            if(userMarker) map.setView(userMarker.getLatLng(), isNavigating ? 19 : 16);
+            else showToast("Buscando GPS...");
         }
 
-        // --- BÚSSOLA DIGITAL (DeviceOrientation) ---
-        function startCompass() {
-            if (window.DeviceOrientationEvent) {
-                window.addEventListener('deviceorientation', function(event) {
-                    let heading = null;
-                    
-                    // iOS usa webkitCompassHeading
-                    if (event.webkitCompassHeading) {
-                        heading = event.webkitCompassHeading;
-                    } 
-                    // Android usa alpha (mas alpha não é north-relative por padrão em alguns browsers, requer calibração complexa, usamos como proxy)
-                    else if (event.alpha) {
-                         heading = 360 - event.alpha;
-                    }
+        // --- ROTA E NAVEGAÇÃO ---
 
-                    if (heading !== null && telemetryOpen) {
-                        const arrow = document.getElementById('compass-needle');
-                        if(arrow) arrow.style.transform = `rotate(${heading}deg)`;
-                    }
-                }, true);
-            }
+        window.setDestination = function(lat, lng) {
+            map.closePopup();
+            if(endMarker) map.removeLayer(endMarker);
+            endMarker = L.marker([lat, lng], {icon: icons.dest}).addTo(map);
+            
+            if(userMarker) calculateRoute(userMarker.getLatLng().lat, userMarker.getLatLng().lng, lat, lng);
+            else showToast("Aguardando GPS inicial...");
         }
 
-        // --- NAVEGAÇÃO ---
-
-        async function startNavigation() {
-            if(!endMarker) return alert("Defina um destino!");
-            
-            isNavigating = true;
-            document.body.classList.add('navigating');
-            document.getElementById('nav-instruction-panel').classList.remove('panel-hidden-top');
-            document.getElementById('nav-instruction-panel').classList.add('panel-visible');
-            
-            // Wake Lock
-            try { if('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
-            
-            if(!is3D) toggle3D();
-            recenterMap();
-        }
-
-        function stopNavigation() {
-            isNavigating = false;
-            document.body.classList.remove('navigating');
-            document.getElementById('nav-instruction-panel').classList.add('panel-hidden-top');
-            document.getElementById('nav-instruction-panel').classList.remove('panel-visible');
-            if(wakeLock) { wakeLock.release(); wakeLock=null; }
-            if(userMarker) map.setView(userMarker.getLatLng(), 16);
-        }
-
-        // --- ROTA ---
-
-        function calculateRoute(destLat, destLng) {
+        function calculateRoute(lat1, lng1, lat2, lng2) {
             if(routingControl) map.removeControl(routingControl);
-            const panel = document.getElementById('bottom-controls');
-            panel.classList.remove('panel-hidden-bottom');
-            panel.classList.add('panel-visible');
-            document.getElementById('route-dist').innerText = "...";
-
-            if(!lastCoords.lat) return alert("Aguardando GPS...");
-
+            
             routingControl = L.Routing.control({
-                waypoints: [L.latLng(lastCoords.lat, lastCoords.lng), L.latLng(destLat, destLng)],
+                waypoints: [L.latLng(lat1, lng1), L.latLng(lat2, lng2)],
                 router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
                 lineOptions: { styles: [{color: '#3b82f6', weight: 8, opacity: 0.8}] },
                 createMarker: () => null, addWaypoints: false
             }).on('routesfound', e => {
                 const r = e.routes[0];
-                document.getElementById('route-dist').innerText = `${(r.summary.totalDistance/1000).toFixed(1)} km`;
-                document.getElementById('route-time').innerText = `${Math.round(r.summary.totalTime/60)} min`;
+                document.getElementById('route-dist').innerText = (r.summary.totalDistance/1000).toFixed(1) + ' km';
+                document.getElementById('route-time').innerText = Math.round(r.summary.totalTime/60) + ' min';
+                document.getElementById('bottom-route-panel').classList.remove('translate-y-full');
                 
                 if(r.instructions && r.instructions.length) {
                     document.getElementById('nav-text').innerText = r.instructions[0].text;
@@ -367,63 +465,48 @@
             stopNavigation();
             if(routingControl) map.removeControl(routingControl);
             if(endMarker) map.removeLayer(endMarker); endMarker=null;
-            const panel = document.getElementById('bottom-controls');
-            panel.classList.add('panel-hidden-bottom');
-            panel.classList.remove('panel-visible');
+            document.getElementById('bottom-route-panel').classList.add('translate-y-full');
+            document.getElementById('search-input').value = '';
         }
 
-        // --- UTILITÁRIOS ---
-        
-        function recenterMap() { 
-            if(lastCoords.lat) map.setView([lastCoords.lat, lastCoords.lng], isNavigating ? 19 : 16); 
-            else alert("Buscando GPS...");
-        }
-
-        function toggle3D() {
-            is3D = !is3D;
-            const c = document.getElementById('map-container');
-            const b = document.getElementById('btn-3d');
-            if(is3D) {
-                c.style.transform = "perspective(600px) rotateX(50deg)";
-                b.classList.add('btn-active');
-                if(!osmb) osmb = new OSMBuildings(map).load('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
-                osmb.show();
-            } else {
-                c.style.transform = "none";
-                b.classList.remove('btn-active');
-                if(osmb) osmb.hide();
+        async function startNavigation() {
+            isNavigating = true;
+            document.body.classList.add('navigating'); // Oculta busca
+            document.getElementById('bottom-route-panel').classList.add('translate-y-full'); // Oculta resumo
+            document.getElementById('nav-instruction-panel').classList.add('active'); // Mostra topo
+            
+            // Força 3D se não estiver
+            if(!document.getElementById('toggle-3d').checked) {
+                document.getElementById('toggle-3d').checked = true;
+                toggle3D();
             }
+
+            try { if('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
+            recenterMap();
         }
 
-        async function handleMapClick(e) {
-            if(isNavigating) return;
-            const popup = L.popup().setLatLng(e.latlng).setContent('<div class="text-center"><i class="fa-solid fa-spinner fa-spin"></i></div>').openOn(map);
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`);
-                const data = await res.json();
-                popup.setContent(`
-                    <div class="min-w-[150px]">
-                        <div class="font-bold text-blue-300 mb-2 truncate">${data.address.road||"Local"}</div>
-                        <button onclick="setDest(${e.latlng.lat}, ${e.latlng.lng})" class="bg-blue-600 w-full py-2 rounded text-xs font-bold">IR PARA CÁ</button>
-                    </div>
-                `);
-            } catch(e) { popup.close(); }
+        function stopNavigation() {
+            isNavigating = false;
+            document.body.classList.remove('navigating');
+            document.getElementById('nav-instruction-panel').classList.remove('active');
+            if(wakeLock) { wakeLock.release(); wakeLock=null; }
+            
+            // Retira 3D
+            document.getElementById('toggle-3d').checked = false;
+            toggle3D();
+            
+            if(userMarker) map.setView(userMarker.getLatLng(), 16);
         }
 
-        window.setDest = (lat, lng) => {
-            map.closePopup();
-            if(endMarker) map.removeLayer(endMarker);
-            endMarker = L.marker([lat, lng], {icon: icons.end}).addTo(map);
-            calculateRoute(lat, lng);
-        };
-        
-        async function searchLocation() {
-            const q = document.getElementById('search-input').value;
-            if(!q) return;
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`);
-            const data = await res.json();
-            if(data.length) setDest(data[0].lat, data[0].lon);
+        function showToast(msg) {
+            const d = document.createElement('div');
+            d.className = "bg-black/80 text-white px-4 py-2 rounded-full shadow-lg text-sm mb-2 backdrop-blur pointer-events-auto";
+            d.innerText = msg;
+            document.getElementById('toast-container').appendChild(d);
+            setTimeout(() => d.remove(), 3000);
         }
     </script>
 </body>
 </html>
+
+
