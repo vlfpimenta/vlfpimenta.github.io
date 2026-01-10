@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planejamento Financeiro 2026</title>
+    <title>Vini e Duda - Planejamento Financeiro</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Ícones -->
@@ -12,6 +12,24 @@
     <style>
         .currency-input { text-align: right; }
         
+        /* Background com Imagem Aleatória */
+        body {
+            background-image: url('https://picsum.photos/1920/1080?grayscale'); /* Imagem aleatória em escala de cinza para ser discreta */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+        
+        /* Overlay para garantir leitura se a imagem for muito clara */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4); /* Escurece o fundo em 40% */
+            z-index: -1;
+        }
+
         /* Checkbox customizado para despesas - AUMENTADO PARA TOUCH */
         .status-checkbox-expense:checked + div {
             background-color: #d1fae5; /* Verde claro quando pago */
@@ -40,13 +58,14 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans pb-10">
+<body class="text-gray-800 font-sans pb-10">
 
     <!-- TELA DE LOGIN (Simplificada) -->
     <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md text-center">
-            <h1 class="text-2xl font-bold mb-2 text-blue-600">Financeiro 2026</h1>
-            <p class="text-gray-500 mb-8 text-sm">Controle suas finanças pessoais</p>
+        <div class="bg-white/95 backdrop-blur-sm p-8 rounded-lg shadow-2xl w-full max-w-md text-center border border-gray-100">
+            <h1 class="text-2xl font-bold mb-2 text-blue-600">Vini e Duda</h1>
+            <h2 class="text-lg font-semibold text-gray-700 mb-6">Planejamento Financeiro</h2>
+            <p class="text-gray-500 mb-8 text-sm">Controle familiar compartilhado</p>
             
             <button id="google-login-btn" class="w-full bg-white border border-gray-300 text-gray-700 p-3 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-3 font-bold shadow-sm">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="Google">
@@ -63,7 +82,7 @@
                     <ol class="list-decimal ml-4 mt-1 space-y-1">
                         <li>Acesse o <a href="https://console.firebase.google.com/" target="_blank" class="text-blue-600 underline">Console do Firebase</a>.</li>
                         <li>Vá em <strong>Authentication</strong> > <strong>Settings</strong> > <strong>Authorized domains</strong>.</li>
-                        <li>Adicione o domínio onde este site está hospedado (ex: <code>seunome.github.io</code> ou <code>localhost</code>).</li>
+                        <li>Adicione o domínio onde este site está hospedado.</li>
                     </ol>
                 </div>
             </div>
@@ -74,7 +93,7 @@
     <div id="app-screen" class="hidden min-h-screen pb-16">
         
         <!-- HEADER COM PERFIL -->
-        <header class="bg-blue-600 text-white p-3 sticky top-0 z-50 shadow-md">
+        <header class="bg-blue-600/90 backdrop-blur text-white p-3 sticky top-0 z-50 shadow-md">
             <div class="max-w-4xl mx-auto flex justify-between items-center">
                 <!-- Navegação Esquerda -->
                 <button id="prev-month" class="p-2 hover:bg-blue-700 rounded w-10 h-10 flex items-center justify-center"><i class="fas fa-chevron-left"></i></button>
@@ -93,6 +112,7 @@
                     <div class="flex items-center gap-2 border-l border-blue-500 pl-3">
                         <div class="hidden md:block text-right leading-tight">
                             <p id="user-name-display" class="text-xs font-bold text-white">Usuário</p>
+                            <p class="text-[9px] text-blue-200">Vini e Duda</p>
                         </div>
                         <img id="user-photo-display" src="" alt="User" class="w-8 h-8 rounded-full border-2 border-blue-300 bg-blue-800 hidden">
                         
@@ -106,7 +126,7 @@
 
         <!-- DASHBOARD -->
         <div class="max-w-4xl mx-auto p-4">
-            <div class="bg-white rounded-lg shadow p-4 mb-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div class="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 mb-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                 <div class="col-span-2 md:col-span-1 border-b md:border-b-0 md:border-r pb-2 md:pb-0">
                     <p class="text-xs text-gray-500 uppercase">Receitas Totais</p>
                     <p id="total-income" class="text-lg font-bold text-green-600">R$ 0,00</p>
@@ -126,7 +146,7 @@
             </div>
 
             <!-- SEÇÃO 1: ENTRADAS -->
-            <div class="bg-white rounded-lg shadow mb-6 overflow-hidden">
+            <div class="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg mb-6 overflow-hidden">
                 <div class="bg-green-600 text-white p-3 flex justify-between items-center">
                     <h3 class="font-bold"><i class="fas fa-wallet mr-2"></i> Entradas</h3>
                     <button onclick="addItem('incomes')" class="text-sm bg-green-700 px-3 py-1 rounded hover:bg-green-800 font-bold"><i class="fas fa-plus"></i></button>
@@ -135,7 +155,7 @@
             </div>
 
             <!-- SEÇÃO 2: CONTAS FIXAS -->
-            <div class="bg-white rounded-lg shadow mb-6 overflow-hidden">
+            <div class="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg mb-6 overflow-hidden">
                 <div class="bg-gray-700 text-white p-3 flex justify-between items-center">
                     <h3 class="font-bold"><i class="fas fa-file-invoice mr-2"></i> Contas Fixas</h3>
                     <button onclick="addItem('fixed')" class="text-sm bg-gray-600 px-3 py-1 rounded hover:bg-gray-800 font-bold"><i class="fas fa-plus"></i></button>
@@ -144,7 +164,7 @@
             </div>
 
             <!-- SEÇÃO 3: CARTÃO DE CRÉDITO -->
-            <div class="bg-white rounded-lg shadow mb-6 overflow-hidden">
+            <div class="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg mb-6 overflow-hidden">
                 <div class="bg-purple-600 text-white p-3 flex justify-between items-center">
                     <h3 class="font-bold"><i class="fas fa-credit-card mr-2"></i> Cartões de Crédito</h3>
                     <button onclick="addItem('cards')" class="text-sm bg-purple-700 px-3 py-1 rounded hover:bg-purple-800 font-bold"><i class="fas fa-plus"></i></button>
@@ -157,7 +177,7 @@
             </div>
 
             <!-- SEÇÃO 4: GASTOS GERAIS -->
-            <div class="bg-white rounded-lg shadow mb-6 overflow-hidden">
+            <div class="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg mb-6 overflow-hidden">
                 <div class="bg-orange-500 text-white p-3 flex justify-between items-center">
                     <h3 class="font-bold"><i class="fas fa-shopping-cart mr-2"></i> Gastos Gerais</h3>
                     <button onclick="addItem('general')" class="text-sm bg-orange-600 px-3 py-1 rounded hover:bg-orange-700 font-bold"><i class="fas fa-plus"></i></button>
@@ -254,7 +274,6 @@
                 authErrorMsg.textContent = error.message;
                 authErrorContainer.classList.remove('hidden');
 
-                // Verifica se é erro de domínio não autorizado
                 if (error.code === 'auth/unauthorized-domain') {
                     domainHelp.classList.remove('hidden');
                 }
@@ -289,7 +308,10 @@
             if (unsubscribeDoc) unsubscribeDoc();
             document.getElementById('save-status').innerHTML = '<div class="loader"></div> Sincronizando...';
 
-            const userDocRef = doc(db, 'users', currentUser.uid, 'financial_data', docId);
+            // MUDANÇA CRÍTICA: CAMINHO COMPARTILHADO
+            // Antes: doc(db, 'users', currentUser.uid, 'financial_data', docId);
+            // Agora: doc(db, 'monthly_data', docId);
+            const userDocRef = doc(db, 'monthly_data', docId);
             
             unsubscribeDoc = onSnapshot(userDocRef, (docSnap) => {
                 if (docSnap.exists()) {
@@ -306,6 +328,11 @@
                 }
                 renderAll();
                 document.getElementById('save-status').innerHTML = '<i class="fas fa-check text-green-500"></i> Sincronizado';
+            }, (error) => {
+                 // Tratamento de erro de permissão caso o usuário não tenha atualizado as regras
+                if (error.code === 'permission-denied') {
+                    document.getElementById('save-status').innerHTML = '<span class="text-red-500 font-bold">Erro: Permissão negada! Verifique as Regras no Firebase.</span>';
+                }
             });
         }
 
@@ -332,11 +359,11 @@
             let label = "";
             if (item.createdBy) {
                 const name = item.createdBy.split(' ')[0]; // Só o primeiro nome
-                label = `Por: ${name}`;
+                label = `Criado por: ${name}`;
             }
             if (item.lastEditedBy && item.lastEditedBy !== item.createdBy) {
                 const editName = item.lastEditedBy.split(' ')[0];
-                label += ` (Edit: ${editName})`;
+                label = `Edit: ${editName}`; // Prioriza mostrar quem editou por último se for diferente
             }
             return label ? `<p class="text-[10px] text-gray-400 mt-0.5 truncate"><i class="fas fa-user-edit text-[8px] mr-1"></i>${label}</p>` : '';
         }
@@ -356,7 +383,7 @@
                     
                     <div class="flex items-start border-b border-transparent focus-within:border-green-500">
                         <span class="text-xs text-gray-500 mr-1 mt-1">R$</span>
-                        <input type="number" step="0.01" value="${item.value}" placeholder="0,00" 
+                        <input type="number" inputmode="decimal" step="0.01" value="${item.value}" placeholder="0,00" 
                             class="w-full bg-transparent outline-none text-sm font-semibold text-right"
                             onchange="updateItem('${type}', ${index}, 'value', parseFloat(this.value))">
                     </div>
@@ -387,7 +414,7 @@
                         
                         <div class="flex items-start border-b border-gray-100 focus-within:border-blue-500">
                             <span class="text-xs text-gray-500 mr-1 mt-1">R$</span>
-                            <input type="number" step="0.01" value="${item.value}" placeholder="0,00" 
+                            <input type="number" inputmode="decimal" step="0.01" value="${item.value}" placeholder="0,00" 
                                 class="w-full bg-transparent outline-none text-sm font-semibold text-gray-700 text-right"
                                 onchange="updateItem('${type}', ${index}, 'value', parseFloat(this.value))">
                         </div>
@@ -421,7 +448,7 @@
                         
                         <div class="flex items-start border-b border-gray-100 focus-within:border-purple-500">
                             <span class="text-xs text-gray-500 mr-1 mt-1">R$</span>
-                            <input type="number" step="0.01" value="${item.value}" placeholder="0,00" 
+                            <input type="number" inputmode="decimal" step="0.01" value="${item.value}" placeholder="0,00" 
                                 class="w-full bg-transparent outline-none text-sm font-bold text-gray-700 text-right"
                                 onchange="updateItem('${type}', ${index}, 'value', parseFloat(this.value))">
                         </div>
@@ -481,6 +508,16 @@
             if(shouldSave) {
                 renderAll();
                 saveData();
+                
+                // Foco automático
+                setTimeout(() => {
+                    const container = document.getElementById(`list-${type}`);
+                    const lastRow = container.lastElementChild;
+                    if (lastRow) {
+                        const firstInput = lastRow.querySelector('input[type="text"]');
+                        if (firstInput) firstInput.focus();
+                    }
+                }, 50);
             }
         };
 
@@ -495,13 +532,13 @@
         window.updateItem = (type, index, field, value) => {
             currentData[type][index][field] = value;
             
-            // Auditoria de edição (só salva se houver user logado)
+            // Auditoria (Só salva quem editou)
             if (currentUser) {
                 currentData[type][index].lastEditedBy = currentUser.displayName || currentUser.email;
             }
 
             if(field === 'paid') renderAll(); 
-            else calculateTotals(); // Se editar texto/valor, não re-renderiza tudo para não perder foco
+            else calculateTotals(); 
             
             saveData();
         };
@@ -513,11 +550,12 @@
                 if (!currentUser) return;
                 const docId = getDocId();
                 try {
-                    await setDoc(doc(db, 'users', currentUser.uid, 'financial_data', docId), currentData);
+                    // MUDANÇA CRÍTICA: CAMINHO COMPARTILHADO
+                    await setDoc(doc(db, 'monthly_data', docId), currentData);
                     document.getElementById('save-status').innerHTML = '<i class="fas fa-check text-green-500"></i> Sincronizado';
                 } catch (e) {
                     console.error(e);
-                    document.getElementById('save-status').textContent = "Erro ao salvar!";
+                    document.getElementById('save-status').textContent = "Erro ao salvar! (Verifique as regras)";
                 }
             }, 1000);
         }
