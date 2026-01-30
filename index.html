@@ -102,12 +102,36 @@
             border-bottom: 1px solid transparent;
         }
 
-        /* The Dynamic Logo */
+        /* CORREÇÃO DO LOGO: 
+           Definimos o estado inicial "Gigante" diretamente no CSS 
+           para evitar que ele "pisque" pequeno no carregamento.
+        */
         #dynamic-logo {
             position: fixed;
-            z-index: 100; /* Super high z-index to stay on top */
-            transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
             transform-origin: top left;
+            object-fit: contain;
+            
+            /* Estado Inicial Mobile */
+            top: 12%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90vw;
+            height: 40vh;
+        }
+
+        @media (min-width: 768px) {
+            #dynamic-logo {
+                /* Estado Inicial Desktop */
+                top: 15%;
+                width: 40vw; 
+                /* Mantém height: 40vh do mobile ou ajusta se necessário */
+            }
+        }
+
+        /* Classe de transição aplicada via JS APÓS o load */
+        .logo-transition {
+            transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* Element Hiding Transitions */
@@ -141,7 +165,7 @@
     <img id="dynamic-logo" 
          src="devlogo.png" 
          alt="Logo VLFP Info" 
-         class="object-contain drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] cursor-pointer"
+         class="drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] cursor-pointer"
          onclick="window.scrollTo(0,0)">
 
     <!-- Navigation -->
@@ -197,7 +221,6 @@
     <section id="home" class="relative min-h-screen flex items-center pt-20 overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
             
-            <!-- Aumentei a margem superior (mt) para dar espaço ao logo gigante -->
             <div class="mt-[45vh] lg:mt-32 text-center lg:text-left lg:grid lg:grid-cols-2 lg:gap-12 items-center transition-all duration-700">
                 
                 <div class="mb-12 lg:mb-0 fade-element" id="hero-content">
@@ -430,55 +453,40 @@
                 if (scrollY > 50) {
                     // --- SCROLLED STATE (Navbar Mode) ---
                     
-                    // 1. Move Logo to Placeholder
-                    // We set explicit sizes for the container, but the CSS object-contain
-                    // ensures the image inside doesn't stretch.
                     elements.logo.style.top = `${rect.top}px`;
                     elements.logo.style.left = `${rect.left}px`;
                     elements.logo.style.width = `${rect.width}px`;
                     elements.logo.style.height = `${rect.height}px`;
                     
-                    // FIX: Remove the transform used for centering in Hero
+                    // Remove transform when docked
                     elements.logo.style.transform = 'translate(0,0)';
                     
-                    // 2. Show Navbar Background
+                    // Show Nav
                     elements.nav.classList.remove('nav-transparent');
                     elements.nav.classList.add('nav-scrolled');
-
-                    // 3. Reveal Nav Links
                     elements.navLinks.classList.remove('nav-hidden');
                     elements.navLinks.classList.add('nav-visible');
                     elements.mobileBtn.classList.remove('nav-hidden');
 
-                    // 4. Fade out Hero hint
                     if(elements.scrollHint) elements.scrollHint.style.opacity = '0';
 
                 } else {
                     // --- HERO STATE (Big Logo Mode) ---
-                    
-                    // 1. Center Logo
-                    // Center vertically in viewport relative to hero section area roughly
+                    // Reset to CSS Initial State values
                     const topPos = isMobile ? '12%' : '15%'; 
                     elements.logo.style.top = topPos;
                     elements.logo.style.left = '50%';
-                    
-                    // Re-apply centering transform
                     elements.logo.style.transform = 'translateX(-50%)'; 
                     
-                    // Size - FULL WIDTH LOGIC
-                    // Mobile: 90% of screen width
-                    // Desktop: 40% of screen width (otherwise it gets too tall)
                     const width = isMobile ? '90vw' : '40vw';
-                    const maxHeight = isMobile ? '40vh' : '40vh'; // Limit height to not push content too far
+                    const maxHeight = '40vh'; 
 
                     elements.logo.style.width = width;
                     elements.logo.style.height = maxHeight; 
 
-                    // 2. Transparent Navbar
+                    // Hide Nav
                     elements.nav.classList.add('nav-transparent');
                     elements.nav.classList.remove('nav-scrolled');
-
-                    // 3. Hide Nav Links
                     elements.navLinks.classList.add('nav-hidden');
                     elements.navLinks.classList.remove('nav-visible');
                     elements.mobileBtn.classList.add('nav-hidden');
@@ -529,11 +537,15 @@
                 setupMobileMenuLinks();
                 setupObserver();
                 
-                // Init Scroll Logic
+                // Add Transition class only after initial layout to prevent FOUC animation
+                setTimeout(() => {
+                    if(elements.logo) elements.logo.classList.add('logo-transition');
+                }, 100);
+
                 window.addEventListener('scroll', handleScroll);
-                window.addEventListener('resize', handleScroll); // Re-calculate on resize
+                window.addEventListener('resize', handleScroll);
                 
-                // Trigger once to set initial state
+                // Ensure correct state on load
                 handleScroll();
             };
 
