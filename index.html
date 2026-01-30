@@ -137,12 +137,12 @@
         <div class="blob"></div><div class="blob"></div><div class="blob"></div>
     </div>
 
-    <!-- O LOGO DINÂMICO (Começa fora da Nav) -->
-    <!-- Este é o elemento que vai se mover pela tela -->
+    <!-- O LOGO DINÂMICO -->
+    <!-- object-contain: Garante que a imagem mantenha a proporção original -->
     <img id="dynamic-logo" 
          src="devlogo.png" 
          alt="Logo VLFP Info" 
-         class="drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] cursor-pointer"
+         class="object-contain drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] cursor-pointer"
          onclick="window.scrollTo(0,0)">
 
     <!-- Navigation -->
@@ -152,8 +152,8 @@
                 
                 <div class="flex-shrink-0 flex items-center gap-4">
                     <!-- LOGO PLACEHOLDER (Fantasma) -->
-                    <!-- Invisível, serve apenas para o JS saber onde estacionar o logo real -->
-                    <div id="logo-placeholder" class="w-20 h-20 opacity-0 pointer-events-none"></div>
+                    <!-- Define a área onde o logo vai "pousar" -->
+                    <div id="logo-placeholder" class="w-24 h-20 opacity-0 pointer-events-none"></div>
                 </div>
 
                 <!-- Desktop Menu Links (Começam escondidos) -->
@@ -173,7 +173,7 @@
                     </div>
                 </div>
 
-                <!-- Mobile menu button (Começa escondido) -->
+                <!-- Mobile menu button -->
                 <div class="-mr-2 flex md:hidden">
                     <button id="mobile-btn" type="button" onclick="app.toggleMenu()" class="nav-hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-white/10 focus:outline-none">
                         <i class="fas fa-bars text-xl"></i>
@@ -437,10 +437,15 @@
                     // --- SCROLLED STATE (Navbar Mode) ---
                     
                     // 1. Move Logo to Placeholder
+                    // We set explicit sizes for the container, but the CSS object-contain
+                    // ensures the image inside doesn't stretch.
                     elements.logo.style.top = `${rect.top}px`;
                     elements.logo.style.left = `${rect.left}px`;
                     elements.logo.style.width = `${rect.width}px`;
                     elements.logo.style.height = `${rect.height}px`;
+                    
+                    // FIX: Remove the transform used for centering in Hero
+                    elements.logo.style.transform = 'translate(0,0)';
                     
                     // 2. Show Navbar Background
                     elements.nav.classList.remove('nav-transparent');
@@ -462,12 +467,14 @@
                     const topPos = isMobile ? '15%' : '18%'; 
                     elements.logo.style.top = topPos;
                     elements.logo.style.left = '50%';
-                    // We use translate via style string in addition to the class transitions
+                    
+                    // Re-apply centering transform
                     elements.logo.style.transform = 'translateX(-50%)'; 
                     
                     // Size
                     const size = isMobile ? '180px' : '250px';
                     elements.logo.style.width = size;
+                    // We allow height to be auto or match size, but object-contain handles ratio
                     elements.logo.style.height = size;
 
                     // 2. Transparent Navbar
@@ -479,10 +486,6 @@
                     elements.navLinks.classList.remove('nav-visible');
                     elements.mobileBtn.classList.add('nav-hidden');
 
-                    // Reset Transform override required for the 'left' movement logic
-                    // When moving to placeholder, we remove the translate. When here, we add it.
-                    // This is handled by the style.transform above.
-                    
                      if(elements.scrollHint) elements.scrollHint.style.opacity = '1';
                 }
             };
@@ -547,3 +550,5 @@
     </script>
 </body>
 </html>
+
+
