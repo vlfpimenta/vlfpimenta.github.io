@@ -103,8 +103,9 @@
         }
 
         /* CORREÇÃO DO LOGO: 
-           Definimos o estado inicial "Gigante" diretamente no CSS 
-           para evitar que ele "pisque" pequeno no carregamento.
+           height: auto -> Garante que a caixa se ajuste à imagem.
+           max-height -> Garante que não fique maior que a tela.
+           width -> Controla o tamanho geral.
         */
         #dynamic-logo {
             position: fixed;
@@ -113,19 +114,20 @@
             object-fit: contain;
             
             /* Estado Inicial Mobile */
-            top: 12%;
+            top: 15%; /* Um pouco mais para baixo */
             left: 50%;
             transform: translateX(-50%);
-            width: 90vw;
-            height: 40vh;
+            width: 80vw; /* Largura controlada */
+            height: auto; /* Altura automática (remove o espaço extra) */
+            max-height: 250px; /* Limite de segurança */
         }
 
         @media (min-width: 768px) {
             #dynamic-logo {
                 /* Estado Inicial Desktop */
-                top: 15%;
-                width: 40vw; 
-                /* Mantém height: 40vh do mobile ou ajusta se necessário */
+                top: 18%;
+                width: 35vw; 
+                max-height: 300px;
             }
         }
 
@@ -175,7 +177,8 @@
                 
                 <div class="flex-shrink-0 flex items-center gap-4">
                     <!-- LOGO PLACEHOLDER (Fantasma) -->
-                    <div id="logo-placeholder" class="w-24 h-20 opacity-0 pointer-events-none"></div>
+                    <!-- Define a área onde o logo vai "pousar" na barra -->
+                    <div id="logo-placeholder" class="w-20 h-16 opacity-0 pointer-events-none"></div>
                 </div>
 
                 <!-- Desktop Menu Links -->
@@ -221,7 +224,8 @@
     <section id="home" class="relative min-h-screen flex items-center pt-20 overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
             
-            <div class="mt-[45vh] lg:mt-32 text-center lg:text-left lg:grid lg:grid-cols-2 lg:gap-12 items-center transition-all duration-700">
+            <!-- Aumentei a margem superior (mt) para dar espaço ao logo -->
+            <div class="mt-[40vh] lg:mt-32 text-center lg:text-left lg:grid lg:grid-cols-2 lg:gap-12 items-center transition-all duration-700">
                 
                 <div class="mb-12 lg:mb-0 fade-element" id="hero-content">
                     <div class="inline-block px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 backdrop-blur-md mb-6">
@@ -473,16 +477,16 @@
                 } else {
                     // --- HERO STATE (Big Logo Mode) ---
                     // Reset to CSS Initial State values
-                    const topPos = isMobile ? '12%' : '15%'; 
+                    const topPos = isMobile ? '15%' : '18%'; 
                     elements.logo.style.top = topPos;
                     elements.logo.style.left = '50%';
                     elements.logo.style.transform = 'translateX(-50%)'; 
                     
-                    const width = isMobile ? '90vw' : '40vw';
-                    const maxHeight = '40vh'; 
-
+                    const width = isMobile ? '80vw' : '35vw';
+                    // height: auto (removes the fixed box)
+                    
                     elements.logo.style.width = width;
-                    elements.logo.style.height = maxHeight; 
+                    elements.logo.style.height = 'auto'; // FIX: Remove fixed height constraint
 
                     // Hide Nav
                     elements.nav.classList.add('nav-transparent');
@@ -559,5 +563,3 @@
     </script>
 </body>
 </html>
-
-
