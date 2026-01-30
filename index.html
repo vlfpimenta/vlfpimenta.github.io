@@ -138,7 +138,6 @@
     </div>
 
     <!-- O LOGO DINÂMICO -->
-    <!-- object-contain: Garante que a imagem mantenha a proporção original -->
     <img id="dynamic-logo" 
          src="devlogo.png" 
          alt="Logo VLFP Info" 
@@ -152,11 +151,10 @@
                 
                 <div class="flex-shrink-0 flex items-center gap-4">
                     <!-- LOGO PLACEHOLDER (Fantasma) -->
-                    <!-- Define a área onde o logo vai "pousar" -->
                     <div id="logo-placeholder" class="w-24 h-20 opacity-0 pointer-events-none"></div>
                 </div>
 
-                <!-- Desktop Menu Links (Começam escondidos) -->
+                <!-- Desktop Menu Links -->
                 <div class="hidden md:block">
                     <div id="nav-links" class="ml-10 flex items-center space-x-8 nav-hidden">
                         <a href="#home" class="hover:text-purple-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">Início</a>
@@ -198,8 +196,9 @@
     <!-- Hero Section -->
     <section id="home" class="relative min-h-screen flex items-center pt-20 overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-            <!-- Espaço extra no topo para compensar o logo gigante -->
-            <div class="mt-32 lg:mt-24 text-center lg:text-left lg:grid lg:grid-cols-2 lg:gap-12 items-center">
+            
+            <!-- Aumentei a margem superior (mt) para dar espaço ao logo gigante -->
+            <div class="mt-[45vh] lg:mt-32 text-center lg:text-left lg:grid lg:grid-cols-2 lg:gap-12 items-center transition-all duration-700">
                 
                 <div class="mb-12 lg:mb-0 fade-element" id="hero-content">
                     <div class="inline-block px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 backdrop-blur-md mb-6">
@@ -226,7 +225,6 @@
                 <!-- Hero Visual -->
                 <div class="relative hidden lg:block fade-element" id="hero-visual">
                     <div class="glass-panel p-8 rounded-3xl relative z-10 transform rotate-2 hover:rotate-0 transition-all duration-700 border-t border-purple-500/30">
-                        <!-- Mockup visual code remains the same -->
                         <div class="flex justify-between items-center mb-8">
                             <div class="flex space-x-2">
                                 <div class="w-3 h-3 rounded-full bg-red-500"></div>
@@ -264,7 +262,6 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Services Cards (Same as before) -->
                 <!-- Service 1 -->
                 <div class="glass-card rounded-2xl group overflow-hidden">
                     <div class="h-44 overflow-hidden relative">
@@ -279,7 +276,6 @@
                         <p class="text-gray-400 text-sm">Montagem de PC Customizado (Gamer/Workstation), limpeza interna e troca de pasta térmica.</p>
                     </div>
                 </div>
-
                 <!-- Service 2 -->
                 <div class="glass-card rounded-2xl group overflow-hidden">
                     <div class="h-44 overflow-hidden relative">
@@ -294,7 +290,6 @@
                         <p class="text-gray-400 text-sm">Instalação e manutenção de câmeras de segurança e sistemas de monitoramento.</p>
                     </div>
                 </div>
-
                 <!-- Service 3 -->
                 <div class="glass-card rounded-2xl group overflow-hidden">
                     <div class="h-44 overflow-hidden relative">
@@ -309,7 +304,6 @@
                         <p class="text-gray-400 text-sm">Infraestrutura de rede cabeada e configuração de roteadores.</p>
                     </div>
                 </div>
-
                 <!-- Service 4 -->
                 <div class="glass-card rounded-2xl group overflow-hidden">
                     <div class="h-44 overflow-hidden relative">
@@ -464,18 +458,21 @@
                     
                     // 1. Center Logo
                     // Center vertically in viewport relative to hero section area roughly
-                    const topPos = isMobile ? '15%' : '18%'; 
+                    const topPos = isMobile ? '12%' : '15%'; 
                     elements.logo.style.top = topPos;
                     elements.logo.style.left = '50%';
                     
                     // Re-apply centering transform
                     elements.logo.style.transform = 'translateX(-50%)'; 
                     
-                    // Size
-                    const size = isMobile ? '180px' : '250px';
-                    elements.logo.style.width = size;
-                    // We allow height to be auto or match size, but object-contain handles ratio
-                    elements.logo.style.height = size;
+                    // Size - FULL WIDTH LOGIC
+                    // Mobile: 90% of screen width
+                    // Desktop: 40% of screen width (otherwise it gets too tall)
+                    const width = isMobile ? '90vw' : '40vw';
+                    const maxHeight = isMobile ? '40vh' : '40vh'; // Limit height to not push content too far
+
+                    elements.logo.style.width = width;
+                    elements.logo.style.height = maxHeight; 
 
                     // 2. Transparent Navbar
                     elements.nav.classList.add('nav-transparent');
