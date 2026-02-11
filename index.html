@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VLFP Info | Assistência Técnica Especializada</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
@@ -96,51 +96,59 @@
             backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
-        
+
         .nav-transparent {
             background: transparent;
             border-bottom: 1px solid transparent;
         }
 
-        /* CORREÇÃO DO LOGO: 
-           height: auto -> Garante que a caixa se ajuste à imagem.
-           max-height -> Garante que não fique maior que a tela.
-           width -> Controla o tamanho geral.
-        */
+        /* === LOGO ANIMATION CORRIGIDA === */
         #dynamic-logo {
             position: fixed;
             z-index: 100;
-            transform-origin: top left;
             object-fit: contain;
-            
-            /* Estado Inicial Mobile */
-            top: 15%; /* Um pouco mais para baixo */
+            cursor: pointer;
+            filter: drop-shadow(0 0 20px rgba(168,85,247,0.6));
+
+            /* Transição suave para TODAS as propriedades */
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+
+            /* Estado inicial: Centro da tela, grande */
+            top: 20vh;
             left: 50%;
             transform: translateX(-50%);
-            width: 80vw; /* Largura controlada */
-            height: auto; /* Altura automática (remove o espaço extra) */
-            max-height: 250px; /* Limite de segurança */
+            width: 280px;
+            max-width: 80vw;
+            height: auto;
+        }
+
+        /* Estado "scrolled": navbar compacta */
+        #dynamic-logo.logo-navbar {
+            top: 10px;
+            left: 16px;
+            transform: translateX(0);
+            width: 80px;
+            max-width: 80px;
         }
 
         @media (min-width: 768px) {
             #dynamic-logo {
-                /* Estado Inicial Desktop */
-                top: 18%;
-                width: 35vw; 
-                max-height: 300px;
+                width: 350px;
+                top: 22vh;
             }
-        }
 
-        /* Classe de transição aplicada via JS APÓS o load */
-        .logo-transition {
-            transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            #dynamic-logo.logo-navbar {
+                width: 100px;
+                max-width: 100px;
+                left: 24px;
+            }
         }
 
         /* Element Hiding Transitions */
         .fade-element {
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
-        
+
         .nav-hidden {
             opacity: 0;
             transform: translateY(-20px);
@@ -154,6 +162,17 @@
         }
 
         html { scroll-behavior: smooth; }
+
+        /* Garante que o conteúdo hero não seja coberto pelo logo */
+        #hero-content {
+            margin-top: 320px;
+        }
+
+        @media (min-width: 768px) {
+            #hero-content {
+                margin-top: 0;
+            }
+        }
     </style>
 </head>
 <body class="antialiased selection:bg-purple-500 selection:text-white">
@@ -166,19 +185,17 @@
     <!-- O LOGO DINÂMICO -->
     <img id="dynamic-logo" 
          src="devlogo.png" 
-         alt="Logo VLFP Info" 
-         class="drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] cursor-pointer"
-         onclick="window.scrollTo(0,0)">
+         alt="Logo VLFP Info"
+         onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
 
     <!-- Navigation -->
     <nav id="main-nav" class="fixed w-full z-40 transition-all duration-500 nav-transparent h-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
             <div class="flex items-center justify-between h-full">
-                
+
                 <div class="flex-shrink-0 flex items-center gap-4">
-                    <!-- LOGO PLACEHOLDER (Fantasma) -->
-                    <!-- Define a área onde o logo vai "pousar" na barra -->
-                    <div id="logo-placeholder" class="w-20 h-16 opacity-0 pointer-events-none"></div>
+                    <!-- Espaço reservado para o logo -->
+                    <div class="w-20 md:w-24 h-16"></div>
                 </div>
 
                 <!-- Desktop Menu Links -->
@@ -187,7 +204,7 @@
                         <a href="#home" class="hover:text-purple-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">Início</a>
                         <a href="#servicos" class="hover:text-purple-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">Serviços</a>
                         <a href="#sobre" class="hover:text-purple-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">Diferenciais</a>
-                        
+
                         <a href="https://www.instagram.com/vlfp.info/" target="_blank" class="text-gray-300 hover:text-purple-400 transition-colors text-xl" title="Siga no Instagram">
                             <i class="fab fa-instagram"></i>
                         </a>
@@ -212,6 +229,7 @@
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                 <a href="#home" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Início</a>
                 <a href="#servicos" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Serviços</a>
+                <a href="#sobre" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Diferenciais</a>
                 <a href="https://www.instagram.com/vlfp.info/" target="_blank" class="text-gray-300 hover:text-purple-400 block px-3 py-2 rounded-md text-base font-medium">
                     <i class="fab fa-instagram mr-2"></i> Instagram
                 </a>
@@ -223,17 +241,16 @@
     <!-- Hero Section -->
     <section id="home" class="relative min-h-screen flex items-center pt-20 overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-            
-            <!-- Aumentei a margem superior (mt) para dar espaço ao logo -->
-            <div class="mt-[40vh] lg:mt-32 text-center lg:text-left lg:grid lg:grid-cols-2 lg:gap-12 items-center transition-all duration-700">
-                
-                <div class="mb-12 lg:mb-0 fade-element" id="hero-content">
+
+            <div class="text-center lg:text-left lg:grid lg:grid-cols-2 lg:gap-12 items-center transition-all duration-700">
+
+                <div id="hero-content" class="mb-12 lg:mb-0 fade-element">
                     <div class="inline-block px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 backdrop-blur-md mb-6">
                         <span class="text-purple-300 text-sm font-semibold tracking-wide uppercase">Assistência Técnica Especializada</span>
                     </div>
                     <h1 class="text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
                         <span class="block mb-2">VLFP INFO</span>
-                        <span class="text-gradient">Hardware, Redes e Câmeras</span>
+                        <span class="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">Hardware, Redes e Câmeras</span>
                     </h1>
                     <p class="text-lg text-gray-300 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
                         Soluções tecnológicas completas. Atendimento presencial e remoto para garantir que seu negócio ou residência nunca pare.
@@ -248,9 +265,9 @@
                         </a>
                     </div>
                 </div>
-                
+
                 <!-- Hero Visual -->
-                <div class="relative hidden lg:block fade-element" id="hero-visual">
+                <div class="relative hidden lg:block fade-element">
                     <div class="glass-panel p-8 rounded-3xl relative z-10 transform rotate-2 hover:rotate-0 transition-all duration-700 border-t border-purple-500/30">
                         <div class="flex justify-between items-center mb-8">
                             <div class="flex space-x-2">
@@ -272,105 +289,110 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Scroll Indicator -->
-            <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce text-purple-400/50" id="scroll-hint">
+            <div id="scroll-hint" class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce text-purple-400/50">
                 <i class="fas fa-chevron-down text-2xl"></i>
             </div>
         </div>
     </section>
 
     <!-- Services Section -->
-    <section id="servicos" class="py-12 relative z-20 bg-slate-900/50 backdrop-blur-sm">
+    <section id="servicos" class="py-20 relative z-20 bg-slate-900/50 backdrop-blur-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-10">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">Nossos Serviços</h2>
-                <p class="text-gray-400 max-w-2xl mx-auto">Excelência técnica e suporte especializado.</p>
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">Nossos Serviços</h2>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">Excelência técnica e suporte especializado para todas as suas necessidades tecnológicas.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- Service 1 -->
                 <div class="glass-card rounded-2xl group overflow-hidden">
-                    <div class="h-44 overflow-hidden relative">
-                        <div class="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-all z-10"></div>
+                    <div class="h-48 overflow-hidden relative">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent group-hover:opacity-50 transition-all z-10"></div>
                         <img src="https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=800&q=80" alt="Montagem" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
                     </div>
-                    <div class="p-6 relative z-20">
-                        <div class="w-12 h-12 rounded-lg bg-purple-600/20 flex items-center justify-center mb-4 backdrop-blur-sm -mt-12 border border-white/10 shadow-lg group-hover:bg-purple-600/40 transition-colors">
-                            <i class="fas fa-desktop text-purple-300 text-xl"></i>
+                    <div class="p-6">
+                        <div class="w-14 h-14 rounded-xl bg-purple-600/20 flex items-center justify-center mb-4 backdrop-blur-sm -mt-14 border border-purple-500/30 shadow-lg group-hover:bg-purple-600/40 group-hover:scale-110 transition-all relative z-20">
+                            <i class="fas fa-desktop text-purple-300 text-2xl"></i>
                         </div>
-                        <h3 class="text-xl font-bold mb-2">Montagem e Manutenção</h3>
-                        <p class="text-gray-400 text-sm">Montagem de PC Customizado (Gamer/Workstation), limpeza interna e troca de pasta térmica.</p>
+                        <h3 class="text-xl font-bold mb-3">Montagem e Manutenção</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">Montagem de PC Customizado (Gamer/Workstation), limpeza interna e troca de pasta térmica.</p>
                     </div>
                 </div>
+
                 <!-- Service 2 -->
                 <div class="glass-card rounded-2xl group overflow-hidden">
-                    <div class="h-44 overflow-hidden relative">
-                        <div class="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-all z-10"></div>
+                    <div class="h-48 overflow-hidden relative">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent group-hover:opacity-50 transition-all z-10"></div>
                         <img src="https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=800&q=80" alt="CFTV" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
                     </div>
-                    <div class="p-6 relative z-20">
-                        <div class="w-12 h-12 rounded-lg bg-purple-600/20 flex items-center justify-center mb-4 backdrop-blur-sm -mt-12 border border-white/10 shadow-lg group-hover:bg-purple-600/40 transition-colors">
-                            <i class="fas fa-video text-purple-300 text-xl"></i>
+                    <div class="p-6">
+                        <div class="w-14 h-14 rounded-xl bg-purple-600/20 flex items-center justify-center mb-4 backdrop-blur-sm -mt-14 border border-purple-500/30 shadow-lg group-hover:bg-purple-600/40 group-hover:scale-110 transition-all relative z-20">
+                            <i class="fas fa-video text-purple-300 text-2xl"></i>
                         </div>
-                        <h3 class="text-xl font-bold mb-2">CFTV e Segurança</h3>
-                        <p class="text-gray-400 text-sm">Instalação e manutenção de câmeras de segurança e sistemas de monitoramento.</p>
+                        <h3 class="text-xl font-bold mb-3">CFTV e Segurança</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">Instalação e manutenção de câmeras de segurança e sistemas de monitoramento completos.</p>
                     </div>
                 </div>
+
                 <!-- Service 3 -->
                 <div class="glass-card rounded-2xl group overflow-hidden">
-                    <div class="h-44 overflow-hidden relative">
-                        <div class="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-all z-10"></div>
+                    <div class="h-48 overflow-hidden relative">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent group-hover:opacity-50 transition-all z-10"></div>
                         <img src="https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=800&q=80" alt="Redes" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
                     </div>
-                    <div class="p-6 relative z-20">
-                        <div class="w-12 h-12 rounded-lg bg-purple-600/20 flex items-center justify-center mb-4 backdrop-blur-sm -mt-12 border border-white/10 shadow-lg group-hover:bg-purple-600/40 transition-colors">
-                            <i class="fas fa-network-wired text-purple-300 text-xl"></i>
+                    <div class="p-6">
+                        <div class="w-14 h-14 rounded-xl bg-purple-600/20 flex items-center justify-center mb-4 backdrop-blur-sm -mt-14 border border-purple-500/30 shadow-lg group-hover:bg-purple-600/40 group-hover:scale-110 transition-all relative z-20">
+                            <i class="fas fa-network-wired text-purple-300 text-2xl"></i>
                         </div>
-                        <h3 class="text-xl font-bold mb-2">Redes e Wi-Fi</h3>
-                        <p class="text-gray-400 text-sm">Infraestrutura de rede cabeada e configuração de roteadores.</p>
+                        <h3 class="text-xl font-bold mb-3">Redes e Wi-Fi</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">Infraestrutura de rede cabeada, configuração de roteadores e otimização de sinal.</p>
                     </div>
                 </div>
+
                 <!-- Service 4 -->
                 <div class="glass-card rounded-2xl group overflow-hidden">
-                    <div class="h-44 overflow-hidden relative">
-                        <div class="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-all z-10"></div>
+                    <div class="h-48 overflow-hidden relative">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent group-hover:opacity-50 transition-all z-10"></div>
                         <img src="https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=800&q=80" alt="Hardware" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
                     </div>
-                    <div class="p-6 relative z-20">
-                        <div class="w-12 h-12 rounded-lg bg-purple-600/20 flex items-center justify-center mb-4 backdrop-blur-sm -mt-12 border border-white/10 shadow-lg group-hover:bg-purple-600/40 transition-colors">
-                            <i class="fas fa-microchip text-purple-300 text-xl"></i>
+                    <div class="p-6">
+                        <div class="w-14 h-14 rounded-xl bg-purple-600/20 flex items-center justify-center mb-4 backdrop-blur-sm -mt-14 border border-purple-500/30 shadow-lg group-hover:bg-purple-600/40 group-hover:scale-110 transition-all relative z-20">
+                            <i class="fas fa-microchip text-purple-300 text-2xl"></i>
                         </div>
-                        <h3 class="text-xl font-bold mb-2">Upgrade de Hardware</h3>
-                        <p class="text-gray-400 text-sm">SSDs, Memória RAM e Processadores para mais velocidade.</p>
+                        <h3 class="text-xl font-bold mb-3">Upgrade de Hardware</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">Instalação de SSDs, memória RAM e processadores para máximo desempenho.</p>
                     </div>
                 </div>
-                 <!-- Service 5 -->
-                 <div class="glass-card rounded-2xl group overflow-hidden">
-                    <div class="h-44 overflow-hidden relative">
-                        <div class="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-all z-10"></div>
+
+                <!-- Service 5 -->
+                <div class="glass-card rounded-2xl group overflow-hidden">
+                    <div class="h-48 overflow-hidden relative">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent group-hover:opacity-50 transition-all z-10"></div>
                         <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80" alt="Otimização" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
                     </div>
-                    <div class="p-6 relative z-20">
-                        <div class="w-12 h-12 rounded-lg bg-purple-600/20 flex items-center justify-center mb-4 backdrop-blur-sm -mt-12 border border-white/10 shadow-lg group-hover:bg-purple-600/40 transition-colors">
-                            <i class="fas fa-rocket text-purple-300 text-xl"></i>
+                    <div class="p-6">
+                        <div class="w-14 h-14 rounded-xl bg-purple-600/20 flex items-center justify-center mb-4 backdrop-blur-sm -mt-14 border border-purple-500/30 shadow-lg group-hover:bg-purple-600/40 group-hover:scale-110 transition-all relative z-20">
+                            <i class="fas fa-rocket text-purple-300 text-2xl"></i>
                         </div>
-                        <h3 class="text-xl font-bold mb-2">Otimização</h3>
-                        <p class="text-gray-400 text-sm">Limpeza de sistema, remoção de vírus e formatação.</p>
+                        <h3 class="text-xl font-bold mb-3">Otimização de Sistema</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">Limpeza profunda, remoção de vírus, formatação e reinstalação de sistemas.</p>
                     </div>
                 </div>
-                 <!-- Service 6 -->
-                 <div class="glass-card rounded-2xl group overflow-hidden">
-                    <div class="h-44 overflow-hidden relative">
-                        <div class="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-all z-10"></div>
+
+                <!-- Service 6 -->
+                <div class="glass-card rounded-2xl group overflow-hidden">
+                    <div class="h-48 overflow-hidden relative">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent group-hover:opacity-50 transition-all z-10"></div>
                         <img src="https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80" alt="Dados" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
                     </div>
-                    <div class="p-6 relative z-20">
-                        <div class="w-12 h-12 rounded-lg bg-purple-600/20 flex items-center justify-center mb-4 backdrop-blur-sm -mt-12 border border-white/10 shadow-lg group-hover:bg-purple-600/40 transition-colors">
-                            <i class="fas fa-database text-purple-300 text-xl"></i>
+                    <div class="p-6">
+                        <div class="w-14 h-14 rounded-xl bg-purple-600/20 flex items-center justify-center mb-4 backdrop-blur-sm -mt-14 border border-purple-500/30 shadow-lg group-hover:bg-purple-600/40 group-hover:scale-110 transition-all relative z-20">
+                            <i class="fas fa-database text-purple-300 text-2xl"></i>
                         </div>
-                        <h3 class="text-xl font-bold mb-2">Backup e Dados</h3>
-                        <p class="text-gray-400 text-sm">Rotinas de backup e recuperação de dados.</p>
+                        <h3 class="text-xl font-bold mb-3">Backup e Recuperação</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">Implementação de rotinas de backup automático e recuperação de dados perdidos.</p>
                     </div>
                 </div>
             </div>
@@ -378,25 +400,41 @@
     </section>
 
     <!-- Differential/CTA -->
-    <section id="sobre" class="py-8 bg-slate-900/50">
+    <section id="sobre" class="py-20 bg-slate-900/50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="glass-panel rounded-3xl p-8 md:p-12 relative overflow-hidden border-purple-500/20">
-                <div class="absolute top-0 right-0 w-64 h-64 bg-purple-600/20 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                <div class="grid md:grid-cols-2 gap-8 items-center relative z-10">
+            <div class="glass-panel rounded-3xl p-10 md:p-16 relative overflow-hidden border-purple-500/20">
+                <div class="absolute top-0 right-0 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                <div class="absolute bottom-0 left-0 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl -ml-32 -mb-32"></div>
+
+                <div class="grid md:grid-cols-2 gap-12 items-center relative z-10">
                     <div>
-                        <h2 class="text-2xl md:text-3xl font-bold mb-4">Por que escolher a VLFP Info?</h2>
+                        <h2 class="text-3xl md:text-4xl font-bold mb-6">Por que escolher a VLFP Info?</h2>
                         <ul class="space-y-4">
-                            <li class="flex items-center text-gray-300"><i class="fas fa-check-circle text-purple-400 mr-3"></i> Atendimento Presencial e Remoto</li>
-                            <li class="flex items-center text-gray-300"><i class="fas fa-check-circle text-purple-400 mr-3"></i> Nota Fiscal de Venda e Serviço</li>
-                            <li class="flex items-center text-gray-300"><i class="fas fa-check-circle text-purple-400 mr-3"></i> Contratos mensais disponíveis</li>
-                            <li class="flex items-center text-gray-300"><i class="fas fa-credit-card text-purple-400 mr-3"></i> Aceitamos Cartões</li>
+                            <li class="flex items-start text-gray-300">
+                                <i class="fas fa-check-circle text-purple-400 mr-3 mt-1 text-xl flex-shrink-0"></i>
+                                <span><strong class="text-white">Atendimento Presencial e Remoto</strong> - Vamos até você ou resolvemos online</span>
+                            </li>
+                            <li class="flex items-start text-gray-300">
+                                <i class="fas fa-check-circle text-purple-400 mr-3 mt-1 text-xl flex-shrink-0"></i>
+                                <span><strong class="text-white">Nota Fiscal</strong> - Garantia e transparência em todos os serviços</span>
+                            </li>
+                            <li class="flex items-start text-gray-300">
+                                <i class="fas fa-check-circle text-purple-400 mr-3 mt-1 text-xl flex-shrink-0"></i>
+                                <span><strong class="text-white">Contratos Mensais</strong> - Suporte contínuo para sua empresa</span>
+                            </li>
+                            <li class="flex items-start text-gray-300">
+                                <i class="fas fa-credit-card text-purple-400 mr-3 mt-1 text-xl flex-shrink-0"></i>
+                                <span><strong class="text-white">Aceitamos Cartões</strong> - Facilidade no pagamento</span>
+                            </li>
                         </ul>
                     </div>
+
                     <div class="text-center md:text-right flex flex-col items-center md:items-end">
-                        <div class="inline-block p-4 bg-white rounded-xl mb-4 shadow-lg">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://wa.me/5521987330744" alt="QR Code WhatsApp" class="w-32 h-32">
+                        <div class="inline-block p-6 bg-white rounded-2xl mb-6 shadow-2xl transform hover:scale-105 transition-transform">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://wa.me/5521987330744" alt="QR Code WhatsApp" class="w-40 h-40">
                         </div>
-                        <p class="text-sm text-gray-400">Escaneie para falar no WhatsApp</p>
+                        <p class="text-sm text-gray-400 mb-2">Escaneie para falar no WhatsApp</p>
+                        <p class="text-purple-400 font-semibold">(21) 98733-0744</p>
                     </div>
                 </div>
             </div>
@@ -404,23 +442,28 @@
     </section>
 
     <!-- Footer -->
-    <footer id="contato" class="py-12 border-t border-white/5 bg-black/40">
+    <footer id="contato" class="py-16 border-t border-white/5 bg-black/40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-2xl font-bold mb-8">Entre em contato agora</h2>
+            <h2 class="text-3xl font-bold mb-10">Entre em contato agora</h2>
+
             <div class="flex flex-col md:flex-row justify-center items-center gap-6 mb-12">
-                <a href="tel:+5521987330744" class="flex items-center gap-3 px-6 py-4 bg-slate-800/40 border border-white/5 backdrop-blur-sm rounded-xl hover:bg-white/10 transition-colors group">
-                    <i class="fas fa-phone-alt text-purple-400 group-hover:text-purple-300 transition-colors"></i>
+                <a href="tel:+5521987330744" class="flex items-center gap-3 px-8 py-4 bg-slate-800/40 border border-white/10 backdrop-blur-sm rounded-xl hover:bg-white/10 transition-all group">
+                    <i class="fas fa-phone-alt text-purple-400 group-hover:text-purple-300 transition-colors text-xl"></i>
                     <span class="text-lg font-semibold">(21) 98733-0744</span>
                 </a>
-                <a href="https://wa.me/5521987330744?text=Olá, preciso de assistência técnica." target="_blank" class="flex items-center gap-3 px-6 py-4 bg-green-600 hover:bg-green-500 rounded-xl transition-all shadow-lg shadow-green-500/20 transform hover:scale-105">
-                    <i class="fab fa-whatsapp text-white text-xl"></i>
+
+                <a href="https://wa.me/5521987330744?text=Olá, preciso de assistência técnica." target="_blank" class="flex items-center gap-3 px-8 py-4 bg-green-600 hover:bg-green-500 rounded-xl transition-all shadow-lg shadow-green-500/30 transform hover:scale-105">
+                    <i class="fab fa-whatsapp text-white text-2xl"></i>
                     <span class="text-lg font-bold text-white">Chamar no WhatsApp</span>
                 </a>
             </div>
-            <div class="text-gray-500 text-sm">
-                <p class="mb-2">VLFP Info &copy; <span id="year"></span></p>
-                <div class="mt-4 flex justify-center space-x-6">
-                    <a href="https://www.instagram.com/vlfp.info/" target="_blank" class="text-gray-400 hover:text-purple-400 transition-colors text-2xl" title="@vlfp.info"><i class="fab fa-instagram"></i></a>
+
+            <div class="text-gray-500 text-sm space-y-4">
+                <p>VLFP Info &copy; <span id="year"></span> - Todos os direitos reservados</p>
+                <div class="mt-6 flex justify-center space-x-6">
+                    <a href="https://www.instagram.com/vlfp.info/" target="_blank" class="text-gray-400 hover:text-purple-400 transition-colors text-2xl transform hover:scale-110 transition-transform" title="@vlfp.info">
+                        <i class="fab fa-instagram"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -429,87 +472,79 @@
     <!-- Modular Application Logic -->
     <script>
         const app = (function() {
-            // --- State ---
+            // === State Management ===
             const elements = {
                 year: document.getElementById('year'),
                 mobileMenu: document.getElementById('mobile-menu'),
-                glassCards: document.querySelectorAll('.glass-card'),
                 mobileMenuLinks: document.querySelectorAll('#mobile-menu a'),
-                // Animation Elements
                 logo: document.getElementById('dynamic-logo'),
-                placeholder: document.getElementById('logo-placeholder'),
                 nav: document.getElementById('main-nav'),
                 navLinks: document.getElementById('nav-links'),
                 mobileBtn: document.getElementById('mobile-btn'),
-                heroContent: document.getElementById('hero-content'),
                 scrollHint: document.getElementById('scroll-hint')
             };
 
-            // --- Logic: Logo & Header Animation ---
+            let scrollThreshold = 150; // Ponto onde a animação acontece
+            let isScrolled = false; // Evita chamadas desnecessárias
+
+            // === Logo Animation (Melhorada) ===
             const handleScroll = () => {
                 const scrollY = window.scrollY;
-                const windowWidth = window.innerWidth;
-                const isMobile = windowWidth < 768;
-                
-                // Get Placeholder Position (Where logo should end up)
-                const rect = elements.placeholder.getBoundingClientRect();
-                
-                if (scrollY > 50) {
-                    // --- SCROLLED STATE (Navbar Mode) ---
-                    
-                    elements.logo.style.top = `${rect.top}px`;
-                    elements.logo.style.left = `${rect.left}px`;
-                    elements.logo.style.width = `${rect.width}px`;
-                    elements.logo.style.height = `${rect.height}px`;
-                    
-                    // Remove transform when docked
-                    elements.logo.style.transform = 'translate(0,0)';
-                    
-                    // Show Nav
+
+                // Detecta se passou do threshold
+                if (scrollY > scrollThreshold && !isScrolled) {
+                    // Transição para navbar
+                    isScrolled = true;
+                    elements.logo.classList.add('logo-navbar');
+
+                    // Mostra elementos da nav
                     elements.nav.classList.remove('nav-transparent');
                     elements.nav.classList.add('nav-scrolled');
                     elements.navLinks.classList.remove('nav-hidden');
                     elements.navLinks.classList.add('nav-visible');
                     elements.mobileBtn.classList.remove('nav-hidden');
+                    elements.mobileBtn.classList.add('nav-visible');
 
-                    if(elements.scrollHint) elements.scrollHint.style.opacity = '0';
+                    // Esconde hint
+                    if (elements.scrollHint) {
+                        elements.scrollHint.style.opacity = '0';
+                        elements.scrollHint.style.pointerEvents = 'none';
+                    }
 
-                } else {
-                    // --- HERO STATE (Big Logo Mode) ---
-                    // Reset to CSS Initial State values
-                    const topPos = isMobile ? '15%' : '18%'; 
-                    elements.logo.style.top = topPos;
-                    elements.logo.style.left = '50%';
-                    elements.logo.style.transform = 'translateX(-50%)'; 
-                    
-                    const width = isMobile ? '80vw' : '35vw';
-                    // height: auto (removes the fixed box)
-                    
-                    elements.logo.style.width = width;
-                    elements.logo.style.height = 'auto'; // FIX: Remove fixed height constraint
+                } else if (scrollY <= scrollThreshold && isScrolled) {
+                    // Volta ao estado hero
+                    isScrolled = false;
+                    elements.logo.classList.remove('logo-navbar');
 
-                    // Hide Nav
+                    // Esconde nav
                     elements.nav.classList.add('nav-transparent');
                     elements.nav.classList.remove('nav-scrolled');
                     elements.navLinks.classList.add('nav-hidden');
                     elements.navLinks.classList.remove('nav-visible');
                     elements.mobileBtn.classList.add('nav-hidden');
+                    elements.mobileBtn.classList.remove('nav-visible');
 
-                     if(elements.scrollHint) elements.scrollHint.style.opacity = '1';
+                    // Mostra hint
+                    if (elements.scrollHint) {
+                        elements.scrollHint.style.opacity = '1';
+                        elements.scrollHint.style.pointerEvents = 'auto';
+                    }
                 }
             };
 
-            // --- General Utilities ---
+            // === Utilities ===
             const updateYear = () => {
-                if(elements.year) elements.year.textContent = new Date().getFullYear();
+                if (elements.year) elements.year.textContent = new Date().getFullYear();
             };
 
             const toggleMenu = () => {
-                if(elements.mobileMenu) elements.mobileMenu.classList.toggle('hidden');
+                if (elements.mobileMenu) {
+                    elements.mobileMenu.classList.toggle('hidden');
+                }
             };
 
             const setupMobileMenuLinks = () => {
-                if(elements.mobileMenuLinks) {
+                if (elements.mobileMenuLinks) {
                     elements.mobileMenuLinks.forEach(link => {
                         link.addEventListener('click', () => {
                             elements.mobileMenu.classList.add('hidden');
@@ -518,7 +553,10 @@
                 }
             };
 
+            // === Intersection Observer para Cards ===
             const setupObserver = () => {
+                const cards = document.querySelectorAll('.glass-card');
+
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
@@ -526,39 +564,50 @@
                             entry.target.classList.remove('opacity-0', 'translate-y-10');
                         }
                     });
-                }, { threshold: 0.1 });
+                }, { threshold: 0.1, rootMargin: '0px 0px -100px 0px' });
 
-                elements.glassCards.forEach((el, index) => {
-                    el.classList.add('opacity-0', 'translate-y-10', 'transition-all', 'duration-700');
-                    el.style.transitionDelay = `${index * 100}ms`;
-                    observer.observe(el);
+                cards.forEach((card, index) => {
+                    card.classList.add('opacity-0', 'translate-y-10', 'transition-all', 'duration-700');
+                    card.style.transitionDelay = `${index * 100}ms`;
+                    observer.observe(card);
                 });
             };
 
-            // --- Initialization ---
+            // === Throttle para Performance ===
+            const throttle = (func, limit) => {
+                let inThrottle;
+                return function() {
+                    const args = arguments;
+                    const context = this;
+                    if (!inThrottle) {
+                        func.apply(context, args);
+                        inThrottle = true;
+                        setTimeout(() => inThrottle = false, limit);
+                    }
+                }
+            };
+
+            // === Initialization ===
             const init = () => {
                 updateYear();
                 setupMobileMenuLinks();
                 setupObserver();
-                
-                // Add Transition class only after initial layout to prevent FOUC animation
-                setTimeout(() => {
-                    if(elements.logo) elements.logo.classList.add('logo-transition');
-                }, 100);
 
-                window.addEventListener('scroll', handleScroll);
-                window.addEventListener('resize', handleScroll);
-                
-                // Ensure correct state on load
+                // Scroll listener com throttle para performance
+                window.addEventListener('scroll', throttle(handleScroll, 50));
+
+                // Verifica estado inicial
                 handleScroll();
             };
 
+            // === Public API ===
             return {
                 init: init,
                 toggleMenu: toggleMenu
             };
         })();
 
+        // Start when DOM is ready
         document.addEventListener('DOMContentLoaded', app.init);
     </script>
 </body>
