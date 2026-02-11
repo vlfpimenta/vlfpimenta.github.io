@@ -90,7 +90,7 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         }
 
-        /* Nav Transition Classes */
+        /* Nav Styles */
         .nav-scrolled {
             background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(20px);
@@ -102,45 +102,23 @@
             border-bottom: 1px solid transparent;
         }
 
-        /* === LOGO ANIMATION CORRIGIDA === */
-        #dynamic-logo {
-            position: fixed;
-            z-index: 100;
+        /* === LOGO FIXO NA NAVBAR === */
+        #navbar-logo {
+            height: 60px;
+            width: auto;
             object-fit: contain;
+            filter: drop-shadow(0 0 15px rgba(168,85,247,0.5));
             cursor: pointer;
-            filter: drop-shadow(0 0 20px rgba(168,85,247,0.6));
-
-            /* Transição suave para TODAS as propriedades */
-            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-
-            /* Estado inicial: Centro da tela, grande */
-            top: 20vh;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 280px;
-            max-width: 80vw;
-            height: auto;
+            transition: transform 0.3s ease;
         }
 
-        /* Estado "scrolled": navbar compacta */
-        #dynamic-logo.logo-navbar {
-            top: 10px;
-            left: 16px;
-            transform: translateX(0);
-            width: 80px;
-            max-width: 80px;
+        #navbar-logo:hover {
+            transform: scale(1.05);
         }
 
         @media (min-width: 768px) {
-            #dynamic-logo {
-                width: 350px;
-                top: 22vh;
-            }
-
-            #dynamic-logo.logo-navbar {
-                width: 100px;
-                max-width: 100px;
-                left: 24px;
+            #navbar-logo {
+                height: 70px;
             }
         }
 
@@ -162,17 +140,6 @@
         }
 
         html { scroll-behavior: smooth; }
-
-        /* Garante que o conteúdo hero não seja coberto pelo logo */
-        #hero-content {
-            margin-top: 320px;
-        }
-
-        @media (min-width: 768px) {
-            #hero-content {
-                margin-top: 0;
-            }
-        }
     </style>
 </head>
 <body class="antialiased selection:bg-purple-500 selection:text-white">
@@ -182,25 +149,22 @@
         <div class="blob"></div><div class="blob"></div><div class="blob"></div>
     </div>
 
-    <!-- O LOGO DINÂMICO -->
-    <img id="dynamic-logo" 
-         src="devlogo.png" 
-         alt="Logo VLFP Info"
-         onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
-
     <!-- Navigation -->
-    <nav id="main-nav" class="fixed w-full z-40 transition-all duration-500 nav-transparent h-20">
+    <nav id="main-nav" class="fixed w-full z-40 transition-all duration-500 nav-scrolled h-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
             <div class="flex items-center justify-between h-full">
 
-                <div class="flex-shrink-0 flex items-center gap-4">
-                    <!-- Espaço reservado para o logo -->
-                    <div class="w-20 md:w-24 h-16"></div>
+                <!-- Logo Fixo -->
+                <div class="flex-shrink-0">
+                    <img id="navbar-logo" 
+                         src="devlogo.png" 
+                         alt="Logo VLFP Info"
+                         onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
                 </div>
 
                 <!-- Desktop Menu Links -->
                 <div class="hidden md:block">
-                    <div id="nav-links" class="ml-10 flex items-center space-x-8 nav-hidden">
+                    <div class="ml-10 flex items-center space-x-8">
                         <a href="#home" class="hover:text-purple-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">Início</a>
                         <a href="#servicos" class="hover:text-purple-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">Serviços</a>
                         <a href="#sobre" class="hover:text-purple-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">Diferenciais</a>
@@ -217,7 +181,7 @@
 
                 <!-- Mobile menu button -->
                 <div class="-mr-2 flex md:hidden">
-                    <button id="mobile-btn" type="button" onclick="app.toggleMenu()" class="nav-hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-white/10 focus:outline-none">
+                    <button id="mobile-btn" type="button" onclick="app.toggleMenu()" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-white/10 focus:outline-none">
                         <i class="fas fa-bars text-xl"></i>
                     </button>
                 </div>
@@ -242,9 +206,9 @@
     <section id="home" class="relative min-h-screen flex items-center pt-20 overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
 
-            <div class="text-center lg:text-left lg:grid lg:grid-cols-2 lg:gap-12 items-center transition-all duration-700">
+            <div class="text-center lg:text-left lg:grid lg:grid-cols-2 lg:gap-12 items-center">
 
-                <div id="hero-content" class="mb-12 lg:mb-0 fade-element">
+                <div class="mb-12 lg:mb-0 fade-element">
                     <div class="inline-block px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 backdrop-blur-md mb-6">
                         <span class="text-purple-300 text-sm font-semibold tracking-wide uppercase">Assistência Técnica Especializada</span>
                     </div>
@@ -291,7 +255,7 @@
             </div>
 
             <!-- Scroll Indicator -->
-            <div id="scroll-hint" class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce text-purple-400/50">
+            <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce text-purple-400/50">
                 <i class="fas fa-chevron-down text-2xl"></i>
             </div>
         </div>
@@ -469,72 +433,21 @@
         </div>
     </footer>
 
-    <!-- Modular Application Logic -->
+    <!-- JavaScript Simplificado -->
     <script>
         const app = (function() {
-            // === State Management ===
+            // === Elements ===
             const elements = {
                 year: document.getElementById('year'),
                 mobileMenu: document.getElementById('mobile-menu'),
-                mobileMenuLinks: document.querySelectorAll('#mobile-menu a'),
-                logo: document.getElementById('dynamic-logo'),
-                nav: document.getElementById('main-nav'),
-                navLinks: document.getElementById('nav-links'),
-                mobileBtn: document.getElementById('mobile-btn'),
-                scrollHint: document.getElementById('scroll-hint')
-            };
-
-            let scrollThreshold = 150; // Ponto onde a animação acontece
-            let isScrolled = false; // Evita chamadas desnecessárias
-
-            // === Logo Animation (Melhorada) ===
-            const handleScroll = () => {
-                const scrollY = window.scrollY;
-
-                // Detecta se passou do threshold
-                if (scrollY > scrollThreshold && !isScrolled) {
-                    // Transição para navbar
-                    isScrolled = true;
-                    elements.logo.classList.add('logo-navbar');
-
-                    // Mostra elementos da nav
-                    elements.nav.classList.remove('nav-transparent');
-                    elements.nav.classList.add('nav-scrolled');
-                    elements.navLinks.classList.remove('nav-hidden');
-                    elements.navLinks.classList.add('nav-visible');
-                    elements.mobileBtn.classList.remove('nav-hidden');
-                    elements.mobileBtn.classList.add('nav-visible');
-
-                    // Esconde hint
-                    if (elements.scrollHint) {
-                        elements.scrollHint.style.opacity = '0';
-                        elements.scrollHint.style.pointerEvents = 'none';
-                    }
-
-                } else if (scrollY <= scrollThreshold && isScrolled) {
-                    // Volta ao estado hero
-                    isScrolled = false;
-                    elements.logo.classList.remove('logo-navbar');
-
-                    // Esconde nav
-                    elements.nav.classList.add('nav-transparent');
-                    elements.nav.classList.remove('nav-scrolled');
-                    elements.navLinks.classList.add('nav-hidden');
-                    elements.navLinks.classList.remove('nav-visible');
-                    elements.mobileBtn.classList.add('nav-hidden');
-                    elements.mobileBtn.classList.remove('nav-visible');
-
-                    // Mostra hint
-                    if (elements.scrollHint) {
-                        elements.scrollHint.style.opacity = '1';
-                        elements.scrollHint.style.pointerEvents = 'auto';
-                    }
-                }
+                mobileMenuLinks: document.querySelectorAll('#mobile-menu a')
             };
 
             // === Utilities ===
             const updateYear = () => {
-                if (elements.year) elements.year.textContent = new Date().getFullYear();
+                if (elements.year) {
+                    elements.year.textContent = new Date().getFullYear();
+                }
             };
 
             const toggleMenu = () => {
@@ -573,31 +486,11 @@
                 });
             };
 
-            // === Throttle para Performance ===
-            const throttle = (func, limit) => {
-                let inThrottle;
-                return function() {
-                    const args = arguments;
-                    const context = this;
-                    if (!inThrottle) {
-                        func.apply(context, args);
-                        inThrottle = true;
-                        setTimeout(() => inThrottle = false, limit);
-                    }
-                }
-            };
-
             // === Initialization ===
             const init = () => {
                 updateYear();
                 setupMobileMenuLinks();
                 setupObserver();
-
-                // Scroll listener com throttle para performance
-                window.addEventListener('scroll', throttle(handleScroll, 50));
-
-                // Verifica estado inicial
-                handleScroll();
             };
 
             // === Public API ===
