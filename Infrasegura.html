@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html lang="pt-pt">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>InfraSegura v4.0 - Operacional</title>
+    <title>InfraSegura v4.1 - Estabilidade Total</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Leaflet Core -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
+    <!-- Leaflet MarkerCluster -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
@@ -24,20 +26,21 @@
 
         #map { height: 100vh; width: 100%; z-index: 1; background: #020617; }
         
-        /* CORRECÇÃO DO QUADRADO BRANCO */
+        /* CORREÇÃO DO QUADRADO BRANCO: Reset total de estilos de ícone do Leaflet */
         .leaflet-div-icon, .custom-div-icon {
             background: transparent !important;
             border: none !important;
             box-shadow: none !important;
+            outline: none !important;
         }
 
         .leaflet-image-layer { object-fit: fill !important; pointer-events: none; }
 
-        /* Marcadores */
+        /* Estilo dos Marcadores Sólidos */
         .marker-pin {
             width: 40px; height: 40px; border-radius: 50% 50% 50% 0;
             position: absolute; transform: rotate(-45deg); left: 50%; top: 50%;
-            margin: -20px 0 0 -20px; border: 2px solid #ffffff;
+            margin: -20px 0 0 -20px; border: 3px solid #ffffff;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 1000 !important;
             transition: transform 0.2s ease;
@@ -45,6 +48,7 @@
         .marker-pin svg { transform: rotate(45deg); color: white; }
         .marker-pin.selected { transform: rotate(-45deg) scale(1.3); border-color: #3b82f6; box-shadow: 0 0 20px #3b82f6; }
 
+        /* Estilo para Círculo de Agrupamento */
         .camera-cluster-custom {
             background: #0f172a; border: 3px solid #3b82f6;
             border-radius: 50%; color: white; font-weight: 900;
@@ -52,6 +56,7 @@
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); font-size: 14px;
         }
 
+        /* Animações de Rede */
         @keyframes flow { from { stroke-dashoffset: 60; } to { stroke-dashoffset: 0; } }
         .data-flow-line { stroke-dasharray: 12, 12; animation: flow 1s linear infinite; filter: drop-shadow(0 0 5px currentColor); }
         .offline-line { stroke-dasharray: 5, 15; opacity: 0.3; }
@@ -65,6 +70,7 @@
         }
         #logo-menu.show { display: block; animation: slideIn 0.2s ease-out; }
 
+        /* FAB Menu */
         .fab-container { position: fixed; right: 24px; bottom: 24px; z-index: 5000; display: flex; flex-direction: column-reverse; align-items: center; gap: 12px; }
         .fab-main { 
             width: 60px; height: 60px; border-radius: 50%; background-color: #3b82f6; 
@@ -75,7 +81,17 @@
         .fab-items { display: flex; flex-direction: column-reverse; gap: 12px; pointer-events: none; opacity: 0; transform: translateY(15px); transition: 0.3s ease; }
         .fab-items.open { pointer-events: auto; opacity: 1; transform: translateY(0); }
         .fab-item-btn { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: #1e293b; border: 2px solid #334155; position: relative; }
-        
+        .fab-item-btn.selected { border-color: #3b82f6; }
+
+        .fab-label { 
+            position: absolute; right: 65px; background: #1e293b; color: white; 
+            padding: 5px 14px; border-radius: 10px; font-size: 11px; font-weight: 900; 
+            text-transform: uppercase; white-space: nowrap; border: 1px solid #334155; 
+            opacity: 0; pointer-events: none; 
+        }
+        .fab-item-btn:hover .fab-label { opacity: 1; right: 75px; }
+
+        /* Indicador Offline Discreto */
         .alert-fab {
             position: fixed; left: 24px; bottom: 24px; z-index: 5000;
             width: 60px; height: 60px; border-radius: 50%; background-color: #ef4444;
@@ -90,8 +106,8 @@
         }
 
         @keyframes alert-pulse {
-            0% { transform: scale(1); }
-            70% { transform: scale(1.05); }
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
             100% { transform: scale(1); }
         }
 
@@ -99,11 +115,11 @@
             .mobile-full { width: 100% !important; left: 0 !important; border-radius: 2rem 2rem 0 0 !important; height: 65vh !important; top: auto !important; bottom: 0 !important; }
             #details-panel, #offline-panel { bottom: -100%; transition: bottom 0.3s ease; display: none; }
             #details-panel.show, #offline-panel.show { bottom: 0; display: flex; }
-            .alert-fab { left: 20px; bottom: 20px; width: 50px; height: 50px; }
+            .alert-fab { left: 20px; bottom: 20px; width: 52px; height: 52px; }
         }
 
         .locked .header-title, .locked .logo-chevron { display: none !important; }
-        .mode-indicator { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 1500; background: #3b82f6; color: white; padding: 6px 16px; border-radius: 9999px; font-size: 10px; font-weight: 900; display: none; }
+        .mode-indicator { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 1500; background: #3b82f6; color: white; padding: 6px 16px; border-radius: 9999px; font-size: 10px; font-weight: 900; display: none; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .pulse-orange { animation: pulse-orange 2s infinite; }
         @keyframes pulse-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } }
@@ -112,12 +128,13 @@
 <body class="bg-slate-950 text-slate-100 overflow-hidden">
 
     <div id="app-container">
+        <!-- Indicador de Offline (Canto Esquerdo) -->
         <div id="alert-fab" onclick="openOfflinePanel()" class="alert-fab">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div id="alert-count" class="alert-count">0</div>
         </div>
 
-        <div id="mode-badge" class="mode-indicator uppercase">MODO INSERÇÃO</div>
+        <div id="mode-badge" class="mode-indicator uppercase">Ação Ativa</div>
 
         <!-- Header -->
         <header class="fixed top-0 left-0 right-0 h-[var(--header-h)] ui-solid border-b-2 border-slate-800 z-[2000] flex items-center justify-between px-4 sm:px-6 shadow-2xl transition-all">
@@ -127,22 +144,22 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     </div>
                     <h1 class="header-title font-black tracking-tighter text-sm sm:text-xl uppercase">Infra<span class="text-blue-500">Segura</span></h1>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="logo-chevron text-slate-600 ml-1"><path d="m6 9 6 6 6-6"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="logo-chevron text-slate-600 ml-1 transition-all"><path d="m6 9 6 6 6-6"/></svg>
                 </button>
 
                 <div id="logo-menu">
-                    <div class="p-4 border-b border-slate-800 bg-slate-950/50 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Menu Principal</div>
+                    <div class="p-4 border-b border-slate-800 bg-slate-950/50 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Menu Maestro</div>
                     <div class="p-2 space-y-1 text-white text-xs font-bold uppercase">
                         <button onclick="openSettings(); toggleLogoMenu();" class="w-full p-3 hover:bg-blue-600 rounded-xl transition-all text-left">Ajustes</button>
                         <button onclick="toggleAppLock()" class="w-full p-3 hover:bg-orange-600 rounded-xl transition-all text-left">Bloquear</button>
-                        <button onclick="resetToWorldMap()" class="w-full p-3 hover:bg-slate-800 rounded-xl transition-all text-left">Mapa Global</button>
+                        <button onclick="resetToWorldMap()" class="w-full p-3 hover:bg-slate-800 rounded-xl transition-all text-left">Sair da Imagem</button>
                     </div>
                 </div>
             </div>
 
             <div class="flex items-center space-x-1 bg-slate-950 border border-slate-800 p-1 rounded-xl">
                 <button onclick="toggleView('map')" id="btn-map" class="px-4 py-1.5 rounded-lg text-[10px] font-black bg-blue-600 text-white transition-all uppercase">Mapa</button>
-                <button onclick="toggleView('list')" id="btn-list" class="px-4 py-1.5 rounded-lg text-[10px] font-black text-slate-500 hover:text-white transition-all uppercase">Lista</button>
+                <button onclick="toggleView('list')" id="btn-list" class="px-4 py-1.5 rounded-lg text-[10px] font-black text-slate-500 hover:text-white transition-all uppercase tracking-widest">Lista</button>
             </div>
 
             <button onclick="locateMe()" class="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 shadow-lg">
@@ -150,18 +167,18 @@
             </button>
         </header>
 
-        <!-- FAB Principal -->
+        <!-- FAB Principal (Direito) -->
         <div id="fab-container" class="fab-container">
             <div id="fab-main" onclick="toggleFab()" class="fab-main">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </div>
 
             <div id="fab-items" class="fab-items">
-                <button onclick="setMode('server')" id="tool-server" class="fab-item-btn tool-btn" style="color: #a78bfa"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/></svg></button>
-                <button onclick="setMode('camera')" id="tool-camera" class="fab-item-btn tool-btn" style="color: #60a5fa"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>
-                <button onclick="setMode('switch')" id="tool-switch" class="fab-item-btn tool-btn" style="color: #34d399"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/><path d="M2 10V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4"/></svg></button>
-                <button onclick="setMode('converter')" id="tool-converter" class="fab-item-btn tool-btn" style="color: #fbbf24"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></button>
-                <button onclick="toggleLinking()" id="link-btn" class="fab-item-btn tool-btn" style="color: #94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54"/></svg></button>
+                <button onclick="setMode('server')" id="tool-server" class="fab-item-btn tool-btn" style="color: #a78bfa"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/></svg><span class="fab-label">Servidor</span></button>
+                <button onclick="setMode('camera')" id="tool-camera" class="fab-item-btn tool-btn" style="color: #60a5fa"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg><span class="fab-label">Câmera IP</span></button>
+                <button onclick="setMode('switch')" id="tool-switch" class="fab-item-btn tool-btn" style="color: #34d399"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/><path d="M2 10V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4"/></svg><span class="fab-label">Switch</span></button>
+                <button onclick="setMode('converter')" id="tool-converter" class="fab-item-btn tool-btn" style="color: #fbbf24"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span class="fab-label">Conversor</span></button>
+                <button onclick="toggleLinking()" id="link-btn" class="fab-item-btn tool-btn" style="color: #94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54"/></svg><span class="fab-label">Vincular</span></button>
             </div>
         </div>
 
@@ -170,7 +187,7 @@
         <!-- Painéis -->
         <div id="offline-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-red-500/40 rounded-[2.5rem] p-6 z-[1000] hidden flex flex-col shadow-3xl mobile-full text-white">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-sm font-black uppercase text-red-500 tracking-widest italic">Diagnóstico</h3>
+                <h3 class="text-sm font-black uppercase text-red-500 tracking-widest italic">Falhas Detectadas</h3>
                 <button onclick="closeOfflinePanel()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
             </div>
             <div id="offline-list" class="flex-1 overflow-y-auto space-y-3"></div>
@@ -180,20 +197,20 @@
             <div class="w-full max-w-xs bg-slate-900 border-2 border-slate-700 rounded-3xl p-8 text-center text-white shadow-3xl">
                 <h3 class="text-lg font-black uppercase mb-4 tracking-widest">Código Operacional</h3>
                 <input type="password" id="unlock-pass" class="w-full bg-slate-950 border-2 border-slate-800 rounded-xl p-4 text-center text-xl tracking-[0.5em] mb-4 outline-none focus:border-blue-500 text-white" placeholder="•••••">
-                <button onclick="checkUnlock()" class="w-full bg-blue-600 py-3 rounded-xl font-black uppercase shadow-lg">Entrar</button>
+                <button onclick="checkUnlock()" class="w-full bg-blue-600 py-3 rounded-xl font-black uppercase shadow-lg">Confirmar</button>
             </div>
         </div>
 
         <div id="settings-modal" class="fixed inset-0 z-[6000] hidden flex items-center justify-center p-4 animate-in fade-in">
             <div class="w-full max-w-md bg-slate-900 border-2 border-slate-700 rounded-3xl shadow-3xl overflow-hidden">
-                <div class="p-6 border-b border-slate-800 flex justify-between bg-slate-950/50">
+                <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
                     <h2 class="text-xl font-black uppercase italic text-white">Configurações</h2>
-                    <button onclick="closeSettings()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+                    <button onclick="closeSettings()" class="text-slate-500"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
                 </div>
                 <div class="p-6 space-y-4">
                     <button onclick="triggerImageMap()" class="w-full p-4 bg-slate-800 border-2 border-slate-700 rounded-xl text-white font-bold uppercase text-xs">Carregar Planta Baixa (Stretch)</button>
                     <div class="pt-2 flex items-center justify-between text-slate-400">
-                        <span class="text-[10px] font-black uppercase">Dashboard 4K (Escala)</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest">Modo Dashboard (Escala+)</span>
                         <input type="checkbox" id="mode-4k" onchange="toggle4KMode(this)" class="w-6 h-6 rounded bg-slate-800 border-slate-700 text-blue-600">
                     </div>
                     <input type="file" id="map-image-input" class="hidden" accept="image/*" onchange="handleImageMap(this)">
@@ -201,20 +218,23 @@
             </div>
         </div>
 
-        <div id="details-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-6 z-[1000] hidden flex flex-col shadow-3xl mobile-full text-white">
+        <div id="details-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-6 sm:p-8 z-[1000] hidden flex flex-col shadow-3xl mobile-full text-white">
             <div id="details-content" class="flex-1 overflow-y-auto space-y-6"></div>
         </div>
     </div>
 
     <script>
-        // --- ESTADO GERAL ---
+        // --- ESTADO SISTEMA ---
         let nodes = []; let links = []; let map; let selectedId = null;
         let isLinking = false; let linkSourceId = null; 
         let activeStatuses = {}; let currentMode = null; let isMenuOpen = false;
         let isLocked = false; let logoClicks = 0; let logoTimer = null;
         let imageOverlay = null; let baseTileLayer = null;
 
-        let switchClusters = {}; let individualLayer = null; let linksLayer = null;
+        // Camadas Dedicadas
+        let switchClusters = {}; 
+        let individualLayer = null; 
+        let linksLayer = null; 
 
         const typeCounters = { server: 0, camera: 0, switch: 0, converter: 0 };
         const CONFIG = {
@@ -225,19 +245,29 @@
         };
 
         window.onload = () => {
-            map = L.map('map', { zoomControl: false, tap: true, maxZoom: 18, dragging: true }).setView([-23.5505, -46.6333], 15);
-            baseTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' }).addTo(map);
+            map = L.map('map', { 
+                zoomControl: false, tap: true, maxZoom: 18, dragging: true 
+            }).setView([-23.5505, -46.6333], 15);
+
+            baseTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { 
+                attribution: '© CartoDB' 
+            }).addTo(map);
+
             L.control.zoom({ position: 'bottomright' }).addTo(map);
+            
             individualLayer = L.layerGroup().addTo(map);
             linksLayer = L.layerGroup().addTo(map);
 
             map.on('click', (e) => {
-                if (currentMode) addNode(currentMode, e.latlng, false);
-                else { closePanel(); closeOfflinePanel(); closeLogoMenu(); }
+                if (currentMode) {
+                    addNode(currentMode, e.latlng, false);
+                } else {
+                    closePanel(); closeOfflinePanel(); closeLogoMenu();
+                }
             });
         };
 
-        // --- LÓGICA DE DIAGNÓSTICO (PROTEGIDA CONTRA LOOPS) ---
+        // --- LÓGICA DE DIAGNÓSTICO (PREVINE LOOPS) ---
         function getDiagnostics() {
             const alerts = [];
             const isDown = (id, visited = new Set()) => {
@@ -249,29 +279,35 @@
                 if (c.length === 0) return false;
                 return c.every(item => isDown(item, visited));
             };
-            nodes.filter(n => n.type === 'converter').forEach(c => { if (isDown(c.id)) alerts.push({ id: c.id, name: c.name, type: 'CONVERSOR', msg: "Erro Fibra" }); });
-            nodes.filter(n => n.type === 'switch').forEach(s => { if (isDown(s.id) && !alerts.some(a => a.id === s.id)) alerts.push({ id: s.id, name: s.name, type: 'SWITCH', msg: "Setor Down" }); });
+            nodes.filter(n => n.type === 'converter').forEach(c => { if (isDown(c.id)) alerts.push({ id: c.id, name: c.name, type: 'CONVERSOR', msg: "Falha de Link Fibra" }); });
+            nodes.filter(n => n.type === 'switch').forEach(s => { if (isDown(s.id) && !alerts.some(a => a.id === s.id)) alerts.push({ id: s.id, name: s.name, type: 'SWITCH', msg: "Setor Desconectado" }); });
             nodes.filter(n => CONFIG[n.type].hasIp).forEach(a => { if (activeStatuses[a.id] === 'offline') alerts.push({ id: a.id, name: a.name, type: CONFIG[a.type].label.toUpperCase(), msg: "Offline" }); });
             return alerts;
         }
 
         function render() {
-            Object.values(switchClusters).forEach(c => map.removeLayer(c)); switchClusters = {};
-            individualLayer.clearLayers(); linksLayer.clearLayers();
+            // Limpar ativos das camadas Leaflet (Não mexer no DOM diretamente!)
+            Object.values(switchClusters).forEach(c => map.removeLayer(c));
+            switchClusters = {};
+            individualLayer.clearLayers();
+            linksLayer.clearLayers();
             
             const diag = getDiagnostics();
 
+            // 1. Desenhar Vínculos na linksLayer
             links.forEach(link => {
                 const n1 = nodes.find(n => n.id === link.a);
                 const n2 = nodes.find(n => n.id === link.b);
                 if (n1 && n2) {
                     const off = (activeStatuses[n1.id] === 'offline' || activeStatuses[n2.id] === 'offline' || diag.some(a => a.id === n1.id || a.id === n2.id));
                     L.polyline([[n1.lat, n1.lng], [n2.lat, n2.lng]], {
-                        color: off ? '#ef4444' : '#3b82f6', weight: 6, opacity: 0.8, className: off ? 'offline-line' : 'data-flow-line'
+                        color: off ? '#ef4444' : '#3b82f6',
+                        weight: 6, opacity: 0.8, className: off ? 'offline-line' : 'data-flow-line'
                     }).addTo(linksLayer);
                 }
             });
 
+            // 2. Desenhar Dispositivos
             nodes.forEach(node => {
                 const isSelected = (selectedId === node.id);
                 const crit = diag.some(a => a.id === node.id);
@@ -290,8 +326,10 @@
                 if (node.type === 'camera') {
                     const conn = links.find(l => {
                         const oId = (l.a === node.id) ? l.b : (l.b === node.id ? l.a : null);
-                        const o = nodes.find(n => n.id === oId); return o && o.type === 'switch';
+                        const o = nodes.find(n => n.id === oId);
+                        return o && o.type === 'switch';
                     });
+
                     if (conn) {
                         const swId = (conn.a === node.id) ? conn.b : conn.a;
                         if (!switchClusters[swId]) {
@@ -301,13 +339,56 @@
                             }).addTo(map);
                         }
                         switchClusters[swId].addLayer(m);
-                    } else individualLayer.addLayer(m);
-                } else individualLayer.addLayer(m);
+                    } else {
+                        individualLayer.addLayer(m);
+                    }
+                } else {
+                    individualLayer.addLayer(m);
+                }
             });
             updateAlertBadge(diag);
         }
 
-        // --- UI GERAL ---
+        // --- CORE FUNÇÕES ---
+        function addNode(type, latlng, open = true) {
+            const id = 'n' + Math.random().toString(36).substr(2, 9); typeCounters[type]++;
+            const name = `${CONFIG[type].label} ${typeCounters[type]}`;
+            const newNode = { id, type, lat: latlng.lat, lng: latlng.lng, name, pathPoints: [], ip: CONFIG[type].hasIp ? `192.168.1.${10 + nodes.length}` : null };
+            nodes.push(newNode); if (CONFIG[type].hasIp) activeStatuses[id] = 'online';
+            render(); if (open) openDetails(id);
+        }
+
+        function handleNodeClick(id) {
+            if (isLinking && !isLocked) {
+                if (!linkSourceId) { linkSourceId = id; showToast(`ORIGEM SELECIONADA...`); }
+                else if (linkSourceId !== id) { toggleLink(linkSourceId, id); linkSourceId = null; render(); }
+                return;
+            }
+            if (!currentMode) openDetails(id);
+        }
+
+        function toggleLink(id1, id2) {
+            const exists = links.findIndex(l => (l.a === id1 && l.b === id2) || (l.a === id2 && l.b === id1));
+            if (exists > -1) { links.splice(exists, 1); showToast("Link Removido"); }
+            else { links.push({ a: id1, b: id2 }); showToast("Link Criado"); }
+        }
+
+        function openDetails(id) {
+            selectedId = id; const n = nodes.find(it => it.id === id);
+            const panel = document.getElementById('details-panel'); panel.classList.add('show');
+            document.getElementById('details-content').innerHTML = `
+                <div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase tracking-tighter shadow-inner"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" ${isLocked ? 'disabled' : ''} class="bg-transparent text-lg font-black border-none p-0 focus:ring-0 w-full text-white text-center outline-none"></div>
+                <div class="p-4 bg-slate-800/40 rounded-2xl text-center border border-slate-800 text-[10px] font-bold text-slate-400 uppercase">${links.filter(l => l.a === id || l.b === id).length} Conexões Totais</div>
+                ${CONFIG[n.type].hasIp ? `<div class="p-5 bg-slate-800/40 rounded-3xl text-center border border-slate-800">
+                    <input type="text" value="${n.ip}" onchange="updateIp('${id}', this.value)" ${isLocked ? 'disabled' : ''} class="bg-slate-950 w-full p-3 rounded-xl border border-slate-800 font-mono text-center text-blue-400 mb-4 outline-none">
+                    <button onclick="toggleStatus('${id}')" class="w-full py-4 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white shadow-xl">SIMULAR TESTE</button>
+                </div>` : ''}
+                ${!isLocked ? `<button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Item</button>` : ''}
+            `;
+            render();
+        }
+
+        // --- SEGURANÇA E UI ---
         function updateAlertBadge(diag) {
             const fab = document.getElementById('alert-fab');
             const count = document.getElementById('alert-count');
@@ -318,14 +399,14 @@
             document.getElementById('offline-list').innerHTML = diag.map(a => `<div onclick="map.flyTo([${nodes.find(n => n.id === a.id).lat}, ${nodes.find(n => n.id === a.id).lng}], 18); openDetails('${a.id}');" class="p-4 bg-slate-800 border-l-4 border-red-500 rounded-r-xl cursor-pointer hover:bg-slate-700 transition-all active:scale-95"><div class="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1">${a.type} • ${a.msg}</div><div class="text-xs font-bold text-white uppercase">${a.name}</div></div>`).join('');
         }
         function handleLogoInteraction() { if (isLocked) { logoClicks++; clearTimeout(logoTimer); if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } else logoTimer = setTimeout(() => logoClicks = 0, 500); } else toggleLogoMenu(); }
-        function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked'); document.getElementById('fab-container').style.display = 'none'; toggleLogoMenu(); showToast("MODO OPERACIONAL"); closePanel(); render(); }
-        function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } else showToast("SENHA INCORRECTA"); }
+        function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked'); document.getElementById('fab-container').style.display = 'none'; toggleLogoMenu(); showToast("PROTEGIDO"); closePanel(); render(); }
+        function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } else showToast("SENHA INCORRETA"); }
         function toggleFab() { if(isLocked) return; if (currentMode || isLinking) { resetTools(); closeFab(); return; } isMenuOpen = !isMenuOpen; document.getElementById('fab-items').classList.toggle('open', isMenuOpen); document.getElementById('fab-main').classList.toggle('active', isMenuOpen); }
-        function setMode(m) { if(isLocked) return; resetTools(); currentMode = m; document.getElementById(`tool-${m}`).classList.add('selected'); document.getElementById('fab-main').classList.add('active'); document.getElementById('mode-badge').style.display = 'block'; document.getElementById('mode-badge').innerText = `INSERINDO ${CONFIG[m].label.toUpperCase()}`; }
-        function toggleLinking() { if(isLocked) return; resetTools(); isLinking = true; document.getElementById('link-btn').classList.add('selected'); document.getElementById('fab-main').classList.add('active'); document.getElementById('mode-badge').style.display = 'block'; document.getElementById('mode-badge').innerText = "CONECTANDO DISPOSITIVOS"; }
+        function setMode(m) { if(isLocked) return; resetTools(); currentMode = m; document.getElementById(`tool-${m}`).classList.add('selected'); document.getElementById('fab-main').classList.add('active'); document.getElementById('mode-badge').style.display = 'block'; document.getElementById('mode-badge').innerText = `Inserindo: ${CONFIG[m].label.toUpperCase()}`; }
+        function toggleLinking() { if(isLocked) return; resetTools(); isLinking = true; document.getElementById('link-btn').classList.add('selected'); document.getElementById('fab-main').classList.add('active'); document.getElementById('mode-badge').style.display = 'block'; document.getElementById('mode-badge').innerText = "Vínculo de Rede"; }
         function resetTools() { currentMode = null; isLinking = false; linkSourceId = null; document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('selected')); document.getElementById('mode-badge').style.display = 'none'; document.getElementById('fab-main').classList.remove('active'); }
         function closeFab() { isMenuOpen = false; document.getElementById('fab-items').classList.remove('open'); document.getElementById('fab-main').classList.remove('active'); }
-        function handleImageMap(input) { const r = new FileReader(); r.onload = (e) => { const b = map.getBounds(); if (imageOverlay) map.removeLayer(imageOverlay); if (baseTileLayer) map.removeLayer(baseTileLayer); imageOverlay = L.imageOverlay(e.target.result, b, { interactive: false }).addTo(map); map.setMaxBounds(b); map.fitBounds(b); toggleLogoMenu(); }; r.readAsDataURL(input.files[0]); }
+        function handleImageMap(input) { const reader = new FileReader(); reader.onload = (e) => { const b = map.getBounds(); if (imageOverlay) map.removeLayer(imageOverlay); if (baseTileLayer) map.removeLayer(baseTileLayer); imageOverlay = L.imageOverlay(e.target.result, b, { interactive: false }).addTo(map); map.setMaxBounds(b); map.fitBounds(b); toggleLogoMenu(); }; reader.readAsDataURL(input.files[0]); }
         function resetToWorldMap() { if (imageOverlay) map.removeLayer(imageOverlay); if (!baseTileLayer._map) baseTileLayer.addTo(map); map.setMaxBounds(null); toggleLogoMenu(); }
         function updateName(id, v) { nodes.find(n => n.id === id).name = v; render(); }
         function updateIp(id, v) { nodes.find(n => n.id === id).ip = v; render(); }
@@ -339,34 +420,7 @@
         function toggleLogoMenu() { if(isLocked) return; document.getElementById('logo-menu').classList.toggle('show'); }
         function toggleView(v) { document.getElementById('btn-map').classList.toggle('bg-blue-600', v === 'map'); document.getElementById('btn-list').classList.toggle('bg-blue-600', v === 'list'); }
         function locateMe() { navigator.geolocation.getCurrentPosition(p => map.flyTo([p.coords.latitude, p.coords.longitude], 17)); }
-        function handleNodeClick(id) {
-            if (isLinking && !isLocked) {
-                if (!linkSourceId) { linkSourceId = id; showToast(`ORIGEM DEFINIDA`); }
-                else if (linkSourceId !== id) { toggleLink(linkSourceId, id); linkSourceId = null; render(); }
-                return;
-            }
-            if (!currentMode) openDetails(id);
-        }
-        function toggleLink(id1, id2) {
-            const ex = links.findIndex(l => (l.a === id1 && l.b === id2) || (l.a === id2 && l.b === id1));
-            if (ex > -1) { links.splice(ex, 1); showToast("VÍNCULO REMOVIDO"); }
-            else { links.push({ a: id1, b: id2 }); showToast("VÍNCULO ESTABELECIDO"); }
-        }
-        function openDetails(id) {
-            selectedId = id; const n = nodes.find(it => it.id === id);
-            const p = document.getElementById('details-panel'); p.classList.add('show');
-            document.getElementById('details-content').innerHTML = `
-                <div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" ${isLocked ? 'disabled' : ''} class="bg-transparent text-lg font-black border-none p-0 focus:ring-0 w-full text-white text-center"></div>
-                <div class="p-4 bg-slate-800/40 rounded-2xl text-center border border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-widest">${links.filter(l => l.a === id || l.b === id).length} Conexões Ativas</div>
-                ${CONFIG[n.type].hasIp ? `<div class="p-5 bg-slate-800/40 rounded-3xl text-center border border-slate-800">
-                    <input type="text" value="${n.ip}" onchange="updateIp('${id}', this.value)" ${isLocked ? 'disabled' : ''} class="bg-slate-950 w-full p-3 rounded-xl border border-slate-800 font-mono text-center text-blue-400 mb-4 outline-none">
-                    <button onclick="toggleStatus('${id}')" class="w-full py-4 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white shadow-xl">SIMULAR TESTE</button>
-                </div>` : ''}
-                ${!isLocked ? `<button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Item</button>` : ''}
-            `;
-            render();
-        }
-        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-24 left-1/2 -translate-x-1/2 px-8 py-3 bg-slate-900 text-white text-[9px] font-black uppercase rounded-full shadow-2xl z-[8000] border-2 border-slate-800 animate-in fade-in slide-in-from-bottom-5"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-24 right-4 sm:bottom-10 sm:left-1/2 sm:-translate-x-1/2 px-8 py-3 bg-slate-900 text-white text-[9px] font-black uppercase rounded-full shadow-2xl z-[8000] border-2 border-slate-800 animate-in fade-in slide-in-from-bottom-5"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
         function toggle4KMode(cb) { document.body.classList.toggle('mode-4k-active', cb.checked); map.invalidateSize(); }
     </script>
 </body>
