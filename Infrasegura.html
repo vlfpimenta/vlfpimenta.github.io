@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>InfraSegura v3.9 - Diagnóstico Centralizado</title>
+    <title>InfraSegura v4.0 - Operacional</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -24,14 +24,20 @@
 
         #map { height: 100vh; width: 100%; z-index: 1; background: #020617; }
         
-        .leaflet-div-icon { background: transparent !important; border: none !important; }
+        /* CORRECÇÃO DO QUADRADO BRANCO */
+        .leaflet-div-icon, .custom-div-icon {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
         .leaflet-image-layer { object-fit: fill !important; pointer-events: none; }
 
         /* Marcadores */
         .marker-pin {
             width: 40px; height: 40px; border-radius: 50% 50% 50% 0;
             position: absolute; transform: rotate(-45deg); left: 50%; top: 50%;
-            margin: -20px 0 0 -18px; border: 3px solid #ffffff;
+            margin: -20px 0 0 -20px; border: 2px solid #ffffff;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 1000 !important;
             transition: transform 0.2s ease;
@@ -59,7 +65,6 @@
         }
         #logo-menu.show { display: block; animation: slideIn 0.2s ease-out; }
 
-        /* FAB Menu (Direito) */
         .fab-container { position: fixed; right: 24px; bottom: 24px; z-index: 5000; display: flex; flex-direction: column-reverse; align-items: center; gap: 12px; }
         .fab-main { 
             width: 60px; height: 60px; border-radius: 50%; background-color: #3b82f6; 
@@ -71,7 +76,6 @@
         .fab-items.open { pointer-events: auto; opacity: 1; transform: translateY(0); }
         .fab-item-btn { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: #1e293b; border: 2px solid #334155; position: relative; }
         
-        /* Botão de Alerta (Esquerdo) */
         .alert-fab {
             position: fixed; left: 24px; bottom: 24px; z-index: 5000;
             width: 60px; height: 60px; border-radius: 50%; background-color: #ef4444;
@@ -83,13 +87,12 @@
             position: absolute; top: -5px; right: -5px; background: white;
             color: #ef4444; width: 22px; height: 22px; border-radius: 50%;
             font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
 
         @keyframes alert-pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            0% { transform: scale(1); }
+            70% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
 
         @media (max-width: 768px) {
@@ -109,36 +112,37 @@
 <body class="bg-slate-950 text-slate-100 overflow-hidden">
 
     <div id="app-container">
-        <!-- Botão de Alerta Crítico (Canto Inferior Esquerdo) -->
         <div id="alert-fab" onclick="openOfflinePanel()" class="alert-fab">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div id="alert-count" class="alert-count">0</div>
         </div>
 
+        <div id="mode-badge" class="mode-indicator uppercase">MODO INSERÇÃO</div>
+
         <!-- Header -->
-        <header class="fixed top-0 left-0 right-0 h-[var(--header-h)] ui-solid border-b-2 border-slate-800 z-[2000] flex items-center justify-between px-4 sm:px-6 shadow-2xl transition-all duration-500">
+        <header class="fixed top-0 left-0 right-0 h-[var(--header-h)] ui-solid border-b-2 border-slate-800 z-[2000] flex items-center justify-between px-4 sm:px-6 shadow-2xl transition-all">
             <div class="flex items-center relative">
                 <button onclick="handleLogoInteraction()" class="flex items-center space-x-3 hover:bg-slate-800/50 p-2 rounded-xl transition-all active:scale-95 group">
                     <div class="logo-container p-2 bg-blue-600 rounded-lg border border-blue-400">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     </div>
                     <h1 class="header-title font-black tracking-tighter text-sm sm:text-xl uppercase">Infra<span class="text-blue-500">Segura</span></h1>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="logo-chevron text-slate-600 ml-1 transition-all"><path d="m6 9 6 6 6-6"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="logo-chevron text-slate-600 ml-1"><path d="m6 9 6 6 6-6"/></svg>
                 </button>
 
                 <div id="logo-menu">
-                    <div class="p-4 border-b border-slate-800 bg-slate-950/50 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Controle Maestro</div>
+                    <div class="p-4 border-b border-slate-800 bg-slate-950/50 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Menu Principal</div>
                     <div class="p-2 space-y-1 text-white text-xs font-bold uppercase">
                         <button onclick="openSettings(); toggleLogoMenu();" class="w-full p-3 hover:bg-blue-600 rounded-xl transition-all text-left">Ajustes</button>
-                        <button onclick="toggleAppLock()" class="w-full p-3 hover:bg-orange-600 rounded-xl transition-all text-left">Travar Mapa</button>
-                        <button onclick="resetToWorldMap()" class="w-full p-3 hover:bg-slate-800 rounded-xl transition-all text-left">Mapa Satélite</button>
+                        <button onclick="toggleAppLock()" class="w-full p-3 hover:bg-orange-600 rounded-xl transition-all text-left">Bloquear</button>
+                        <button onclick="resetToWorldMap()" class="w-full p-3 hover:bg-slate-800 rounded-xl transition-all text-left">Mapa Global</button>
                     </div>
                 </div>
             </div>
 
             <div class="flex items-center space-x-1 bg-slate-950 border border-slate-800 p-1 rounded-xl">
-                <button onclick="toggleView('map')" id="btn-map" class="px-4 py-1.5 rounded-lg text-[10px] font-black bg-blue-600 text-white shadow-lg transition-all">MAPA</button>
-                <button onclick="toggleView('list')" id="btn-list" class="px-4 py-1.5 rounded-lg text-[10px] font-black text-slate-500 hover:text-white transition-all">LISTA</button>
+                <button onclick="toggleView('map')" id="btn-map" class="px-4 py-1.5 rounded-lg text-[10px] font-black bg-blue-600 text-white transition-all uppercase">Mapa</button>
+                <button onclick="toggleView('list')" id="btn-list" class="px-4 py-1.5 rounded-lg text-[10px] font-black text-slate-500 hover:text-white transition-all uppercase">Lista</button>
             </div>
 
             <button onclick="locateMe()" class="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 shadow-lg">
@@ -146,7 +150,7 @@
             </button>
         </header>
 
-        <!-- FAB Menu Principal -->
+        <!-- FAB Principal -->
         <div id="fab-container" class="fab-container">
             <div id="fab-main" onclick="toggleFab()" class="fab-main">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -155,7 +159,7 @@
             <div id="fab-items" class="fab-items">
                 <button onclick="setMode('server')" id="tool-server" class="fab-item-btn tool-btn" style="color: #a78bfa"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/></svg></button>
                 <button onclick="setMode('camera')" id="tool-camera" class="fab-item-btn tool-btn" style="color: #60a5fa"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>
-                <button onclick="setMode('switch')" id="tool-switch" class="fab-item-btn tool-btn" style="color: #34d399"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M14 18h.01"/><path d="M2 10V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4"/></svg></button>
+                <button onclick="setMode('switch')" id="tool-switch" class="fab-item-btn tool-btn" style="color: #34d399"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/><path d="M2 10V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4"/></svg></button>
                 <button onclick="setMode('converter')" id="tool-converter" class="fab-item-btn tool-btn" style="color: #fbbf24"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></button>
                 <button onclick="toggleLinking()" id="link-btn" class="fab-item-btn tool-btn" style="color: #94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54"/></svg></button>
             </div>
@@ -163,59 +167,42 @@
 
         <div id="map"></div>
 
-        <!-- Painel de Falhas (Offlines) -->
-        <div id="offline-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-red-500/50 rounded-[2.5rem] p-6 sm:p-8 z-[1000] hidden flex flex-col shadow-3xl mobile-full text-white overflow-hidden">
+        <!-- Painéis -->
+        <div id="offline-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-red-500/40 rounded-[2.5rem] p-6 z-[1000] hidden flex flex-col shadow-3xl mobile-full text-white">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-sm font-black uppercase text-red-500 tracking-widest flex items-center">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="mr-2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
-                    Diagnóstico de Falhas
-                </h3>
-                <button onclick="closeOfflinePanel()" class="p-2 hover:bg-slate-800 rounded-full"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+                <h3 class="text-sm font-black uppercase text-red-500 tracking-widest italic">Diagnóstico</h3>
+                <button onclick="closeOfflinePanel()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
             </div>
-            <div id="offline-list" class="flex-1 overflow-y-auto space-y-3">
-                <!-- Lista de itens offline gerada via JS -->
-            </div>
-            <div class="mt-6 p-4 bg-red-500/10 rounded-2xl border border-red-500/20 text-[10px] font-bold text-red-400 uppercase text-center italic">
-                Verifique os pontos de infraestrutura indicados no mapa.
+            <div id="offline-list" class="flex-1 overflow-y-auto space-y-3"></div>
+        </div>
+
+        <div id="password-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
+            <div class="w-full max-w-xs bg-slate-900 border-2 border-slate-700 rounded-3xl p-8 text-center text-white shadow-3xl">
+                <h3 class="text-lg font-black uppercase mb-4 tracking-widest">Código Operacional</h3>
+                <input type="password" id="unlock-pass" class="w-full bg-slate-950 border-2 border-slate-800 rounded-xl p-4 text-center text-xl tracking-[0.5em] mb-4 outline-none focus:border-blue-500 text-white" placeholder="•••••">
+                <button onclick="checkUnlock()" class="w-full bg-blue-600 py-3 rounded-xl font-black uppercase shadow-lg">Entrar</button>
             </div>
         </div>
 
-        <!-- Password Modal -->
-        <div id="password-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-            <div class="w-full max-w-xs bg-slate-900 border-2 border-slate-700 rounded-3xl p-8 shadow-3xl text-center text-white">
-                <h3 class="text-lg font-black uppercase mb-6 tracking-widest">Acesso Restrito</h3>
-                <input type="password" id="unlock-pass" class="w-full bg-slate-950 border-2 border-slate-800 rounded-xl p-4 text-center text-xl tracking-[0.5em] mb-4 outline-none focus:border-blue-500 transition-all text-white" placeholder="•••••">
-                <button onclick="checkUnlock()" class="w-full bg-blue-600 py-3 rounded-xl font-black uppercase shadow-lg">Confirmar</button>
-            </div>
-        </div>
-
-        <!-- Config Modal -->
-        <div id="settings-modal" class="fixed inset-0 z-[6000] hidden flex items-center justify-center p-4 sm:p-6 animate-in fade-in">
-            <div class="w-full max-w-md bg-slate-900 border-2 border-slate-700 rounded-3xl sm:rounded-[2.5rem] shadow-3xl overflow-hidden">
-                <div class="p-6 sm:p-8 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
-                    <h2 class="text-xl font-black uppercase italic text-white text-center text-white">Configurações</h2>
-                    <button onclick="closeSettings()" class="text-slate-500 hover:text-white transition-all"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+        <div id="settings-modal" class="fixed inset-0 z-[6000] hidden flex items-center justify-center p-4 animate-in fade-in">
+            <div class="w-full max-w-md bg-slate-900 border-2 border-slate-700 rounded-3xl shadow-3xl overflow-hidden">
+                <div class="p-6 border-b border-slate-800 flex justify-between bg-slate-950/50">
+                    <h2 class="text-xl font-black uppercase italic text-white">Configurações</h2>
+                    <button onclick="closeSettings()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
                 </div>
-                <div class="p-6 sm:p-8 space-y-4 text-white">
-                    <button onclick="triggerNUUOImport()" class="w-full p-4 bg-slate-800 border-2 border-slate-700 rounded-xl text-white font-bold uppercase text-xs">Importar Câmeras CSV</button>
-                    <button onclick="triggerImageMap()" class="w-full p-4 bg-slate-800 border-2 border-slate-700 rounded-xl text-white font-bold uppercase text-xs">Usar Planta Baixa (Stretch)</button>
-                    <div class="pt-2 flex items-center justify-between">
-                        <span class="text-[10px] font-black uppercase text-slate-500">Escala Dashboard 4K</span>
+                <div class="p-6 space-y-4">
+                    <button onclick="triggerImageMap()" class="w-full p-4 bg-slate-800 border-2 border-slate-700 rounded-xl text-white font-bold uppercase text-xs">Carregar Planta Baixa (Stretch)</button>
+                    <div class="pt-2 flex items-center justify-between text-slate-400">
+                        <span class="text-[10px] font-black uppercase">Dashboard 4K (Escala)</span>
                         <input type="checkbox" id="mode-4k" onchange="toggle4KMode(this)" class="w-6 h-6 rounded bg-slate-800 border-slate-700 text-blue-600">
                     </div>
-                    <input type="file" id="nuuo-file-input" class="hidden" accept=".csv" onchange="handleNUUOFile(this)">
                     <input type="file" id="map-image-input" class="hidden" accept="image/*" onchange="handleImageMap(this)">
                 </div>
             </div>
         </div>
 
-        <!-- Details Panel -->
-        <div id="details-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-6 sm:p-8 z-[1000] hidden flex flex-col shadow-3xl mobile-full text-white">
-            <div id="details-content" class="flex-1 overflow-y-auto space-y-6 pr-2"></div>
-        </div>
-
-        <div id="list-view" class="fixed inset-0 top-[var(--header-h)] bg-slate-950 z-[2000] hidden p-6 sm:p-12 overflow-y-auto animate-in fade-in">
-            <div id="list-content" class="max-w-4xl mx-auto grid gap-4 sm:gap-6"></div>
+        <div id="details-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-6 z-[1000] hidden flex flex-col shadow-3xl mobile-full text-white">
+            <div id="details-content" class="flex-1 overflow-y-auto space-y-6"></div>
         </div>
     </div>
 
@@ -250,22 +237,21 @@
             });
         };
 
-        // --- LÓGICA DE DIAGNÓSTICO (ATUALIZADA) ---
+        // --- LÓGICA DE DIAGNÓSTICO (PROTEGIDA CONTRA LOOPS) ---
         function getDiagnostics() {
             const alerts = [];
-            const isDown = (id) => {
+            const isDown = (id, visited = new Set()) => {
+                if (visited.has(id)) return false; 
+                visited.add(id);
                 const n = nodes.find(it => it.id === id); if (!n) return true;
                 if (CONFIG[n.type].hasIp) return activeStatuses[id] === 'offline';
                 const c = links.filter(l => l.a === id || l.b === id).map(l => (l.a === id ? l.b : l.a));
                 if (c.length === 0) return false;
-                return c.every(item => isDown(item));
+                return c.every(item => isDown(item, visited));
             };
-            nodes.filter(n => n.type === 'converter').forEach(c => { if (isDown(c.id)) alerts.push({ id: c.id, name: c.name, type: 'CONVERSOR', msg: "Falha Geral de Fibra" }); });
-            nodes.filter(n => n.type === 'switch').forEach(s => { if (isDown(s.id) && !alerts.some(a => a.type === 'CONVERSOR')) alerts.push({ id: s.id, name: s.name, type: 'SWITCH', msg: "Setor Sem Comunicação" }); });
-            nodes.filter(n => CONFIG[n.type].hasIp).forEach(a => { if (activeStatuses[a.id] === 'offline') {
-                const isInfraDown = alerts.some(al => links.some(l => (l.a === a.id && l.b === al.id) || (l.b === a.id && l.a === al.id)));
-                if(!isInfraDown) alerts.push({ id: a.id, name: a.name, type: CONFIG[a.type].label.toUpperCase(), msg: "Perda de Resposta (Ping)" });
-            }});
+            nodes.filter(n => n.type === 'converter').forEach(c => { if (isDown(c.id)) alerts.push({ id: c.id, name: c.name, type: 'CONVERSOR', msg: "Erro Fibra" }); });
+            nodes.filter(n => n.type === 'switch').forEach(s => { if (isDown(s.id) && !alerts.some(a => a.id === s.id)) alerts.push({ id: s.id, name: s.name, type: 'SWITCH', msg: "Setor Down" }); });
+            nodes.filter(n => CONFIG[n.type].hasIp).forEach(a => { if (activeStatuses[a.id] === 'offline') alerts.push({ id: a.id, name: a.name, type: CONFIG[a.type].label.toUpperCase(), msg: "Offline" }); });
             return alerts;
         }
 
@@ -302,13 +288,12 @@
                 m.on('dragend', (e) => { const p = e.target.getLatLng(); node.lat = p.lat; node.lng = p.lng; render(); });
 
                 if (node.type === 'camera') {
-                    const connectedSwitch = links.find(l => {
-                        const otherId = (l.a === node.id) ? l.b : (l.b === node.id ? l.a : null);
-                        const other = nodes.find(n => n.id === otherId);
-                        return other && other.type === 'switch';
+                    const conn = links.find(l => {
+                        const oId = (l.a === node.id) ? l.b : (l.b === node.id ? l.a : null);
+                        const o = nodes.find(n => n.id === oId); return o && o.type === 'switch';
                     });
-                    if (connectedSwitch) {
-                        const swId = (connectedSwitch.a === node.id) ? connectedSwitch.b : connectedSwitch.a;
+                    if (conn) {
+                        const swId = (conn.a === node.id) ? conn.b : conn.a;
                         if (!switchClusters[swId]) {
                             switchClusters[swId] = L.markerClusterGroup({
                                 iconCreateFunction: (c) => L.divIcon({ html: `<div>${c.getChildCount()}</div>`, className: 'camera-cluster-custom', iconSize: L.point(40, 40) }),
@@ -319,97 +304,70 @@
                     } else individualLayer.addLayer(m);
                 } else individualLayer.addLayer(m);
             });
-            updateOfflineBadge(diag);
+            updateAlertBadge(diag);
         }
 
-        // --- NOVO SISTEMA DE ALERTAS DISCRETOS ---
-        function updateOfflineBadge(diag) {
-            const badge = document.getElementById('alert-fab');
+        // --- UI GERAL ---
+        function updateAlertBadge(diag) {
+            const fab = document.getElementById('alert-fab');
             const count = document.getElementById('alert-count');
-            if (diag.length > 0) {
-                badge.style.display = 'flex';
-                count.innerText = diag.length;
-                renderOfflineList(diag);
-            } else {
-                badge.style.display = 'none';
-                closeOfflinePanel();
-            }
+            if (diag.length > 0) { fab.style.display = 'flex'; count.innerText = diag.length; renderOfflineList(diag); }
+            else { fab.style.display = 'none'; closeOfflinePanel(); }
         }
-
         function renderOfflineList(diag) {
-            const list = document.getElementById('offline-list');
-            list.innerHTML = diag.map(a => `
-                <div onclick="map.flyTo([${nodes.find(n => n.id === a.id).lat}, ${nodes.find(n => n.id === a.id).lng}], 18); openDetails('${a.id}');" 
-                     class="p-4 bg-slate-800 border-l-4 border-red-500 rounded-r-xl hover:bg-slate-700 cursor-pointer transition-all active:scale-95 group">
-                    <div class="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1 group-hover:text-white transition-colors">${a.type} • ${a.msg}</div>
-                    <div class="text-xs font-bold text-white uppercase">${a.name}</div>
-                </div>
-            `).join('');
+            document.getElementById('offline-list').innerHTML = diag.map(a => `<div onclick="map.flyTo([${nodes.find(n => n.id === a.id).lat}, ${nodes.find(n => n.id === a.id).lng}], 18); openDetails('${a.id}');" class="p-4 bg-slate-800 border-l-4 border-red-500 rounded-r-xl cursor-pointer hover:bg-slate-700 transition-all active:scale-95"><div class="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1">${a.type} • ${a.msg}</div><div class="text-xs font-bold text-white uppercase">${a.name}</div></div>`).join('');
         }
-
-        function openOfflinePanel() {
-            document.getElementById('offline-panel').classList.add('show');
-            closePanel();
-        }
-
-        function closeOfflinePanel() {
-            document.getElementById('offline-panel').classList.remove('show');
-        }
-
-        // --- SEGURANÇA / CORE ---
         function handleLogoInteraction() { if (isLocked) { logoClicks++; clearTimeout(logoTimer); if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } else logoTimer = setTimeout(() => logoClicks = 0, 500); } else toggleLogoMenu(); }
-        function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked'); document.getElementById('fab-container').style.display = 'none'; toggleLogoMenu(); showToast("PROTEGIDO"); closePanel(); render(); }
-        function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } else showToast("SENHA INCORRETA"); }
+        function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked'); document.getElementById('fab-container').style.display = 'none'; toggleLogoMenu(); showToast("MODO OPERACIONAL"); closePanel(); render(); }
+        function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } else showToast("SENHA INCORRECTA"); }
         function toggleFab() { if(isLocked) return; if (currentMode || isLinking) { resetTools(); closeFab(); return; } isMenuOpen = !isMenuOpen; document.getElementById('fab-items').classList.toggle('open', isMenuOpen); document.getElementById('fab-main').classList.toggle('active', isMenuOpen); }
-        function setMode(m) { if(isLocked) return; resetTools(); currentMode = m; document.getElementById(`tool-${m}`).classList.add('selected'); document.getElementById('fab-main').classList.add('active'); document.getElementById('mode-badge').style.display = 'block'; }
-        function toggleLinking() { if(isLocked) return; resetTools(); isLinking = true; document.getElementById('link-btn').classList.add('selected'); document.getElementById('fab-main').classList.add('active'); document.getElementById('mode-badge').style.display = 'block'; document.getElementById('mode-badge').innerText = "Modo Vínculo"; }
+        function setMode(m) { if(isLocked) return; resetTools(); currentMode = m; document.getElementById(`tool-${m}`).classList.add('selected'); document.getElementById('fab-main').classList.add('active'); document.getElementById('mode-badge').style.display = 'block'; document.getElementById('mode-badge').innerText = `INSERINDO ${CONFIG[m].label.toUpperCase()}`; }
+        function toggleLinking() { if(isLocked) return; resetTools(); isLinking = true; document.getElementById('link-btn').classList.add('selected'); document.getElementById('fab-main').classList.add('active'); document.getElementById('mode-badge').style.display = 'block'; document.getElementById('mode-badge').innerText = "CONECTANDO DISPOSITIVOS"; }
         function resetTools() { currentMode = null; isLinking = false; linkSourceId = null; document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('selected')); document.getElementById('mode-badge').style.display = 'none'; document.getElementById('fab-main').classList.remove('active'); }
         function closeFab() { isMenuOpen = false; document.getElementById('fab-items').classList.remove('open'); document.getElementById('fab-main').classList.remove('active'); }
-        function handleImageMap(input) { const reader = new FileReader(); reader.onload = (e) => { const bounds = map.getBounds(); if (imageOverlay) map.removeLayer(imageOverlay); if (baseTileLayer) map.removeLayer(baseTileLayer); imageOverlay = L.imageOverlay(e.target.result, bounds, { interactive: false }).addTo(map); map.setMaxBounds(bounds); map.fitBounds(bounds); toggleLogoMenu(); }; reader.readAsDataURL(input.files[0]); }
+        function handleImageMap(input) { const r = new FileReader(); r.onload = (e) => { const b = map.getBounds(); if (imageOverlay) map.removeLayer(imageOverlay); if (baseTileLayer) map.removeLayer(baseTileLayer); imageOverlay = L.imageOverlay(e.target.result, b, { interactive: false }).addTo(map); map.setMaxBounds(b); map.fitBounds(b); toggleLogoMenu(); }; r.readAsDataURL(input.files[0]); }
         function resetToWorldMap() { if (imageOverlay) map.removeLayer(imageOverlay); if (!baseTileLayer._map) baseTileLayer.addTo(map); map.setMaxBounds(null); toggleLogoMenu(); }
         function updateName(id, v) { nodes.find(n => n.id === id).name = v; render(); }
         function updateIp(id, v) { nodes.find(n => n.id === id).ip = v; render(); }
         function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
         function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(); render(); }
-        function closePanel() { const p = document.getElementById('details-panel'); p.classList.remove('show'); setTimeout(() => p.classList.add('hidden'), 300); selectedId = null; render(); }
+        function closePanel() { const p = document.getElementById('details-panel'); p.classList.remove('show'); selectedId = null; render(); }
+        function openOfflinePanel() { document.getElementById('offline-panel').classList.add('show'); closePanel(); }
+        function closeOfflinePanel() { document.getElementById('offline-panel').classList.remove('show'); }
         function openSettings() { if(isLocked) return; document.getElementById('settings-modal').classList.remove('hidden'); closeFab(); }
         function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
         function toggleLogoMenu() { if(isLocked) return; document.getElementById('logo-menu').classList.toggle('show'); }
-        function toggleView(v) { document.getElementById('list-view').classList.toggle('hidden', v === 'map'); if(v === 'list') renderList(); closePanel(); }
+        function toggleView(v) { document.getElementById('btn-map').classList.toggle('bg-blue-600', v === 'map'); document.getElementById('btn-list').classList.toggle('bg-blue-600', v === 'list'); }
         function locateMe() { navigator.geolocation.getCurrentPosition(p => map.flyTo([p.coords.latitude, p.coords.longitude], 17)); }
         function handleNodeClick(id) {
             if (isLinking && !isLocked) {
-                if (!linkSourceId) { linkSourceId = id; showToast(`Origem Selecionada`); }
+                if (!linkSourceId) { linkSourceId = id; showToast(`ORIGEM DEFINIDA`); }
                 else if (linkSourceId !== id) { toggleLink(linkSourceId, id); linkSourceId = null; render(); }
                 return;
             }
             if (!currentMode) openDetails(id);
         }
         function toggleLink(id1, id2) {
-            const exists = links.findIndex(l => (l.a === id1 && l.b === id2) || (l.a === id2 && l.b === id1));
-            if (exists > -1) links.splice(exists, 1);
-            else links.push({ a: id1, b: id2 });
+            const ex = links.findIndex(l => (l.a === id1 && l.b === id2) || (l.a === id2 && l.b === id1));
+            if (ex > -1) { links.splice(ex, 1); showToast("VÍNCULO REMOVIDO"); }
+            else { links.push({ a: id1, b: id2 }); showToast("VÍNCULO ESTABELECIDO"); }
         }
         function openDetails(id) {
             selectedId = id; const n = nodes.find(it => it.id === id);
-            const panel = document.getElementById('details-panel'); panel.classList.add('show');
+            const p = document.getElementById('details-panel'); p.classList.add('show');
             document.getElementById('details-content').innerHTML = `
                 <div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" ${isLocked ? 'disabled' : ''} class="bg-transparent text-lg font-black border-none p-0 focus:ring-0 w-full text-white text-center"></div>
-                <div class="p-4 bg-slate-800/40 rounded-2xl text-center border border-slate-800 text-[10px] font-bold text-slate-400">PONTO COM ${links.filter(l => l.a === id || l.b === id).length} CONEXÕES</div>
+                <div class="p-4 bg-slate-800/40 rounded-2xl text-center border border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-widest">${links.filter(l => l.a === id || l.b === id).length} Conexões Ativas</div>
                 ${CONFIG[n.type].hasIp ? `<div class="p-5 bg-slate-800/40 rounded-3xl text-center border border-slate-800">
                     <input type="text" value="${n.ip}" onchange="updateIp('${id}', this.value)" ${isLocked ? 'disabled' : ''} class="bg-slate-950 w-full p-3 rounded-xl border border-slate-800 font-mono text-center text-blue-400 mb-4 outline-none">
-                    <button onclick="toggleStatus('${id}')" class="w-full py-4 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white shadow-xl transition-all">TESTAR STATUS</button>
+                    <button onclick="toggleStatus('${id}')" class="w-full py-4 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white shadow-xl">SIMULAR TESTE</button>
                 </div>` : ''}
-                ${!isLocked ? `<button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover</button>` : ''}
+                ${!isLocked ? `<button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Item</button>` : ''}
             `;
             render();
         }
-        function triggerNUUOImport() { document.getElementById('nuuo-file-input').click(); }
-        function triggerImageMap() { document.getElementById('map-image-input').click(); }
-        function handleNUUOFile(i) { showToast("Câmeras Importadas"); closeSettings(); }
-        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-24 right-4 sm:bottom-10 sm:left-1/2 sm:-translate-x-1/2 px-8 py-3 bg-slate-900 text-white text-[9px] font-black uppercase rounded-full shadow-2xl z-[8000] border-2 border-slate-800 animate-in fade-in slide-in-from-bottom-5"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
-        function trigger4KMode(cb) { document.body.classList.toggle('mode-4k-active', cb.checked); map.invalidateSize(); }
-        function renderList() { document.getElementById('list-content').innerHTML = nodes.map(n => `<div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between"><div class="flex items-center space-x-4"><div class="p-3 bg-slate-950 rounded-xl" style="color: ${CONFIG[n.type].color}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">${CONFIG[n.type].icon}</svg></div><div><h4 class="font-black text-base text-white uppercase">${n.name}</h4><p class="text-[9px] font-bold text-slate-600">${n.ip || 'Passivo'}</p></div></div><button onclick="toggleView('map'); map.flyTo([${n.lat}, ${n.lng}], 18); openDetails('${n.id}')" class="p-3 bg-slate-800 text-slate-500 rounded-xl hover:bg-blue-600 hover:text-white transition-all"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button></div>`).join(''); }
+        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-24 left-1/2 -translate-x-1/2 px-8 py-3 bg-slate-900 text-white text-[9px] font-black uppercase rounded-full shadow-2xl z-[8000] border-2 border-slate-800 animate-in fade-in slide-in-from-bottom-5"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+        function toggle4KMode(cb) { document.body.classList.toggle('mode-4k-active', cb.checked); map.invalidateSize(); }
     </script>
 </body>
 </html>
