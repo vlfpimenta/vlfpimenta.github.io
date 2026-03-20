@@ -31,23 +31,36 @@
             background: transparent !important; border: none !important; box-shadow: none !important;
         }
 
+        /* ÍCONE OFFLINE (PIN ATUAL) */
         .marker-pin {
             width: 44px; height: 44px; border-radius: 50% 50% 50% 0;
             position: absolute; transform: rotate(-45deg); left: 50%; top: 50%;
             margin: -22px 0 0 -22px; border: 3px solid #ffffff;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 1000 !important;
-            transition: transform 0.2s;
+            transition: all 0.3s ease;
         }
         .marker-pin svg { transform: rotate(45deg); color: white; }
         .marker-pin.selected { border-color: #3b82f6; box-shadow: 0 0 25px #3b82f6; transform: rotate(-45deg) scale(1.1); }
+
+        /* ÍCONE ONLINE (BOLINHA DISCRETA) */
+        .online-dot {
+            width: 14px; height: 14px; border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.8);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+        .online-dot.selected {
+            border-color: #3b82f6;
+            box-shadow: 0 0 12px #3b82f6;
+            transform: scale(1.4);
+        }
 
         .vertex-handle {
             width: 12px; height: 12px; background: #3b82f6; border: 2px solid white;
             border-radius: 50%; cursor: move; box-shadow: 0 0 8px rgba(0,0,0,0.5);
         }
 
-        /* Estilo para o ponto do meio (arrastável) */
         .midpoint-handle {
             width: 10px; height: 10px; background: rgba(59, 130, 246, 0.5); border: 1px solid white;
             border-radius: 50%; cursor: crosshair;
@@ -321,34 +334,17 @@
                     const off = (statusMap[n1.id] || statusMap[n2.id]);
                     const pathCoords = [[n1.lat, n1.lng], ...(link.vertices || []), [n2.lat, n2.lng]];
                     L.polyline(pathCoords, { color: off ? '#ef4444' : '#3b82f6', weight: 6, opacity: 0.8, className: off ? 'offline-line' : 'data-flow-line' }).addTo(linksLayer);
-                    
                     if (!isLocked && (selectedId === link.a || selectedId === link.b)) {
-                        // Renderiza Vértices Reais
                         (link.vertices || []).forEach((v, vIdx) => {
                             const handle = L.marker(v, { draggable: true, icon: L.divIcon({ className: 'vertex-handle', iconSize: [12, 12] }) }).addTo(handlesLayer);
-                            handle.on('drag', (e) => {
-                                link.vertices[vIdx] = [e.target.getLatLng().lat, e.target.getLatLng().lng];
-                                render(); saveData();
-                            });
+                            handle.on('drag', (e) => { link.vertices[vIdx] = [e.target.getLatLng().lat, e.target.getLatLng().lng]; render(); saveData(); });
                         });
-
-                        // --- GHOST MIDPOINTS (Arrastar para criar novo ponto) ---
                         for (let i = 0; i < pathCoords.length - 1; i++) {
                             const p1 = pathCoords[i]; const p2 = pathCoords[i+1];
                             const mid = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
                             const ghost = L.marker(mid, { draggable: true, icon: L.divIcon({ className: 'midpoint-handle', iconSize: [10, 10] }) }).addTo(handlesLayer);
-                            
-                            ghost.on('dragstart', () => {
-                                // Transforma ghost em vértice real ao começar arrastar
-                                if (!link.vertices) link.vertices = [];
-                                link.vertices.splice(i, 0, mid); // 'i' funciona pois ignora o n1 inicial
-                            });
-
-                            ghost.on('drag', (e) => {
-                                link.vertices[i] = [e.target.getLatLng().lat, e.target.getLatLng().lng];
-                                render();
-                            });
-
+                            ghost.on('dragstart', () => { if (!link.vertices) link.vertices = []; link.vertices.splice(i, 0, mid); });
+                            ghost.on('drag', (e) => { link.vertices[i] = [e.target.getLatLng().lat, e.target.getLatLng().lng]; render(); });
                             ghost.on('dragend', () => { saveData(); render(); });
                         }
                     }
@@ -356,9 +352,28 @@
             });
             
             nodes.forEach(node => {
-                const isSelected = (selectedId === node.id); const isOff = statusMap[node.id];
-                let color = CONFIG[node.type].color; if (isOff) color = '#ef4444';
-                const icon = L.divIcon({ html: `<div class="marker-pin ${isSelected ? 'selected' : ''} ${isOff ? 'pulse-orange' : ''}" style="background-color: ${color}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg></div>`, iconSize: [44, 44], iconAnchor: [22, 44] });
+                const isSelected = (selectedId === node.id); 
+                const isOff = statusMap[node.id];
+                let color = CONFIG[node.type].color; 
+                
+                let html, iconSize, iconAnchor;
+
+                // --- LOGICA DE TRANSFORMAÇÃO VISUAL ---
+                if (isOff) {
+                    // Modo Alerta: Pin Pulsante e grande
+                    html = `<div class="marker-pin ${isSelected ? 'selected' : ''} pulse-orange" style="background-color: #ef4444">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg>
+                            </div>`;
+                    iconSize = [44, 44];
+                    iconAnchor = [22, 44];
+                } else {
+                    // Modo Normal: Bolinha discreta
+                    html = `<div class="online-dot ${isSelected ? 'selected' : ''}" style="background-color: ${color}"></div>`;
+                    iconSize = [14, 14];
+                    iconAnchor = [7, 7];
+                }
+
+                const icon = L.divIcon({ html, iconSize, iconAnchor });
                 const m = L.marker([node.lat, node.lng], { icon, draggable: !isLocked }).addTo(individualLayer);
                 m.on('click', (e) => { L.DomEvent.stopPropagation(e); if(isLocked) return; handleNodeClick(node.id); });
                 m.on('dragend', (e) => { const p = e.target.getLatLng(); node.lat = p.lat; node.lng = p.lng; render(); saveData(); });
@@ -413,29 +428,16 @@
             document.getElementById('fab-main').classList.add('active'); showToast("Clique na linha ou no mapa.");
         }
 
-        // --- INSERÇÃO INTELIGENTE (Detecta o segmento mais próximo) ---
         function addVertexToPath(latlng) { 
             const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId)); 
             if (!link) return;
             if (!link.vertices) link.vertices = [];
-
-            const n1 = nodes.find(n => n.id === link.a);
-            const n2 = nodes.find(n => n.id === link.b);
+            const n1 = nodes.find(n => n.id === link.a); const n2 = nodes.find(n => n.id === link.b);
             const pathPoints = [[n1.lat, n1.lng], ...link.vertices, [n2.lat, n2.lng]];
-
-            let minDistance = Infinity;
-            let insertIndex = link.vertices.length; // Default no fim
-
+            let minDistance = Infinity; let insertIndex = link.vertices.length;
             for (let i = 0; i < pathPoints.length - 1; i++) {
-                const dist = L.LineUtil.pointToSegmentDistance(
-                    map.latLngToLayerPoint(latlng),
-                    map.latLngToLayerPoint(pathPoints[i]),
-                    map.latLngToLayerPoint(pathPoints[i+1])
-                );
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    insertIndex = i;
-                }
+                const dist = L.LineUtil.pointToSegmentDistance(map.latLngToLayerPoint(latlng), map.latLngToLayerPoint(pathPoints[i]), map.latLngToLayerPoint(pathPoints[i+1]));
+                if (dist < minDistance) { minDistance = dist; insertIndex = i; }
             }
             link.vertices.splice(insertIndex, 0, [latlng.lat, latlng.lng]);
             render();
