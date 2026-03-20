@@ -118,7 +118,7 @@
         .tree-node::before { content: ""; position: absolute; left: -2px; top: 12px; width: 12px; height: 2px; background: #1e293b; }
         .tree-item { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; transition: all 0.2s; }
 
-        #vps-status { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 6000; font-size: 9px; font-weight: 900; text-transform: uppercase; color: #64748b; background: #0f172a; padding: 4px 12px; border-radius: 999px; border: 1px solid #1e293b; display: flex; align-items: center; gap: 6px; }
+        #vps-status { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 6000; font-size: 9px; font-weight: 900; text-transform: uppercase; color: #64748b; background: #0f172a; padding: 4px 12px; border-radius: 9999px; border: 1px solid #1e293b; display: flex; align-items: center; gap: 6px; }
         .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; }
         .status-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
 
@@ -246,7 +246,6 @@
             server: { label: 'Servidor', color: '#a78bfa', hasIp: true, icon: '<rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/>', rank: 4 }
         };
 
-        // --- VPS SYNC ---
         async function loadData() {
             try {
                 const response = await fetch(`${VPS_API_URL}/data`);
@@ -272,28 +271,20 @@
         window.onload = () => {
             map = L.map('map', { zoomControl: false, tap: true, maxZoom: 18, dragging: true }).setView([-23.5505, -46.6333], 15);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-            
             linksLayer = L.layerGroup().addTo(map);
             individualLayer = L.layerGroup().addTo(map);
             handlesLayer = L.layerGroup().addTo(map);
-
             map.on('click', (e) => { 
                 if (isLocked) return;
                 if (isDrawingPath) addVertexToPath(e.latlng);
                 else if (currentMode) addNode(currentMode, e.latlng); 
                 else { closePanel(); closeOfflinePanel(); document.getElementById('logo-menu').classList.remove('show'); } 
             });
-
             loadData();
         };
 
         function resetTools() {
-            currentMode = null;
-            isLinking = false;
-            isDrawingPath = false;
-            drawingNodeId = null;
-            linkSourceId = null;
-            isMenuOpen = false;
+            currentMode = null; isLinking = false; isDrawingPath = false; drawingNodeId = null; linkSourceId = null; isMenuOpen = false;
             const bar = document.getElementById('mode-indicator-bar');
             bar.style.display = 'none';
             document.getElementById('mode-actions').innerHTML = '';
@@ -341,26 +332,20 @@
         function render() {
             individualLayer.clearLayers(); linksLayer.clearLayers(); handlesLayer.clearLayers();
             const statusMap = {}; nodes.forEach(n => statusMap[n.id] = isNodeOffline(n.id));
-
             links.forEach((link) => {
                 const n1 = nodes.find(n => n.id === link.a); const n2 = nodes.find(n => n.id === link.b);
                 if (n1 && n2) {
                     const off = (statusMap[n1.id] || statusMap[n2.id]);
                     const path = [[n1.lat, n1.lng], ...(link.vertices || []), [n2.lat, n2.lng]];
                     L.polyline(path, { color: off ? '#ef4444' : '#3b82f6', weight: 6, opacity: 0.8, className: off ? 'offline-line' : 'data-flow-line' }).addTo(linksLayer);
-                    
                     if (!isLocked && (selectedId === link.a || selectedId === link.b)) {
                         (link.vertices || []).forEach((v, vIdx) => {
                             const handle = L.marker(v, { draggable: true, icon: L.divIcon({ className: 'vertex-handle', iconSize: [12, 12] }) }).addTo(handlesLayer);
-                            handle.on('drag', (e) => {
-                                link.vertices[vIdx] = [e.target.getLatLng().lat, e.target.getLatLng().lng];
-                                render(); saveData();
-                            });
+                            handle.on('drag', (e) => { link.vertices[vIdx] = [e.target.getLatLng().lat, e.target.getLatLng().lng]; render(); saveData(); });
                         });
                     }
                 }
             });
-
             nodes.forEach(node => {
                 const isSelected = (selectedId === node.id); const isOff = statusMap[node.id];
                 let color = CONFIG[node.type].color; if (isOff) color = '#ef4444';
@@ -372,7 +357,6 @@
                 m.on('click', (e) => { L.DomEvent.stopPropagation(e); if(isLocked) return; handleNodeClick(node.id); });
                 m.on('dragend', (e) => { const p = e.target.getLatLng(); node.lat = p.lat; node.lng = p.lng; render(); saveData(); });
             });
-
             updateAlertBadge(getDiagnostics());
         }
 
@@ -380,8 +364,7 @@
             const fab = document.getElementById('alert-fab');
             const count = document.getElementById('alert-count');
             if (diag.length > 0) {
-                fab.style.display = 'flex';
-                count.innerText = diag.length;
+                fab.style.display = 'flex'; count.innerText = diag.length;
                 document.getElementById('offline-list').innerHTML = diag.map(a => {
                     const n = nodes.find(node => node.id === a.id);
                     return `<div onclick="toggleView('map'); map.flyTo([${n.lat}, ${n.lng}], 18); openDetails('${a.id}');" class="p-5 bg-slate-950 border border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-500/10 transition-all shadow-xl">
@@ -395,27 +378,12 @@
         function handleNodeClick(id) { 
             if (isDrawingPath) return; 
             if (isLinking) { 
-                if (!linkSourceId) { 
-                    linkSourceId = id; 
-                    showToast(`Origem: ${nodes.find(n => n.id === id).name}`); 
-                } 
+                if (!linkSourceId) { linkSourceId = id; showToast(`Origem: ${nodes.find(n => n.id === id).name}`); } 
                 else if (linkSourceId !== id) { 
-                    const n1 = nodes.find(n => n.id === linkSourceId);
-                    const n2 = nodes.find(n => n.id === id);
-                    
-                    // Lógica de Hierarquia Automática
+                    const n1 = nodes.find(n => n.id === linkSourceId); const n2 = nodes.find(n => n.id === id);
                     let parentId, childId;
-                    if (CONFIG[n1.type].rank <= CONFIG[n2.type].rank) {
-                        parentId = n1.id; childId = n2.id;
-                    } else {
-                        parentId = n2.id; childId = n1.id;
-                    }
-
-                    links.push({ id: 'l'+Date.now(), a: parentId, b: childId, vertices: [] }); 
-                    saveData(); 
-                    linkSourceId = null; 
-                    render(); 
-                    showToast("Conectado conforme hierarquia."); 
+                    if (CONFIG[n1.type].rank <= CONFIG[n2.type].rank) { parentId = n1.id; childId = n2.id; } else { parentId = n2.id; childId = n1.id; }
+                    links.push({ id: 'l'+Date.now(), a: parentId, b: childId, vertices: [] }); saveData(); linkSourceId = null; render(); showToast("Conectado conforme hierarquia."); 
                 } 
                 return; 
             } 
@@ -424,91 +392,53 @@
 
         function openDetails(id) {
             selectedId = id; const n = nodes.find(it => it.id === id);
-            const panel = document.getElementById('details-panel');
-            panel.classList.add('show');
-            
+            const panel = document.getElementById('details-panel'); panel.classList.add('show');
             const connIds = links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
             const parent = nodes.find(vn => connIds.includes(vn.id) && (CONFIG[vn.type].rank < CONFIG[n.type].rank));
             const children = nodes.filter(vn => connIds.includes(vn.id) && (CONFIG[vn.type].rank > CONFIG[n.type].rank));
-
-            let hierarchyHtml = `
-                <div class="space-y-4 pt-4 border-t border-slate-800">
-                    <div class="text-[9px] font-black uppercase text-blue-500 tracking-widest italic">Rede Hierárquica</div>
-                    <div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800">
-                        <p class="text-[8px] text-slate-500 mb-1 uppercase">Origem do Sinal (Pai)</p>
-                        <p class="text-xs font-bold ${parent ? 'text-indigo-400' : 'text-slate-600 italic'}">
-                            ${parent ? parent.name : 'Nenhum'}
-                        </p>
-                    </div>
-                    ${n.type !== 'camera' ? `
-                    <div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800">
-                        <p class="text-[8px] text-slate-500 mb-1 uppercase">Itens Jusante (Filhos: ${children.length})</p>
-                        <div class="max-h-32 overflow-y-auto space-y-1">
-                            ${children.map(c => `<div class="text-[10px] flex justify-between"><span>${c.name}</span> <span class="${activeStatuses[c.id] === 'offline' ? 'text-red-500' : 'text-emerald-500'}">●</span></div>`).join('')}
-                        </div>
-                    </div>` : ''}
-                </div>`;
-
-            document.getElementById('details-content').innerHTML = `
-                <div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase font-black tracking-tight"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0"></div>
-                ${CONFIG[n.type].hasIp ? `
-                <div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-800">
-                    <p class="text-[8px] text-slate-500 mb-2 uppercase text-center">Endereço IP</p>
-                    <input type="text" value="${n.ip || '0.0.0.0'}" onchange="updateIp('${id}', this.value)" class="bg-slate-950 w-full p-2 rounded-lg border border-slate-800 font-mono text-center text-blue-400 outline-none">
-                    <button onclick="toggleStatus('${id}')" class="w-full mt-3 py-3 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl transition-all">Simular Status</button>
-                </div>` : ''}
-                ${hierarchyHtml}
-                <button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase shadow-lg mt-4">Editar Traçado</button>
-                <button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Ativo</button>
-            `;
+            let hierarchyHtml = `<div class="space-y-4 pt-4 border-t border-slate-800"><div class="text-[9px] font-black uppercase text-blue-500 tracking-widest italic">Rede Hierárquica</div><div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-1 uppercase">Origem do Sinal (Pai)</p><p class="text-xs font-bold ${parent ? 'text-indigo-400' : 'text-slate-600 italic'}">${parent ? parent.name : 'Nenhum'}</p></div>${n.type !== 'camera' ? `<div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-1 uppercase">Itens Jusante (Filhos: ${children.length})</p><div class="max-h-32 overflow-y-auto space-y-1">${children.map(c => `<div class="text-[10px] flex justify-between"><span>${c.name}</span> <span class="${activeStatuses[c.id] === 'offline' ? 'text-red-500' : 'text-emerald-500'}">●</span></div>`).join('')}</div></div>` : ''}</div>`;
+            document.getElementById('details-content').innerHTML = `<div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase font-black tracking-tight"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0"></div>${CONFIG[n.type].hasIp ? `<div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-2 uppercase text-center">Endereço IP</p><input type="text" value="${n.ip || '0.0.0.0'}" onchange="updateIp('${id}', this.value)" class="bg-slate-950 w-full p-2 rounded-lg border border-slate-800 font-mono text-center text-blue-400 outline-none"><button onclick="toggleStatus('${id}')" class="w-full mt-3 py-3 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl transition-all">Simular Status</button></div>` : ''}${hierarchyHtml}<button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase shadow-lg mt-4">Editar Traçado</button><button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Ativo</button>`;
             render();
         }
 
         function startDrawingPath(nodeId) { 
             isDrawingPath = true; drawingNodeId = nodeId; closePanel(); 
-            const bar = document.getElementById('mode-indicator-bar');
-            const actions = document.getElementById('mode-actions');
-            bar.style.display = 'flex'; 
-            document.getElementById('mode-text').innerText = "Editando Traçado";
-            actions.innerHTML = `
-                <button onclick="resetTools()" class="mode-btn">Concluir Edição</button>
-                <button onclick="resetNodePath('${nodeId}')" class="mode-btn" style="background:#ef4444; color:white">Restaurar Traçado</button>
-            `;
-            document.getElementById('fab-main').classList.add('active');
-            showToast("Clique no mapa para criar pontos.");
+            const bar = document.getElementById('mode-indicator-bar'); const actions = document.getElementById('mode-actions');
+            bar.style.display = 'flex'; document.getElementById('mode-text').innerText = "Editando Traçado";
+            actions.innerHTML = `<button onclick="resetTools()" class="mode-btn">Concluir Edição</button><button onclick="resetNodePath('${nodeId}')" class="mode-btn" style="background:#ef4444; color:white">Restaurar Traçado</button>`;
+            document.getElementById('fab-main').classList.add('active'); showToast("Clique no mapa para criar pontos.");
         }
 
+        // --- CORREÇÃO DA HIERARQUIA DE NOMES ---
         function addNode(type, latlng) { 
             const id = 'n'+Date.now(); 
-            nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${nodes.length+1}`, ip: CONFIG[type].hasIp ? '192.168.1.100' : null }); 
+            // Filtra os nós para contar quantos já existem desta categoria específica
+            const count = nodes.filter(n => n.type === type).length + 1;
+            
+            nodes.push({ 
+                id, 
+                type, 
+                lat: latlng.lat, 
+                lng: latlng.lng, 
+                name: `${CONFIG[type].label} ${count}`, // Nome sequencial por categoria
+                ip: CONFIG[type].hasIp ? '192.168.1.100' : null 
+            }); 
             saveData(); render();
             showToast(`${CONFIG[type].label} adicionado.`);
         }
 
         function toggleFab() { 
-            if (isLocked) return;
-            if (currentMode || isLinking || isDrawingPath) { resetTools(); return; }
-            isMenuOpen = !isMenuOpen;
-            document.getElementById('fab-items').classList.toggle('open', isMenuOpen);
-            document.getElementById('fab-main').classList.toggle('active', isMenuOpen);
+            if (isLocked) return; if (currentMode || isLinking || isDrawingPath) { resetTools(); return; }
+            isMenuOpen = !isMenuOpen; document.getElementById('fab-items').classList.toggle('open', isMenuOpen); document.getElementById('fab-main').classList.toggle('active', isMenuOpen);
         }
-        
         function setMode(m) { 
-            currentMode = m; 
-            document.getElementById('mode-indicator-bar').style.display = 'flex';
-            document.getElementById('mode-text').innerText = `Inserindo: ${CONFIG[m].label}`;
-            document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected'));
-            document.getElementById('tool-' + m).classList.add('selected');
+            currentMode = m; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = `Inserindo: ${CONFIG[m].label}`;
+            document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('tool-' + m).classList.add('selected');
         }
-
         function toggleLinking() { 
-            isLinking = true; currentMode = null;
-            document.getElementById('mode-indicator-bar').style.display = 'flex';
-            document.getElementById('mode-text').innerText = "Criando Conexões";
-            document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected'));
-            document.getElementById('link-btn').classList.add('selected');
+            isLinking = true; currentMode = null; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = "Criando Conexões";
+            document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('link-btn').classList.add('selected');
         }
-
         function openOfflinePanel() { document.getElementById('offline-panel').classList.add('show'); }
         function closeOfflinePanel() { document.getElementById('offline-panel').classList.remove('show'); }
         function closePanel() { document.getElementById('details-panel').classList.remove('show'); selectedId = null; render(); }
@@ -521,62 +451,36 @@
         function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
         function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(); render(); saveData(); }
         function handleLogoInteraction() { if (isLocked) { logoClicks++; if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } } else document.getElementById('logo-menu').classList.toggle('show'); }
-        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-900 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
-        function toggleView(v) { 
-            document.getElementById('map').style.display = v==='map'?'block':'none';
-            document.getElementById('list-view').style.display = v==='list'?'block':'none';
-            document.getElementById('btn-map').className = v==='map'?"px-5 py-2 rounded-xl text-[11px] font-black bg-blue-600 text-white shadow-xl uppercase":"px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 uppercase";
-            document.getElementById('btn-list').className = v==='list'?"px-5 py-2 rounded-xl text-[11px] font-black bg-blue-600 text-white shadow-xl uppercase":"px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 uppercase";
-            if(v==='list') renderListView(); else map.invalidateSize();
-        }
+        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-950 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+        function toggleView(v) { document.getElementById('map').style.display = v==='map'?'block':'none'; document.getElementById('list-view').style.display = v==='list'?'block':'none'; document.getElementById('btn-map').className = v==='map'?"px-5 py-2 rounded-xl text-[11px] font-black bg-blue-600 text-white shadow-xl uppercase":"px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 uppercase"; document.getElementById('btn-list').className = v==='list'?"px-5 py-2 rounded-xl text-[11px] font-black bg-blue-600 text-white shadow-xl uppercase":"px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 uppercase"; if(v==='list') renderListView(); else map.invalidateSize(); }
         function locateMe() { navigator.geolocation.getCurrentPosition(p => map.flyTo([p.coords.latitude, p.coords.longitude], 17)); }
 
         function renderListView() {
-            const container = document.getElementById('tree-container');
-            container.innerHTML = '';
+            const container = document.getElementById('tree-container'); container.innerHTML = '';
             const offlineMap = {}; nodes.forEach(n => offlineMap[n.id] = isNodeOffline(n.id));
             const getConnections = (id) => links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
             const processedIds = new Set();
             const cores = nodes.filter(n => n.type === 'core_switch');
             cores.forEach(core => {
-                processedIds.add(core.id);
-                const coreEl = createTreeItem(core, offlineMap[core.id]);
-                const coreChildren = document.createElement('div');
-                coreChildren.className = 'tree-node';
-                getConnections(core.id).map(cid => nodes.find(n => n.id === cid)).forEach(item => {
-                    if (!item || processedIds.has(item.id)) return;
-                    if (item.type === 'converter' || item.type === 'switch') processSubTree(item, coreChildren, getConnections, processedIds, offlineMap);
-                });
-                coreEl.appendChild(coreChildren);
-                container.appendChild(coreEl);
+                processedIds.add(core.id); const coreEl = createTreeItem(core, offlineMap[core.id]);
+                const coreChildren = document.createElement('div'); coreChildren.className = 'tree-node';
+                getConnections(core.id).map(cid => nodes.find(n => n.id === cid)).forEach(item => { if (!item || processedIds.has(item.id)) return; if (item.type === 'converter' || item.type === 'switch') processSubTree(item, coreChildren, getConnections, processedIds, offlineMap); });
+                coreEl.appendChild(coreChildren); container.appendChild(coreEl);
             });
             nodes.filter(n => n.type === 'converter' && !processedIds.has(n.id)).forEach(conv => processSubTree(conv, container, getConnections, processedIds, offlineMap));
             nodes.filter(n => !processedIds.has(n.id)).forEach(item => container.appendChild(createTreeItem(item, offlineMap[item.id])));
         }
 
         function processSubTree(node, parentEl, getConnections, processedIds, offlineMap) {
-            processedIds.add(node.id);
-            const el = createTreeItem(node, offlineMap[node.id]);
-            const childrenContainer = document.createElement('div');
-            childrenContainer.className = 'tree-node';
-            getConnections(node.id).map(cid => nodes.find(n => n.id === cid)).forEach(child => {
-                if (!child || processedIds.has(child.id)) return;
-                if ((node.type === 'converter' && child.type === 'switch') || (node.type === 'switch' && child.type === 'camera')) processSubTree(child, childrenContainer, getConnections, processedIds, offlineMap);
-            });
-            if (childrenContainer.children.length > 0) el.appendChild(childrenContainer);
-            parentEl.appendChild(el);
+            processedIds.add(node.id); const el = createTreeItem(node, offlineMap[node.id]);
+            const childrenContainer = document.createElement('div'); childrenContainer.className = 'tree-node';
+            getConnections(node.id).map(cid => nodes.find(n => n.id === cid)).forEach(child => { if (!child || processedIds.has(child.id)) return; if ((node.type === 'converter' && child.type === 'switch') || (node.type === 'switch' && child.type === 'camera')) processSubTree(child, childrenContainer, getConnections, processedIds, offlineMap); });
+            if (childrenContainer.children.length > 0) el.appendChild(childrenContainer); parentEl.appendChild(el);
         }
 
         function createTreeItem(node, isOff) {
-            const div = document.createElement('div');
-            div.className = 'mb-2';
-            div.innerHTML = `<div class="tree-item ${isOff ? 'border-red-500/50 bg-red-500/5' : ''}">
-                <div class="p-2 rounded-lg" style="background: ${isOff ? '#ef4444' : CONFIG[node.type].color}">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg>
-                </div>
-                <div class="flex-1"><p class="text-xs font-bold uppercase">${node.name}</p></div>
-                ${isOff ? '<span class="text-[8px] bg-red-600 px-1.5 rounded uppercase font-black">OFFLINE</span>' : ''}
-            </div>`;
+            const div = document.createElement('div'); div.className = 'mb-2';
+            div.innerHTML = `<div class="tree-item ${isOff ? 'border-red-500/50 bg-red-500/5' : ''}"><div class="p-2 rounded-lg" style="background: ${isOff ? '#ef4444' : CONFIG[node.type].color}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg></div><div class="flex-1"><p class="text-xs font-bold uppercase">${node.name}</p></div>${isOff ? '<span class="text-[8px] bg-red-600 px-1.5 rounded uppercase font-black">OFFLINE</span>' : ''}</div>`;
             return div;
         }
     </script>
