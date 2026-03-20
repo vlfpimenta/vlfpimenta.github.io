@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>InfraSegura v6.4 - Conexões Inteligentes</title>
+    <title>InfraSegura v6.5 - Gestão de Ativos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -88,10 +88,7 @@
             position: relative; transition: all 0.2s;
         }
         .fab-item-btn.selected { 
-            border-color: #3b82f6; 
-            background-color: #0f172a; 
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
-            transform: scale(1.1);
+            border-color: #3b82f6; background-color: #0f172a; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); transform: scale(1.1);
         }
 
         .alert-fab {
@@ -107,16 +104,12 @@
             padding: 10px 24px; border-radius: 9999px; 
             font-size: 11px; font-weight: 900; display: none; 
             box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5); 
-            border: 2px solid rgba(255,255,255,0.3);
-            text-transform: uppercase;
-            align-items: center;
-            gap: 15px;
+            border: 2px solid rgba(255,255,255,0.3); text-transform: uppercase; align-items: center; gap: 15px;
         }
 
         .mode-btn {
             background: white; color: #3b82f6; padding: 4px 12px; border-radius: 999px;
-            font-size: 9px; font-weight: 900; text-transform: uppercase;
-            transition: all 0.2s;
+            font-size: 9px; font-weight: 900; text-transform: uppercase; transition: all 0.2s;
         }
         .mode-btn:hover { background: #f1f5f9; transform: scale(1.05); }
 
@@ -151,7 +144,7 @@
 
         <div id="vps-status">
             <div class="status-dot" id="status-dot"></div>
-            <span id="status-text">Sincronizando com vlf-vps...</span>
+            <span id="status-text">Sincronizando...</span>
         </div>
 
         <div id="alert-fab" onclick="openOfflinePanel()" class="alert-fab">
@@ -169,11 +162,15 @@
                 </button>
 
                 <div id="logo-menu">
-                    <div class="p-5 border-b border-slate-800 bg-slate-950/50 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Gestão VPS</div>
-                    <div class="p-2 space-y-1 text-white text-xs font-bold uppercase">
-                        <button onclick="toggleAppLock()" class="w-full p-4 hover:bg-orange-600 rounded-2xl transition-all text-left">Bloquear Painel</button>
+                    <div class="p-4 border-b border-slate-800 bg-slate-950/50 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Configurações</div>
+                    <div class="p-2 space-y-1 text-white text-[10px] font-bold uppercase">
+                        <button onclick="exportMap()" class="w-full p-3 hover:bg-blue-600 rounded-xl transition-all text-left">Salvar Mapa (.json)</button>
+                        <button onclick="document.getElementById('import-input').click()" class="w-full p-3 hover:bg-emerald-600 rounded-xl transition-all text-left">Importar Mapa</button>
+                        <hr class="border-slate-800 my-1">
+                        <button onclick="toggleAppLock()" class="w-full p-3 hover:bg-orange-600 rounded-xl transition-all text-left">Bloquear Painel</button>
                     </div>
                 </div>
+                <input type="file" id="import-input" class="hidden" accept=".json" onchange="importMap(event)">
             </div>
 
             <div class="flex items-center space-x-1.5 bg-slate-950 border border-slate-800 p-1 rounded-2xl">
@@ -250,6 +247,36 @@
             server: { label: 'Servidor', color: '#a78bfa', hasIp: true, icon: '<rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/>', rank: 4 }
         };
 
+        // --- SALVAR E IMPORTAR MAPA ---
+        function exportMap() {
+            const data = JSON.stringify({ nodes, links, view: { center: map.getCenter(), zoom: map.getZoom() } });
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `Mapa_InfraSegura_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showToast("Mapa exportado com sucesso.");
+        }
+
+        function importMap(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    nodes = data.nodes || [];
+                    links = data.links || [];
+                    if (data.view) map.setView(data.view.center, data.view.zoom);
+                    render();
+                    saveData();
+                    showToast("Mapa importado.");
+                    document.getElementById('logo-menu').classList.remove('show');
+                } catch (err) { showToast("Erro ao ler arquivo."); }
+            };
+            reader.readAsText(file);
+        }
+
         async function loadData() {
             try {
                 const controller = new AbortController();
@@ -262,8 +289,7 @@
                 document.getElementById('status-text').innerText = "VPS Sincronizada";
                 render();
             } catch (e) { 
-                document.getElementById('status-text').innerText = "Modo Local Ativo"; 
-                document.getElementById('status-dot').classList.remove('status-online');
+                document.getElementById('status-text').innerText = "Modo Local"; 
                 render(); 
             }
         }
@@ -273,13 +299,11 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 2000);
                 await fetch(`${VPS_API_URL}/save`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ nodes, links }),
-                    signal: controller.signal
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ nodes, links }), signal: controller.signal
                 });
                 clearTimeout(timeoutId);
-            } catch (e) { /* Falha silenciosa para não travar UI */ }
+            } catch (e) { }
         }
 
         window.onload = () => {
@@ -306,16 +330,22 @@
             render();
         }
 
+        // --- LÓGICA DE STATUS SIMPLIFICADA ---
         function isNodeOffline(id, visited = new Set()) {
             if (visited.has(id)) return false; visited.add(id);
             const n = nodes.find(it => it.id === id); if (!n) return true;
-            if (CONFIG[n.type].hasIp) return activeStatuses[id] === 'offline';
+            
+            // Se o item tem IP e foi marcado offline manualmente/simulado
+            if (CONFIG[n.type].hasIp && activeStatuses[id] === 'offline') return true;
+
+            // Para Switches e Conversores: Só fica offline se TODOS os filhos estiverem offline
             const connIds = links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
             const downstream = connIds.filter(cid => {
                 const nn = nodes.find(it => it.id === cid);
                 return nn && CONFIG[nn.type].rank > CONFIG[n.type].rank;
             });
-            if (downstream.length === 0) return false;
+
+            if (downstream.length === 0) return false; // Sem filhos = Online (bolinha)
             return downstream.every(depId => isNodeOffline(depId, visited));
         }
 
@@ -326,46 +356,20 @@
                 if (offlineMap[n.id]) {
                     let suppressed = false;
                     const connIds = links.filter(l => l.a === n.id || l.b === n.id).map(l => l.a === n.id ? l.b : l.a);
-                    if (n.type === 'camera') suppressed = connIds.some(cid => { const o = nodes.find(on => on.id === cid); return o && (o.type === 'switch' || o.type === 'core_switch') && offlineMap[cid]; });
-                    else if (n.type === 'switch') suppressed = connIds.some(cid => { const o = nodes.find(on => on.id === cid); return o && (o.type === 'converter' || o.type === 'core_switch' || o.type === 'switch') && offlineMap[cid]; });
-                    else if (n.type === 'converter') suppressed = connIds.some(cid => { const o = nodes.find(on => on.id === cid); return o && o.type === 'core_switch' && offlineMap[cid]; });
-                    if (!suppressed) alerts.push({ id: n.id, name: n.name, type: n.type });
+                    // Supressão: Se o pai estiver offline, não alerta o filho
+                    const parentOffline = connIds.some(cid => {
+                        const o = nodes.find(on => on.id === cid);
+                        return o && CONFIG[o.type].rank < CONFIG[n.type].rank && offlineMap[cid];
+                    });
+                    if (!parentOffline) alerts.push({ id: n.id, name: n.name, type: n.type });
                 }
             });
             return alerts;
         }
 
-        // --- CORREÇÃO DO LOOP INFINITO NO RASTREAMENTO ---
-        function getCascadeImpactMap() {
-            const impactMap = new Set();
-            const offlineMap = {}; nodes.forEach(n => offlineMap[n.id] = isNodeOffline(n.id));
-            
-            nodes.forEach(node => {
-                if (offlineMap[node.id]) {
-                    let current = node;
-                    let visitedPath = new Set(); // Trava de segurança contra loops
-                    while (current && !visitedPath.has(current.id)) {
-                        visitedPath.add(current.id);
-                        const connIds = links.filter(l => l.a === current.id || l.b === current.id).map(l => l.a === current.id ? l.b : l.a);
-                        // Subida: Procura switch pai que não foi visitado ainda
-                        const parent = nodes.find(n => connIds.includes(n.id) && CONFIG[n.type].rank <= CONFIG[current.type].rank && n.id !== current.id && !visitedPath.has(n.id));
-                        
-                        if (parent && parent.type === 'switch') {
-                            impactMap.add(parent.id);
-                            current = parent;
-                        } else {
-                            current = null;
-                        }
-                    }
-                }
-            });
-            return impactMap;
-        }
-
         function render() {
             individualLayer.clearLayers(); linksLayer.clearLayers(); handlesLayer.clearLayers();
             const statusMap = {}; nodes.forEach(n => statusMap[n.id] = isNodeOffline(n.id));
-            const cascadeMap = getCascadeImpactMap();
             const isEditingMode = !!(currentMode || isLinking || isDrawingPath || isMenuOpen);
 
             links.forEach((link) => {
@@ -392,15 +396,11 @@
             });
             
             nodes.forEach(node => {
-                const isSelected = (selectedId === node.id); 
-                const isOff = statusMap[node.id];
-                const isCascading = cascadeMap.has(node.id);
+                const isSelected = (selectedId === node.id); const isOff = statusMap[node.id];
                 let color = CONFIG[node.type].color; 
                 let html, iconSize, iconAnchor;
-                if (isOff || isCascading || isEditingMode) {
-                    const pulseClass = (isOff || isCascading) ? 'pulse-orange' : '';
-                    const pinColor = (isOff || isCascading) ? '#ef4444' : color;
-                    html = `<div class="marker-pin ${isSelected ? 'selected' : ''} ${pulseClass}" style="background-color: ${pinColor}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg></div>`;
+                if (isOff || isEditingMode) {
+                    html = `<div class="marker-pin ${isSelected ? 'selected' : ''} ${isOff ? 'pulse-orange' : ''}" style="background-color: ${isOff ? '#ef4444' : color}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg></div>`;
                     iconSize = [44, 44]; iconAnchor = [22, 44];
                 } else {
                     html = `<div class="online-dot ${isSelected ? 'selected' : ''}" style="background-color: ${color}"></div>`;
@@ -421,25 +421,7 @@
                 fab.style.display = 'flex'; count.innerText = diag.length;
                 document.getElementById('offline-list').innerHTML = diag.map(a => {
                     const node = nodes.find(n => n.id === a.id);
-                    const connIds = links.filter(l => l.a === a.id || l.b === a.id).map(l => l.a === a.id ? l.b : l.a);
-                    let relationHtml = "";
-                    if (node.type === 'camera') {
-                        const sw = nodes.find(n => connIds.includes(n.id) && n.type === 'switch');
-                        const conv = nodes.find(n => n.type === 'converter' && links.some(l => (l.a === n.id || l.b === n.id) && (l.a === sw?.id || l.b === sw?.id)));
-                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]"><p class="text-red-400 font-black mb-1">CAMINHO TÉCNICO:</p><p>● Switch: ${sw ? sw.name : 'N/A'}</p><p>● Conversor: ${conv ? conv.name : 'N/A'}</p></div>`;
-                    } else if (node.type === 'switch') {
-                        const cams = nodes.filter(n => connIds.includes(n.id) && n.type === 'camera');
-                        const parentSw = nodes.find(n => connIds.includes(n.id) && n.type === 'switch' && n.id !== node.id);
-                        const conv = nodes.find(n => connIds.includes(n.id) && n.type === 'converter');
-                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]"><p class="text-red-400 font-black mb-1">IMPACTO & ORIGEM:</p>${parentSw ? `<p class="font-bold text-orange-400">⚠ Em cascata com: ${parentSw.name}</p>` : ''}<p>● Fonte de Sinal: ${conv ? conv.name : 'Cascata de Rede'}</p><p>● Câmeras Afetadas: ${cams.length > 0 ? cams.map(c => c.name).join(', ') : 'Nenhuma'}</p></div>`;
-                    } else if (node.type === 'converter') {
-                        const sws = nodes.filter(n => connIds.includes(n.id) && n.type === 'switch');
-                        const allCams = nodes.filter(n => n.type === 'camera' && links.some(l => (l.a === n.id || l.b === n.id) && sws.some(s => s.id === l.a || s.id === l.b)));
-                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]"><p class="text-red-400 font-black mb-1">CASCATA DE ERRO:</p><p>● Switches: ${sws.length > 0 ? sws.map(s => s.name).join(', ') : 'Nenhum'}</p><p>● Câmeras sob Jusante: ${allCams.length > 0 ? allCams.map(c => c.name).join(', ') : 'Nenhuma'}</p></div>`;
-                    } else if (node.type === 'core_switch') {
-                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]"><p class="text-red-400 font-black mb-1">FALHA TOTAL DE BACKBONE:</p><p>● Todos os ativos da rede estão sem comunicação com a central.</p></div>`;
-                    }
-                    return `<div onclick="toggleView('map'); map.flyTo([${node.lat}, ${node.lng}], 18); openDetails('${a.id}');" class="p-5 bg-slate-950 border border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-500/10 transition-all shadow-xl"><div class="text-[9px] font-black text-red-500 uppercase mb-1 italic tracking-widest">${CONFIG[node.type].label} OFFLINE</div><h4 class="font-black text-sm text-white uppercase">${node.name}</h4>${relationHtml}</div>`;
+                    return `<div onclick="toggleView('map'); map.flyTo([${node.lat}, ${node.lng}], 18); openDetails('${a.id}');" class="p-5 bg-slate-950 border border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-500/10 transition-all shadow-xl"><div class="text-[9px] font-black text-red-500 uppercase mb-1 italic tracking-widest">${CONFIG[node.type].label} OFFLINE</div><h4 class="font-black text-sm text-white uppercase">${node.name}</h4></div>`;
                 }).join('');
             } else { fab.style.display = 'none'; closeOfflinePanel(); }
         }
@@ -450,10 +432,10 @@
                 if (!linkSourceId) { linkSourceId = id; showToast(`Origem: ${nodes.find(n => n.id === id).name}`); } 
                 else if (linkSourceId !== id) { 
                     const n1 = nodes.find(n => n.id === linkSourceId); const n2 = nodes.find(n => n.id === id);
-                    if (n1.type === 'camera' && n2.type === 'camera') { showToast("Erro: Câmeras não podem se conectar diretamente."); linkSourceId = null; render(); return; }
-                    let parentId, childId;
-                    if (CONFIG[n1.type].rank <= CONFIG[n2.type].rank) { parentId = n1.id; childId = n2.id; } else { parentId = n2.id; childId = n1.id; }
-                    links.push({ id: 'l'+Date.now(), a: parentId, b: childId, vertices: [] }); saveData(); linkSourceId = null; render(); showToast("Conectado conforme hierarquia."); 
+                    if (n1.type === 'camera' && n2.type === 'camera') { showToast("Câmeras não conectam em câmeras."); linkSourceId = null; render(); return; }
+                    let pId = (CONFIG[n1.type].rank <= CONFIG[n2.type].rank) ? n1.id : n2.id;
+                    let cId = (pId === n1.id) ? n2.id : n1.id;
+                    links.push({ id: 'l'+Date.now(), a: pId, b: cId, vertices: [] }); saveData(); linkSourceId = null; render(); showToast("Conectado."); 
                 } 
                 return; 
             } 
@@ -463,36 +445,12 @@
         function openDetails(id) {
             selectedId = id; const n = nodes.find(it => it.id === id);
             const panel = document.getElementById('details-panel'); panel.classList.add('show');
-            const connIds = links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
-            const parent = nodes.find(vn => connIds.includes(vn.id) && (CONFIG[vn.type].rank <= CONFIG[n.type].rank) && vn.id !== id);
-            const children = nodes.filter(vn => connIds.includes(vn.id) && (CONFIG[vn.type].rank > CONFIG[n.type].rank));
-            let hierarchyHtml = `<div class="space-y-4 pt-4 border-t border-slate-800"><div class="text-[9px] font-black uppercase text-blue-500 tracking-widest italic">Rede Hierárquica</div><div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-1 uppercase">Origem do Sinal (Pai)</p><p class="text-xs font-bold ${parent ? 'text-indigo-400' : 'text-slate-600 italic'}">${parent ? parent.name : 'Nenhum'}</p></div>${n.type !== 'camera' ? `<div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-1 uppercase">Itens Jusante (Filhos: ${children.length})</p><div class="max-h-32 overflow-y-auto space-y-1">${children.map(c => `<div class="text-[10px] flex justify-between"><span>${c.name}</span> <span class="${activeStatuses[c.id] === 'offline' ? 'text-red-500' : 'text-emerald-500'}">●</span></div>`).join('')}</div></div>` : ''}</div>`;
-            document.getElementById('details-content').innerHTML = `<div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase font-black tracking-tight"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0"></div>${CONFIG[n.type].hasIp ? `<div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-2 uppercase text-center">Endereço IP</p><input type="text" value="${n.ip || '0.0.0.0'}" onchange="updateIp('${id}', this.value)" class="bg-slate-950 w-full p-2 rounded-lg border border-slate-800 font-mono text-center text-blue-400 outline-none"><button onclick="toggleStatus('${id}')" class="w-full mt-3 py-3 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl transition-all">Simular Status</button></div>` : ''}${hierarchyHtml}<button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase shadow-lg mt-4">Editar Traçado</button><button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Ativo</button>`;
+            document.getElementById('details-content').innerHTML = `<div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase font-black tracking-tight"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0"></div>${CONFIG[n.type].hasIp ? `<div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-2 uppercase text-center">Endereço IP</p><input type="text" value="${n.ip || '0.0.0.0'}" onchange="updateIp('${id}', this.value)" class="bg-slate-950 w-full p-2 rounded-lg border border-slate-800 font-mono text-center text-blue-400 outline-none"><button onclick="toggleStatus('${id}')" class="w-full mt-3 py-3 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl transition-all">Simular Status</button></div>` : ''}<button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase shadow-lg mt-4">Editar Traçado</button><button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Ativo</button>`;
             render();
         }
 
-        function startDrawingPath(nodeId) { 
-            isDrawingPath = true; drawingNodeId = nodeId; closePanel(); 
-            const bar = document.getElementById('mode-indicator-bar'); const actions = document.getElementById('mode-actions');
-            bar.style.display = 'flex'; document.getElementById('mode-text').innerText = "Editando Traçado";
-            actions.innerHTML = `<button onclick="resetTools()" class="mode-btn">Concluir Edição</button><button onclick="resetNodePath('${nodeId}')" class="mode-btn" style="background:#ef4444; color:white">Restaurar Traçado</button>`;
-            document.getElementById('fab-main').classList.add('active'); showToast("Clique na linha ou no mapa.");
-        }
-
-        function addVertexToPath(latlng) { 
-            const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId)); 
-            if (!link) return; if (!link.vertices) link.vertices = [];
-            const n1 = nodes.find(n => n.id === link.a); const n2 = nodes.find(n => n.id === link.b);
-            const pathPoints = [[n1.lat, n1.lng], ...link.vertices, [n2.lat, n2.lng]];
-            let minDistance = Infinity; let insertIndex = link.vertices.length;
-            for (let i = 0; i < pathPoints.length - 1; i++) {
-                const dist = L.LineUtil.pointToSegmentDistance(map.latLngToLayerPoint(latlng), map.latLngToLayerPoint(pathPoints[i]), map.latLngToLayerPoint(pathPoints[i+1]));
-                if (dist < minDistance) { minDistance = dist; insertIndex = i; }
-            }
-            link.vertices.splice(insertIndex, 0, [latlng.lat, latlng.lng]);
-            render();
-        }
-
+        function startDrawingPath(nodeId) { isDrawingPath = true; drawingNodeId = nodeId; closePanel(); const bar = document.getElementById('mode-indicator-bar'); const actions = document.getElementById('mode-actions'); bar.style.display = 'flex'; document.getElementById('mode-text').innerText = "Editando Traçado"; actions.innerHTML = `<button onclick="resetTools()" class="mode-btn">Concluir Edição</button><button onclick="resetNodePath('${nodeId}')" class="mode-btn" style="background:#ef4444; color:white">Restaurar Traçado</button>`; document.getElementById('fab-main').classList.add('active'); render(); }
+        function addVertexToPath(latlng) { const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId)); if (!link) return; if (!link.vertices) link.vertices = []; const n1 = nodes.find(n => n.id === link.a); const n2 = nodes.find(n => n.id === link.b); const points = [[n1.lat, n1.lng], ...link.vertices, [n2.lat, n2.lng]]; let minDist = Infinity; let idx = link.vertices.length; for (let i = 0; i < points.length - 1; i++) { const d = L.LineUtil.pointToSegmentDistance(map.latLngToLayerPoint(latlng), map.latLngToLayerPoint(points[i]), map.latLngToLayerPoint(points[i+1])); if (d < minDist) { minDist = d; idx = i; } } link.vertices.splice(idx, 0, [latlng.lat, latlng.lng]); render(); }
         function addNode(type, latlng) { const id = 'n'+Date.now(); const count = nodes.filter(n => n.type === type).length + 1; nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${count}`, ip: CONFIG[type].hasIp ? '192.168.1.100' : null }); saveData(); render(); showToast(`${CONFIG[type].label} adicionado.`); }
         function toggleFab() { if (isLocked) return; if (currentMode || isLinking || isDrawingPath) { resetTools(); return; } isMenuOpen = !isMenuOpen; document.getElementById('fab-items').classList.toggle('open', isMenuOpen); document.getElementById('fab-main').classList.toggle('active', isMenuOpen); render(); }
         function setMode(m) { currentMode = m; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = `Inserindo: ${CONFIG[m].label}`; document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('tool-' + m).classList.add('selected'); }
@@ -508,7 +466,7 @@
         function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
         function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(); render(); saveData(); }
         function handleLogoInteraction() { if (isLocked) { logoClicks++; if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } } else document.getElementById('logo-menu').classList.toggle('show'); }
-        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-950 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-900 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
         function toggleView(v) { document.getElementById('map').style.display = v==='map'?'block':'none'; document.getElementById('list-view').style.display = v==='list'?'block':'none'; document.getElementById('btn-map').className = v==='map'?"px-5 py-2 rounded-xl text-[11px] font-black bg-blue-600 text-white shadow-xl uppercase":"px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 uppercase"; document.getElementById('btn-list').className = v==='list'?"px-5 py-2 rounded-xl text-[11px] font-black bg-blue-600 text-white shadow-xl uppercase":"px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 uppercase"; if(v==='list') renderListView(); else map.invalidateSize(); }
         function locateMe() { navigator.geolocation.getCurrentPosition(p => map.flyTo([p.coords.latitude, p.coords.longitude], 17)); }
 
@@ -531,7 +489,7 @@
         function processSubTree(node, parentEl, getConnections, processedIds, offlineMap) {
             processedIds.add(node.id); const el = createTreeItem(node, offlineMap[node.id]);
             const childrenContainer = document.createElement('div'); childrenContainer.className = 'tree-node';
-            getConnections(node.id).map(cid => nodes.find(n => n.id === cid)).forEach(child => { if (!child || processedIds.has(child.id)) return; if ((node.type === 'converter' && child.type === 'switch') || (node.type === 'switch' && child.type === 'camera') || (node.type === 'switch' && child.type === 'switch')) processSubTree(child, childrenContainer, getConnections, processedIds, offlineMap); });
+            getConnections(node.id).map(cid => nodes.find(n => n.id === cid)).forEach(child => { if (!child || processedIds.has(child.id)) return; if ((node.type === 'converter' && child.type === 'switch') || (node.type === 'switch' && child.type === 'camera')) processSubTree(child, childrenContainer, getConnections, processedIds, offlineMap); });
             if (childrenContainer.children.length > 0) el.appendChild(childrenContainer); parentEl.appendChild(el);
         }
 
