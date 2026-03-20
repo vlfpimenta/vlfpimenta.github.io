@@ -349,13 +349,39 @@
             render();
         }
 
-        function isNodeOffline(id, visited = new Set()) {
-            if (visited.has(id)) return false; visited.add(id);
-            const n = nodes.find(it => it.id === id); if (!n) return true;
-            if (CONFIG[n.type].hasIp && activeStatuses[id] === 'offline') return true;
-            const parentLinks = links.filter(l => l.b === id);
-            if (parentLinks.length === 0) return false; 
-            return parentLinks.every(l => isNodeOffline(l.a, visited));
+        // Nova lógica de agrupamento de falhas (Bottom-up + Top-down)
+        function getStatusMap() {
+            let statusMap = {};
+            // Primeiramente marca todos que estão manualmente em estado offline (somente itens que suportam IP)
+            nodes.forEach(n => statusMap[n.id] = (CONFIG[n.type].hasIp && activeStatuses[n.id] === 'offline'));
+
+            let changed = true;
+            while(changed) {
+                changed = false;
+                nodes.forEach(n => {
+                    if (!statusMap[n.id]) {
+                        // Varredura de Cima para Baixo (Se o PAI cair, o FILHO cai)
+                        const parentLink = links.find(l => l.b === n.id);
+                        if (parentLink && statusMap[parentLink.a]) {
+                            statusMap[n.id] = true;
+                            changed = true;
+                        }
+                        
+                        // Varredura de Baixo para Cima (Se TODOS os FILHOS caírem e eu for um equipamento sem IP, eu caio)
+                        if (!CONFIG[n.type].hasIp) {
+                            const childrenIds = links.filter(l => l.a === n.id).map(l => l.b);
+                            if (childrenIds.length > 0) {
+                                const allChildrenOffline = childrenIds.every(cid => statusMap[cid]);
+                                if (allChildrenOffline) {
+                                    statusMap[n.id] = true;
+                                    changed = true;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            return statusMap;
         }
 
         function getPathLinkIds(nodeId) {
@@ -458,7 +484,7 @@
 
         function render() {
             individualLayer.clearLayers(); linksLayer.clearLayers(); handlesLayer.clearLayers();
-            const statusMap = {}; nodes.forEach(n => statusMap[n.id] = isNodeOffline(n.id));
+            const statusMap = getStatusMap(); // Obter mapa consolidado de status online/offline
             const isEditingMode = !!(currentMode || isLinking || isDrawingPath || isMenuOpen);
 
             let pathIds = selectedId ? getPathLinkIds(selectedId) : null;
@@ -471,7 +497,6 @@
             while (queue.length > 0) {
                 let curr = queue.shift();
                 links.forEach(l => {
-                    // Sobe na hierarquia: curr é o "filho", l.a é o "pai"
                     if (l.b === curr) {
                         internetLinks.add(l.id);
                         if (!visitedNodes.has(l.a)) {
@@ -552,16 +577,30 @@
                 m.on('click', (e) => { L.DomEvent.stopPropagation(e); if(isLocked) return; handleNodeClick(node.id); });
                 m.on('dragend', (e) => { const p = e.target.getLatLng(); node.lat = p.lat; node.lng = p.lng; render(); saveData(); });
             });
-            updateAlertBadge();
+            updateAlertBadge(statusMap);
         }
 
-        function updateAlertBadge() {
-            const fab = document.getElementById('alert-fab'); const count = document.getElementById('alert-count');
-            const offlineNodes = nodes.filter(n => isNodeOffline(n.id));
-            if (offlineNodes.length > 0) {
-                fab.style.display = 'flex'; count.innerText = offlineNodes.length;
-                document.getElementById('offline-list').innerHTML = offlineNodes.map(n => `<div onclick="if(event) event.stopPropagation(); toggleView('map'); openDetails('${n.id}');" class="p-5 bg-slate-950 border border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-500/10 shadow-xl"><div class="text-[9px] font-black text-red-500 uppercase mb-1 italic tracking-widest">${CONFIG[n.type].label} OFFLINE</div><h4 class="font-black text-sm text-white uppercase">${n.name}</h4></div>`).join('');
-            } else { fab.style.display = 'none'; closeOfflinePanel(); }
+        function updateAlertBadge(statusMap) {
+            const fab = document.getElementById('alert-fab'); 
+            const count = document.getElementById('alert-count');
+            
+            // Ocultação de Ruído: Filtra apenas os equipamentos raiz do problema.
+            // Se um pai também está offline, esconde o filho da lista.
+            const rootOfflineNodes = nodes.filter(n => {
+                if (!statusMap[n.id]) return false;
+                const parentLink = links.find(l => l.b === n.id);
+                // Se não tem pai, ou o pai NÃO está offline, ele é a raiz do problema
+                return !parentLink || !statusMap[parentLink.a];
+            });
+
+            if (rootOfflineNodes.length > 0) {
+                fab.style.display = 'flex'; 
+                count.innerText = rootOfflineNodes.length;
+                document.getElementById('offline-list').innerHTML = rootOfflineNodes.map(n => `<div onclick="if(event) event.stopPropagation(); toggleView('map'); openDetails('${n.id}');" class="p-5 bg-slate-950 border border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-500/10 shadow-xl"><div class="text-[9px] font-black text-red-500 uppercase mb-1 italic tracking-widest">${CONFIG[n.type].label} OFFLINE</div><h4 class="font-black text-sm text-white uppercase">${n.name}</h4></div>`).join('');
+            } else { 
+                fab.style.display = 'none'; 
+                closeOfflinePanel(); 
+            }
         }
 
         function handleNodeClick(id) { 
@@ -701,7 +740,7 @@
 
         function renderListView() {
             const container = document.getElementById('tree-container'); container.innerHTML = '';
-            const statusMap = {}; nodes.forEach(n => statusMap[n.id] = isNodeOffline(n.id));
+            const statusMap = getStatusMap();
             const roots = nodes.filter(n => !links.some(l => l.b === n.id));
             roots.forEach(root => { container.appendChild(buildTreeElement(root, statusMap)); });
         }
