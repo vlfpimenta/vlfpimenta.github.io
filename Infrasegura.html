@@ -64,12 +64,11 @@
         #mode-indicator-bar { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 4500; background: #3b82f6; color: white; padding: 10px 24px; border-radius: 9999px; font-size: 11px; font-weight: 900; display: none; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5); border: 2px solid rgba(255,255,255,0.3); text-transform: uppercase; align-items: center; gap: 15px; }
         .mode-btn { background: white; color: #3b82f6; padding: 4px 12px; border-radius: 999px; font-size: 9px; font-weight: 900; text-transform: uppercase; transition: all 0.2s; }
         .mode-btn:hover { background: #f1f5f9; transform: scale(1.05); }
-        #vps-status { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 6000; font-size: 9px; font-weight: 900; text-transform: uppercase; color: #64748b; background: #0f172a; padding: 4px 12px; border-radius: 9999px; border: 1px solid #1e293b; display: flex; align-items: center; gap: 6px; }
-        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; }
-        .status-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
         #details-panel, #offline-panel { transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none; transform: translateX(110%); z-index: 4000; }
         #details-panel.show, #offline-panel.show { opacity: 1; transform: translateX(0); pointer-events: auto; }
         
+        .locked-mode #settings-btn-container { display: none !important; }
+
         @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .pulse-orange { animation: pulse-orange 2s infinite; }
 
@@ -102,11 +101,6 @@
         <div id="mode-indicator-bar">
             <span id="mode-text">Modo Ativo</span>
             <div id="mode-actions" class="flex gap-2"></div>
-        </div>
-
-        <div id="vps-status">
-            <div class="status-dot" id="status-dot"></div>
-            <span id="status-text">Pronto</span>
         </div>
 
         <div id="alert-fab" onclick="openOfflinePanel(event)" class="alert-fab">
@@ -142,23 +136,29 @@
                 <button onclick="toggleView('list', event)" id="btn-list" class="px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 hover:text-white transition-all uppercase">Lista</button>
             </div>
 
-            <div class="flex gap-2 relative">
-                <button onclick="fitAllNodes(true)" title="Ajustar Visão" class="p-3 bg-slate-800 hover:bg-blue-600 rounded-xl border border-slate-700 shadow-lg active:scale-90 transition-all">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M15 3h6v6M9 21H3v-6M21 15v6h-6M3 9V3h6"/></svg>
-                </button>
+            <div id="settings-btn-container" class="flex gap-2 relative">
                 <button onclick="toggleSettingsMenu(event)" title="Configurações" class="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 shadow-lg active:scale-90 transition-transform text-white">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
 
                 <div id="settingsMenu" class="absolute top-[55px] right-0 w-52 bg-[#0f172a] border-2 border-slate-700 rounded-2xl shadow-2xl hidden z-[3000] p-2">
+                    <button onclick="initPasswordChange()" class="w-full p-3 hover:bg-slate-800 rounded-xl transition-all text-left flex justify-between text-white text-[10px] font-bold uppercase mb-1">Alterar Senha <span>🔑</span></button>
                     <button onclick="toggleAppLock()" class="w-full p-3 hover:bg-orange-600 rounded-xl transition-all text-left flex justify-between text-white text-[10px] font-bold uppercase">Bloquear Tela <span>🔒</span></button>
                 </div>
             </div>
         </header>
 
-        <!-- Botão de localização menor no canto do mapa -->
-        <button id="map-locate-btn" onclick="locateMeAndFly(event)" class="absolute top-[80px] right-4 z-[1000] p-2 bg-slate-900/60 hover:bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl shadow-lg transition-all text-white/80 hover:text-white" title="Minha Localização">
+        <!-- Botões Overlay do Mapa -->
+        <button id="map-fit-btn" onclick="fitAllNodes(true); if(event) event.stopPropagation();" class="absolute top-[80px] right-4 z-[1000] p-2.5 bg-slate-900/60 hover:bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl shadow-lg transition-all text-white/80 hover:text-white" title="Visão Geral">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 15v6h-6M3 9V3h6"/></svg>
+        </button>
+
+        <button id="map-locate-btn" onclick="locateMeAndFly(event)" class="absolute top-[135px] right-4 z-[1000] p-2.5 bg-slate-900/60 hover:bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl shadow-lg transition-all text-white/80 hover:text-white" title="Minha Localização">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+        </button>
+
+        <button id="map-layer-btn" onclick="toggleMapLayer(event)" class="absolute top-[190px] right-4 z-[1000] p-2.5 bg-slate-900/60 hover:bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl shadow-lg transition-all text-white/80 hover:text-white" title="Alternar Mapa/Satélite">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
         </button>
 
         <div id="fab-container" class="fab-container">
@@ -215,24 +215,33 @@
 
         <div id="password-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
             <div class="w-full max-w-xs bg-slate-900 border-2 border-slate-700 rounded-[2.5rem] p-10 text-center text-white shadow-4xl">
-                <h3 class="text-xl font-black uppercase mb-8 tracking-tighter">Segurança</h3>
-                <input type="password" id="unlock-pass" class="w-full bg-slate-950 border-2 border-slate-800 rounded-2xl p-5 text-center text-2xl tracking-[0.5em] mb-6 outline-none focus:border-blue-500 text-white" placeholder="•••••">
-                <button onclick="checkUnlock()" class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase shadow-lg">Desbloquear</button>
+                <h3 id="pass-modal-title" class="text-xl font-black uppercase mb-8 tracking-tighter">Segurança</h3>
+                <p id="pass-modal-msg" class="text-[10px] text-slate-400 mb-4 uppercase hidden"></p>
+                <input type="password" id="unlock-pass" onkeypress="if(event.key === 'Enter') handlePasswordAction()" class="w-full bg-slate-950 border-2 border-slate-800 rounded-2xl p-5 text-center text-2xl tracking-[0.5em] mb-6 outline-none focus:border-blue-500 text-white" placeholder="•••••">
+                <div class="flex gap-2">
+                    <button id="pass-cancel-btn" onclick="closePasswordModal()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-black uppercase shadow-lg text-xs hidden">Cancelar</button>
+                    <button id="pass-action-btn" onclick="handlePasswordAction()" class="flex-1 bg-blue-600 py-4 rounded-2xl font-black uppercase shadow-lg text-xs">Desbloquear</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const VPS_API_URL = "https://infrasec.vlfp.com.br/api"; 
         let nodes = []; let links = []; let map; let selectedId = null;
         let isLinking = false; let isDrawingPath = false; 
         let drawingNodeId = null; let linkSourceId = null; 
         let activeStatuses = {}; let currentMode = null; 
         let isLocked = false; let logoClicks = 0; let isMenuOpen = false;
-        let individualLayer, linksLayer, handlesLayer, worldTiles, bgImageLayer;
+        
+        let individualLayer, linksLayer, handlesLayer, bgImageLayer;
+        let darkMapLayer, satelliteLayer;
+        let currentMapLayer = 'dark';
         let currentBackgroundBase64 = null; let minZoomLimit = 15;
         let previousMapView = null;
         let userLocationMarker = null;
+        
+        let appPasswordHash = null;
+        let passwordModalMode = 'unlock'; // unlock, setup, change_current, change_new
 
         const CONFIG = {
             core_switch: { label: 'Switch Principal', color: '#6366f1', hasIp: true, icon: '<rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2"/>', rank: 0 },
@@ -241,6 +250,144 @@
             camera: { label: 'Câmera', color: '#3b82f6', hasIp: true, icon: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>', rank: 3 },
             server: { label: 'Servidor', color: '#a78bfa', hasIp: true, icon: '<rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/>', rank: 4 }
         };
+
+        // Função de Hash (Segurança Básica)
+        async function hashPassword(msg) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(msg);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Controle do Modal de Senha
+        function openPasswordModal(mode) {
+            passwordModalMode = mode;
+            const modal = document.getElementById('password-modal');
+            const title = document.getElementById('pass-modal-title');
+            const msg = document.getElementById('pass-modal-msg');
+            const input = document.getElementById('unlock-pass');
+            const actionBtn = document.getElementById('pass-action-btn');
+            const cancelBtn = document.getElementById('pass-cancel-btn');
+
+            input.value = '';
+            msg.classList.remove('hidden');
+            cancelBtn.classList.remove('hidden');
+
+            if (mode === 'setup') {
+                title.innerText = 'Nova Senha';
+                msg.innerText = 'Defina uma senha para bloquear';
+                actionBtn.innerText = 'Salvar';
+            } else if (mode === 'unlock') {
+                title.innerText = 'Bloqueado';
+                msg.innerText = 'Insira a senha para acessar';
+                actionBtn.innerText = 'Desbloquear';
+                cancelBtn.classList.add('hidden'); // Não pode cancelar na tela de bloqueio
+            } else if (mode === 'change_current') {
+                title.innerText = 'Segurança';
+                msg.innerText = 'Insira a senha atual';
+                actionBtn.innerText = 'Avançar';
+            } else if (mode === 'change_new') {
+                title.innerText = 'Nova Senha';
+                msg.innerText = 'Digite a nova senha';
+                actionBtn.innerText = 'Salvar';
+            }
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => input.focus(), 100);
+        }
+
+        function closePasswordModal() {
+            document.getElementById('password-modal').classList.add('hidden');
+        }
+
+        async function handlePasswordAction() {
+            const inputVal = document.getElementById('unlock-pass').value;
+            if (!inputVal) { showToast("Insira uma senha!"); return; }
+
+            const hashed = await hashPassword(inputVal);
+
+            if (passwordModalMode === 'setup') {
+                appPasswordHash = hashed;
+                saveData();
+                closePasswordModal();
+                executeLock();
+            } else if (passwordModalMode === 'unlock') {
+                if (hashed === appPasswordHash) {
+                    isLocked = false; 
+                    document.body.classList.remove('locked-mode'); 
+                    document.getElementById('fab-container').style.display = 'flex'; 
+                    
+                    // Restaura a movimentação e o zoom do mapa
+                    map.touchZoom.enable();
+                    map.doubleClickZoom.enable();
+                    map.scrollWheelZoom.enable();
+                    map.boxZoom.enable();
+                    map.keyboard.enable();
+                    checkDrag(); // Restaura o dragging com base nas regras da planta de fundo
+
+                    closePasswordModal();
+                    showToast("Desbloqueado");
+                    logoClicks = 0;
+                    render();
+                } else {
+                    showToast("Senha Incorreta!");
+                    document.getElementById('unlock-pass').value = '';
+                }
+            } else if (passwordModalMode === 'change_current') {
+                if (hashed === appPasswordHash) {
+                    openPasswordModal('change_new');
+                } else {
+                    showToast("Senha atual incorreta!");
+                    document.getElementById('unlock-pass').value = '';
+                }
+            } else if (passwordModalMode === 'change_new') {
+                appPasswordHash = hashed;
+                saveData();
+                closePasswordModal();
+                showToast("Senha alterada com sucesso!");
+            }
+        }
+
+        function initPasswordChange() {
+            document.getElementById('settingsMenu').classList.add('hidden');
+            if (!appPasswordHash) {
+                openPasswordModal('setup');
+            } else {
+                openPasswordModal('change_current');
+            }
+        }
+
+        function toggleAppLock() { 
+            resetTools(); 
+            closePanel(null); 
+            document.getElementById('logo-menu').classList.remove('show'); 
+            document.getElementById('settingsMenu').classList.add('hidden');
+            
+            if (!appPasswordHash) {
+                openPasswordModal('setup');
+                return;
+            }
+            executeLock(); 
+        }
+
+        function executeLock() {
+            isLocked = true; 
+            document.body.classList.add('locked-mode'); 
+            document.getElementById('fab-container').style.display = 'none'; 
+            
+            // Retorna a câmera para a visão geral
+            fitAllNodes(true);
+            
+            // Bloqueia completamente movimentação e zoom
+            map.dragging.disable();
+            map.touchZoom.disable();
+            map.doubleClickZoom.disable();
+            map.scrollWheelZoom.disable();
+            map.boxZoom.disable();
+            map.keyboard.disable();
+
+            showToast("MODO OPERAÇÃO ATIVADO"); 
+        }
 
         function openSaveModal() {
             document.getElementById('save-modal').classList.remove('hidden');
@@ -254,7 +401,8 @@
 
         function confirmExport() {
             const filename = document.getElementById('save-filename').value || "Projeto_Rede";
-            const data = JSON.stringify({ nodes, links, background: currentBackgroundBase64, view: { center: map.getCenter(), zoom: map.getZoom() } });
+            // Inclui o hash da senha na exportação
+            const data = JSON.stringify({ nodes, links, background: currentBackgroundBase64, view: { center: map.getCenter(), zoom: map.getZoom() }, passwordHash: appPasswordHash });
             const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `${filename}.json`; a.click();
@@ -269,9 +417,11 @@
                 try {
                     const data = JSON.parse(e.target.result);
                     nodes = data.nodes || []; links = data.links || [];
+                    appPasswordHash = data.passwordHash || null; // Recupera a senha criptografada do arquivo
+                    
                     if (data.background) applyBackground(data.background); else resetToWorldMap();
+                    saveData(); 
                     render(); 
-                    // Enquadramento automático com delay seguro na importação
                     setTimeout(() => fitAllNodes(false), 300);
                     showToast("Projeto Carregado.");
                 } catch (err) { showToast("Erro no arquivo."); }
@@ -288,8 +438,10 @@
 
         function applyBackground(base64) {
             currentBackgroundBase64 = base64;
-            if (worldTiles) map.removeLayer(worldTiles);
+            if (map.hasLayer(darkMapLayer)) map.removeLayer(darkMapLayer);
+            if (map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
             if (bgImageLayer) map.removeLayer(bgImageLayer);
+            
             const bounds = map.getBounds();
             bgImageLayer = L.imageOverlay(base64, bounds, { zIndex: 0 }).addTo(map);
             map.setMaxBounds(bounds); minZoomLimit = map.getZoom();
@@ -304,31 +456,39 @@
         function resetToWorldMap() {
             currentBackgroundBase64 = null;
             if (bgImageLayer) map.removeLayer(bgImageLayer);
-            if (!map.hasLayer(worldTiles)) worldTiles.addTo(map);
+            
+            if (currentMapLayer === 'dark' && !map.hasLayer(darkMapLayer)) darkMapLayer.addTo(map);
+            else if (currentMapLayer === 'satellite' && !map.hasLayer(satelliteLayer)) satelliteLayer.addTo(map);
+            
             map.setMaxBounds(null); map.setMinZoom(1); map.setMaxZoom(28);
             map.dragging.enable();
             document.getElementById('logo-menu').classList.remove('show');
             document.getElementById('settingsMenu').classList.add('hidden');
         }
 
-        async function loadData() {
+        function loadData() {
             try {
-                const response = await fetch(`${VPS_API_URL}/data`);
-                const data = await response.json();
-                nodes = data.nodes || []; links = data.links || []; 
-                render();
-                // Enquadramento automático com delay seguro no primeiro carregamento
-                setTimeout(() => fitAllNodes(false), 300);
+                const localData = localStorage.getItem('infrasegura_data');
+                if (localData) {
+                    const parsed = JSON.parse(localData);
+                    nodes = parsed.nodes || [];
+                    links = parsed.links || [];
+                    appPasswordHash = parsed.passwordHash || null; // Recupera hash
+                }
             } catch (e) { 
-                render(); 
-                setTimeout(() => fitAllNodes(false), 300);
+                console.error("Erro ao carregar dados locais", e);
             }
+            render();
+            if(nodes.length > 0) setTimeout(() => fitAllNodes(false), 300);
         }
 
-        async function saveData() {
+        function saveData() {
             try {
-                await fetch(`${VPS_API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nodes, links }) });
-            } catch (e) { }
+                // Salva localmente com a senha atrelada
+                localStorage.setItem('infrasegura_data', JSON.stringify({ nodes, links, passwordHash: appPasswordHash }));
+            } catch (e) { 
+                console.error("Erro ao salvar dados locais", e);
+            }
         }
 
         function fitAllNodes(animate = true) {
@@ -345,7 +505,6 @@
                 if (animate) {
                     map.flyToBounds(targetBounds, { padding: [50, 50], duration: 1 });
                 } else {
-                    // FitBounds é instantâneo e melhor para usar assim que a página renderiza
                     map.fitBounds(targetBounds, { padding: [50, 50] });
                 }
                 if(animate) showToast("Visão Ajustada");
@@ -356,8 +515,15 @@
         }
 
         window.onload = () => {
+            // Inicializa mapa base
             map = L.map('map', { zoomControl: false, tap: false, maxZoom: 28 }).setView([-23.5505, -46.6333], 10);
-            worldTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 28, maxNativeZoom: 18 }).addTo(map);
+            
+            // Define camadas
+            darkMapLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 28, maxNativeZoom: 18 });
+            satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 28, maxNativeZoom: 19 });
+            
+            darkMapLayer.addTo(map); // Padrão
+            
             linksLayer = L.layerGroup().addTo(map); individualLayer = L.layerGroup().addTo(map); handlesLayer = L.layerGroup().addTo(map);
             
             map.on('click', (e) => { 
@@ -374,7 +540,7 @@
             });
             map.on('zoomend', checkDrag);
 
-            // Rastreador silencioso de localização (não move a câmera)
+            // Rastreia localização SEM mover a câmera (apenas desenha o ponto)
             map.on('locationfound', function(e) {
                 if (!userLocationMarker) {
                     const locIcon = L.divIcon({ 
@@ -393,7 +559,32 @@
 
         function locateMeAndFly(e) {
             if(e) e.stopPropagation();
-            map.locate({setView: true, maxZoom: 18});
+            if (userLocationMarker) {
+                map.flyTo(userLocationMarker.getLatLng(), 18);
+            } else {
+                showToast("Buscando localização...");
+            }
+        }
+
+        function toggleMapLayer(e) {
+            if(e) e.stopPropagation();
+            
+            if (currentBackgroundBase64) {
+                showToast("Em modo Planta de Fundo");
+                return; 
+            }
+
+            if (currentMapLayer === 'dark') {
+                map.removeLayer(darkMapLayer);
+                satelliteLayer.addTo(map);
+                currentMapLayer = 'satellite';
+                showToast("Modo Satélite Ativado");
+            } else {
+                map.removeLayer(satelliteLayer);
+                darkMapLayer.addTo(map);
+                currentMapLayer = 'dark';
+                showToast("Modo Mapa Escuro Ativado");
+            }
         }
 
         function toggleSettingsMenu(e) {
@@ -406,7 +597,10 @@
             if(e) e.stopPropagation();
             if (isLocked) { 
                 logoClicks++; 
-                if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } 
+                if (logoClicks >= 3) { 
+                    logoClicks = 0; 
+                    openPasswordModal('unlock');
+                } 
             } else {
                 document.getElementById('logo-menu').classList.toggle('show');
                 document.getElementById('settingsMenu').classList.add('hidden');
@@ -775,8 +969,6 @@
             restoreMapView();
         }
         
-        function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; document.getElementById('logo-menu').classList.remove('show'); document.getElementById('settingsMenu').classList.add('hidden'); closePanel(); showToast("MODO OPERAÇÃO"); }
-        function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked-mode'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } }
         function updateName(id, v) { nodes.find(n => n.id === id).name = v; saveData(); render(); }
         function updateIp(id, v) { nodes.find(n => n.id === id).ip = v; saveData(); render(); }
         function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
