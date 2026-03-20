@@ -120,8 +120,9 @@
                 <div id="logo-menu">
                     <div class="p-4 border-b border-slate-800 bg-slate-950/50 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Projeto</div>
                     <div class="p-2 space-y-1 text-white text-[10px] font-bold uppercase">
-                        <button onclick="openSaveModal()" class="w-full p-3 hover:bg-blue-600 rounded-xl transition-all text-left flex justify-between">Salvar Projeto <span>💾</span></button>
                         <button onclick="document.getElementById('import-input').click()" class="w-full p-3 hover:bg-emerald-600 rounded-xl transition-all text-left flex justify-between">Abrir Projeto <span>📂</span></button>
+                        <button onclick="openSaveModal()" class="w-full p-3 hover:bg-blue-600 rounded-xl transition-all text-left flex justify-between">Salvar Projeto <span>💾</span></button>
+                        <button onclick="requestCloseProject()" class="w-full p-3 hover:bg-red-600 rounded-xl transition-all text-left flex justify-between">Fechar Projeto <span>❌</span></button>
                         <hr class="border-slate-800 my-1">
                         <button onclick="openProjectSettings()" class="w-full p-3 hover:bg-indigo-600 rounded-xl transition-all text-left flex justify-between">Configurações do Projeto <span>⚙️</span></button>
                     </div>
@@ -147,7 +148,6 @@
             </div>
         </header>
 
-        <!-- Botões Overlay do Mapa -->
         <button id="map-fit-btn" onclick="fitAllNodes(true); if(event) event.stopPropagation();" class="absolute top-[80px] right-4 z-[1000] p-2.5 bg-slate-900/60 hover:bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl shadow-lg transition-all text-white/80 hover:text-white" title="Visão Geral">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 15v6h-6M3 9V3h6"/></svg>
         </button>
@@ -184,16 +184,15 @@
             <div id="tree-container"></div>
         </div>
 
-        <!-- NOVO MODAL DE CONFIGURAÇÕES DO PROJETO -->
         <div id="project-settings-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
             <div class="w-full max-w-sm bg-slate-900 border-2 border-slate-700 rounded-[2.5rem] p-8 text-white shadow-4xl relative">
-                <h3 class="text-xl font-black uppercase mb-6 tracking-tighter text-center">Configurações do Projeto</h3>
+                <h3 class="text-xl font-black uppercase mb-6 tracking-tighter text-center">Configurações</h3>
                 
                 <div class="mb-6">
                     <p class="text-[10px] text-slate-500 uppercase font-black mb-3">Modo de Mapa</p>
                     <div class="flex gap-2">
-                        <button onclick="document.getElementById('bg-input').click()" class="flex-1 bg-slate-800 hover:bg-indigo-600 py-3 rounded-xl font-black uppercase text-[9px] transition-all border border-slate-700">Planta de Fundo 🖼️</button>
-                        <button onclick="resetToWorldMap()" class="flex-1 bg-slate-800 hover:bg-indigo-600 py-3 rounded-xl font-black uppercase text-[9px] transition-all border border-slate-700">Mapa Mundi 🌍</button>
+                        <button onclick="document.getElementById('bg-input').click()" class="flex-1 bg-slate-800 hover:bg-indigo-600 py-3 rounded-xl font-black uppercase text-[9px] transition-all border border-slate-700">Planta 🖼️</button>
+                        <button onclick="resetToWorldMap()" class="flex-1 bg-slate-800 hover:bg-indigo-600 py-3 rounded-xl font-black uppercase text-[9px] transition-all border border-slate-700">Mundi 🌍</button>
                     </div>
                 </div>
 
@@ -209,6 +208,18 @@
                 </div>
 
                 <button onclick="closeProjectSettings()" class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs shadow-lg">Concluído</button>
+            </div>
+        </div>
+
+        <div id="close-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
+            <div class="w-full max-w-sm bg-slate-900 border-2 border-red-500/50 rounded-[2.5rem] p-10 text-white shadow-4xl text-center">
+                <h3 class="text-xl font-black uppercase mb-4 tracking-tighter text-red-500">Fechar Projeto</h3>
+                <p class="text-[10px] text-slate-400 uppercase font-black mb-8">Você possui alterações não salvas. Deseja exportar o projeto antes de fechar e limpar a tela?</p>
+                <div class="flex flex-col gap-3">
+                    <button onclick="closeCloseModal(); openSaveModal();" class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs shadow-lg">Salvar Projeto</button>
+                    <button onclick="closeProject()" class="w-full bg-red-600/20 text-red-500 hover:bg-red-600 hover:text-white py-4 rounded-2xl font-black uppercase text-xs border border-red-500/30 transition-colors">Fechar Sem Salvar</button>
+                    <button onclick="closeCloseModal()" class="w-full bg-slate-800 py-4 rounded-2xl font-black uppercase text-xs mt-2">Cancelar</button>
+                </div>
             </div>
         </div>
 
@@ -269,7 +280,8 @@
         
         let appPasswordHash = null;
         let passwordModalMode = 'unlock';
-        let autoLockOnLoad = false; // Nova variável de configuração
+        let autoLockOnLoad = false; 
+        let hasUnsavedChanges = false; // Controle de Memória de Alterações
 
         const CONFIG = {
             core_switch: { label: 'Switch Principal', color: '#6366f1', hasIp: true, icon: '<rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2"/>', rank: 0 },
@@ -338,7 +350,6 @@
                 saveData();
                 closePasswordModal();
                 
-                // Se a pessoa ativou o autolock mas não tinha senha, volta pra tela de config e liga o toggle
                 if (document.getElementById('project-settings-modal').classList.contains('hidden') === false) {
                     autoLockOnLoad = true;
                     updateAutoLockUI();
@@ -461,6 +472,37 @@
             showToast("MODO OPERAÇÃO ATIVADO"); 
         }
 
+        // --- FECHAR PROJETO E EXPORTAR ---
+        function requestCloseProject() {
+            document.getElementById('logo-menu').classList.remove('show');
+            document.getElementById('settingsMenu').classList.add('hidden');
+            if (hasUnsavedChanges && nodes.length > 0) {
+                document.getElementById('close-modal').classList.remove('hidden');
+            } else {
+                closeProject();
+            }
+        }
+
+        function closeCloseModal() {
+            document.getElementById('close-modal').classList.add('hidden');
+        }
+
+        function closeProject() {
+            nodes = []; links = [];
+            appPasswordHash = null; autoLockOnLoad = false;
+            hasUnsavedChanges = false;
+            localStorage.removeItem('infrasegura_data');
+            
+            resetToWorldMap();
+            render();
+            
+            closeCloseModal();
+            closePanel(null);
+            closeOfflinePanel(null);
+            map.setView([-23.5505, -46.6333], 10);
+            showToast("Projeto Fechado.");
+        }
+
         function openSaveModal() {
             document.getElementById('save-modal').classList.remove('hidden');
             document.getElementById('logo-menu').classList.remove('show');
@@ -473,11 +515,13 @@
 
         function confirmExport() {
             const filename = document.getElementById('save-filename').value || "Projeto_Rede";
-            // Salva as novas configs no JSON
             const data = JSON.stringify({ nodes, links, background: currentBackgroundBase64, view: { center: map.getCenter(), zoom: map.getZoom() }, passwordHash: appPasswordHash, autoLockOnLoad: autoLockOnLoad });
             const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `${filename}.json`; a.click();
+            
+            hasUnsavedChanges = false; // Memória de alterações zerada!
+            saveData(false);
             closeSaveModal();
             showToast("Projeto Exportado.");
         }
@@ -493,10 +537,11 @@
                     autoLockOnLoad = data.autoLockOnLoad || false;
                     
                     if (data.background) applyBackground(data.background); else resetToWorldMap();
-                    saveData(); 
+                    
+                    hasUnsavedChanges = false; 
+                    saveData(false); 
                     render(); 
                     
-                    // Carrega e checa se deve bloquear a tela automaticamente
                     setTimeout(() => {
                         fitAllNodes(false);
                         if (autoLockOnLoad && appPasswordHash) executeLock();
@@ -529,6 +574,7 @@
             document.getElementById('logo-menu').classList.remove('show');
             document.getElementById('settingsMenu').classList.add('hidden');
             closeProjectSettings();
+            saveData();
         }
 
         function checkDrag() { 
@@ -555,6 +601,7 @@
             document.getElementById('logo-menu').classList.remove('show');
             document.getElementById('settingsMenu').classList.add('hidden');
             closeProjectSettings();
+            saveData();
         }
 
         function loadData() {
@@ -566,6 +613,7 @@
                     links = parsed.links || [];
                     appPasswordHash = parsed.passwordHash || null;
                     autoLockOnLoad = parsed.autoLockOnLoad || false;
+                    hasUnsavedChanges = parsed.hasUnsavedChanges || false;
                 }
             } catch (e) { 
                 console.error("Erro ao carregar dados locais", e);
@@ -578,9 +626,16 @@
             }, 300);
         }
 
-        function saveData() {
+        function saveData(changed = true) {
             try {
-                localStorage.setItem('infrasegura_data', JSON.stringify({ nodes, links, passwordHash: appPasswordHash, autoLockOnLoad: autoLockOnLoad }));
+                if(changed) hasUnsavedChanges = true;
+                localStorage.setItem('infrasegura_data', JSON.stringify({ 
+                    nodes, 
+                    links, 
+                    passwordHash: appPasswordHash, 
+                    autoLockOnLoad: autoLockOnLoad,
+                    hasUnsavedChanges: hasUnsavedChanges
+                }));
             } catch (e) { 
                 console.error("Erro ao salvar dados locais", e);
             }
@@ -1134,3 +1189,5 @@
     </script>
 </body>
 </html>
+
+
