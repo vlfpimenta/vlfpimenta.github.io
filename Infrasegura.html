@@ -252,13 +252,23 @@
 
         async function loadData() {
             try {
-                const response = await fetch(`${VPS_API_URL}/data`);
+                // Timeout para não ficar "sincronizando" pra sempre se o servidor estiver fora
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+                const response = await fetch(`${VPS_API_URL}/data`, { signal: controller.signal });
                 const data = await response.json();
+                clearTimeout(timeoutId);
+
                 nodes = data.nodes || []; links = data.links || [];
                 document.getElementById('status-dot').classList.add('status-online');
                 document.getElementById('status-text').innerText = "VPS Sincronizada";
                 render();
-            } catch (e) { document.getElementById('status-text').innerText = "Erro Sincronização"; }
+            } catch (e) { 
+                document.getElementById('status-text').innerText = "Modo Local Ativo"; 
+                document.getElementById('status-dot').classList.remove('status-online');
+                render(); // Renderiza mesmo se falhar a sincronia
+            }
         }
 
         async function saveData() {
@@ -271,13 +281,18 @@
             map = L.map('map', { zoomControl: false, tap: true, maxZoom: 18, dragging: true }).setView([-23.5505, -46.6333], 15);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
             linksLayer = L.layerGroup().addTo(map); individualLayer = L.layerGroup().addTo(map); handlesLayer = L.layerGroup().addTo(map);
+            
             map.on('click', (e) => { 
                 if (isLocked) return;
                 if (isDrawingPath) addVertexToPath(e.latlng);
                 else if (currentMode) addNode(currentMode, e.latlng); 
                 else { closePanel(); closeOfflinePanel(); document.getElementById('logo-menu').classList.remove('show'); } 
             });
+            
             loadData();
+            
+            // Garantir que o mapa renderize no tamanho correto
+            setTimeout(() => map.invalidateSize(), 200);
         };
 
         function resetTools() {
@@ -367,61 +382,31 @@
             updateAlertBadge(getDiagnostics());
         }
 
-        // --- RELATÓRIO INTELIGENTE ---
         function updateAlertBadge(diag) {
             const fab = document.getElementById('alert-fab');
             const count = document.getElementById('alert-count');
-            
             if (diag.length > 0) {
-                fab.style.display = 'flex';
-                count.innerText = diag.length;
-                
+                fab.style.display = 'flex'; count.innerText = diag.length;
                 document.getElementById('offline-list').innerHTML = diag.map(a => {
                     const node = nodes.find(n => n.id === a.id);
                     const connIds = links.filter(l => l.a === a.id || l.b === a.id).map(l => l.a === a.id ? l.b : l.a);
-                    
                     let relationHtml = "";
-
-                    // Lógica de diagnóstico conforme solicitado
                     if (node.type === 'camera') {
                         const sw = nodes.find(n => connIds.includes(n.id) && n.type === 'switch');
                         const conv = nodes.find(n => n.type === 'converter' && links.some(l => (l.a === n.id || l.b === n.id) && (l.a === sw?.id || l.b === sw?.id)));
-                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]">
-                            <p class="text-red-400 font-black mb-1">CAMINHO TÉCNICO:</p>
-                            <p>● Switch: ${sw ? sw.name : 'N/A'}</p>
-                            <p>● Conversor: ${conv ? conv.name : 'N/A'}</p>
-                        </div>`;
-                    } 
-                    else if (node.type === 'switch') {
+                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]"><p class="text-red-400 font-black mb-1">CAMINHO TÉCNICO:</p><p>● Switch: ${sw ? sw.name : 'N/A'}</p><p>● Conversor: ${conv ? conv.name : 'N/A'}</p></div>`;
+                    } else if (node.type === 'switch') {
                         const cams = nodes.filter(n => connIds.includes(n.id) && n.type === 'camera');
                         const conv = nodes.find(n => connIds.includes(n.id) && n.type === 'converter');
-                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]">
-                            <p class="text-red-400 font-black mb-1">IMPACTO & ORIGEM:</p>
-                            <p>● Conversor Pai: ${conv ? conv.name : 'N/A'}</p>
-                            <p>● Câmeras Afetadas: ${cams.length > 0 ? cams.map(c => c.name).join(', ') : 'Nenhuma'}</p>
-                        </div>`;
-                    }
-                    else if (node.type === 'converter') {
+                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]"><p class="text-red-400 font-black mb-1">IMPACTO & ORIGEM:</p><p>● Conversor Pai: ${conv ? conv.name : 'N/A'}</p><p>● Câmeras Afetadas: ${cams.length > 0 ? cams.map(c => c.name).join(', ') : 'Nenhuma'}</p></div>`;
+                    } else if (node.type === 'converter') {
                         const sws = nodes.filter(n => connIds.includes(n.id) && n.type === 'switch');
                         const allCams = nodes.filter(n => n.type === 'camera' && links.some(l => (l.a === n.id || l.b === n.id) && sws.some(s => s.id === l.a || s.id === l.b)));
-                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]">
-                            <p class="text-red-400 font-black mb-1">CASCATA DE ERRO:</p>
-                            <p>● Switches: ${sws.length > 0 ? sws.map(s => s.name).join(', ') : 'Nenhum'}</p>
-                            <p>● Câmeras sob Jusante: ${allCams.length > 0 ? allCams.map(c => c.name).join(', ') : 'Nenhuma'}</p>
-                        </div>`;
+                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]"><p class="text-red-400 font-black mb-1">CASCATA DE ERRO:</p><p>● Switches: ${sws.length > 0 ? sws.map(s => s.name).join(', ') : 'Nenhum'}</p><p>● Câmeras sob Jusante: ${allCams.length > 0 ? allCams.map(c => c.name).join(', ') : 'Nenhuma'}</p></div>`;
+                    } else if (node.type === 'core_switch') {
+                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]"><p class="text-red-400 font-black mb-1">FALHA TOTAL DE BACKBONE:</p><p>● Todos os ativos da rede estão sem comunicação com a central.</p></div>`;
                     }
-                    else if (node.type === 'core_switch') {
-                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]">
-                            <p class="text-red-400 font-black mb-1">FALHA TOTAL DE BACKBONE:</p>
-                            <p>● Todos os ativos da rede estão sem comunicação com a central.</p>
-                        </div>`;
-                    }
-
-                    return `<div onclick="toggleView('map'); map.flyTo([${node.lat}, ${node.lng}], 18); openDetails('${a.id}');" class="p-5 bg-slate-950 border border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-500/10 transition-all shadow-xl">
-                        <div class="text-[9px] font-black text-red-500 uppercase mb-1 italic tracking-widest">${CONFIG[node.type].label} OFFLINE</div>
-                        <h4 class="font-black text-sm text-white uppercase">${node.name}</h4>
-                        ${relationHtml}
-                    </div>`;
+                    return `<div onclick="toggleView('map'); map.flyTo([${node.lat}, ${node.lng}], 18); openDetails('${a.id}');" class="p-5 bg-slate-950 border border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-500/10 transition-all shadow-xl"><div class="text-[9px] font-black text-red-500 uppercase mb-1 italic tracking-widest">${CONFIG[node.type].label} OFFLINE</div><h4 class="font-black text-sm text-white uppercase">${node.name}</h4>${relationHtml}</div>`;
                 }).join('');
             } else { fab.style.display = 'none'; closeOfflinePanel(); }
         }
@@ -506,7 +491,7 @@
                 getConnections(core.id).map(cid => nodes.find(n => n.id === cid)).forEach(item => { if (!item || processedIds.has(item.id)) return; if (item.type === 'converter' || item.type === 'switch') processSubTree(item, coreChildren, getConnections, processedIds, offlineMap); });
                 coreEl.appendChild(coreChildren); container.appendChild(coreEl);
             });
-            nodes.filter(n => n.type === 'converter' && !processedIds.has(n.id)).forEach(conv => processSubTree(conv, container, getConnections, processedIds, offlineMap);
+            nodes.filter(n => n.type === 'converter' && !processedIds.has(n.id)).forEach(conv => processSubTree(conv, container, getConnections, processedIds, offlineMap));
             nodes.filter(n => !processedIds.has(n.id)).forEach(item => container.appendChild(createTreeItem(item, offlineMap[item.id])));
         }
 
