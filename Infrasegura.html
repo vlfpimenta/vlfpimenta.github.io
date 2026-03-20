@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>InfraSegura v5.8 - Estabilidade de Funções</title>
+    <title>InfraSegura v5.9 - Estabilidade e Fluxo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Leaflet Core -->
@@ -101,8 +101,14 @@
         .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; }
         .status-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
 
+        /* Painel Detalhes - Transições */
+        #details-panel { transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0; transform: translateX(100%); }
+        #details-panel.show { opacity: 1; transform: translateX(0); }
+
         @media (max-width: 768px) {
             .mobile-full { width: 100% !important; left: 0 !important; border-radius: 2rem 2rem 0 0 !important; height: 75vh !important; top: auto !important; bottom: 0 !important; }
+            #details-panel { transform: translateY(100%); }
+            #details-panel.show { transform: translateY(0); }
         }
     </style>
 </head>
@@ -111,7 +117,7 @@
     <div id="app-container">
         <div id="mode-indicator-bar" class="flex">
             <span id="mode-text">Modo de Edição</span>
-            <button id="finish-draw-btn" onclick="resetTools()" class="hidden">Cancelar</button>
+            <button id="finish-draw-btn" onclick="resetTools()" class="hidden">Concluir</button>
         </div>
 
         <div id="vps-status">
@@ -168,7 +174,9 @@
         <div id="details-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-slate-800 rounded-[3rem] p-8 z-[1000] hidden flex flex-col shadow-4xl mobile-full text-white overflow-hidden">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Ativo</h3>
-                <button onclick="closePanel()" class="p-2 hover:bg-slate-800 rounded-full"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+                <button onclick="closePanel()" class="p-2 hover:bg-slate-800 rounded-full transition-colors">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
             </div>
             <div id="details-content" class="flex-1 overflow-y-auto space-y-6"></div>
         </div>
@@ -366,7 +374,9 @@
         function openDetails(id) {
             selectedId = id; const n = nodes.find(it => it.id === id);
             const panel = document.getElementById('details-panel');
-            panel.classList.remove('hidden'); panel.classList.add('show');
+            panel.classList.remove('hidden'); 
+            setTimeout(() => panel.classList.add('show'), 10);
+            
             const connIds = links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
             let itemsHtml = '';
             if (n.type === 'switch' || n.type === 'converter') {
@@ -387,13 +397,15 @@
             const id = 'n'+Date.now(); 
             nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${nodes.length+1}` }); 
             saveData(); 
-            resetTools();
+            // resetTools() REMOVIDO para permitir adição em lote
+            render();
+            showToast(`${CONFIG[type].label} adicionado`);
         }
 
         function updateName(id, v) { nodes.find(n => n.id === id).name = v; saveData(); render(); }
         function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
         function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(); render(); saveData(); }
-        function toggleAppLock() { isLocked = true; document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; document.getElementById('logo-menu').classList.remove('show'); closePanel(); showToast("MODO VISUALIZAÇÃO"); }
+        function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; document.getElementById('logo-menu').classList.remove('show'); closePanel(); showToast("MODO VISUALIZAÇÃO"); }
         function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked-mode'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } }
         
         function startDrawingPath(nodeId) { 
@@ -411,10 +423,10 @@
             resetTools();
             currentMode = m; 
             document.getElementById('mode-indicator-bar').style.display = 'flex';
-            document.getElementById('mode-text').innerText = `Adicionando: ${CONFIG[m].label}`;
+            document.getElementById('mode-text').innerText = `Ação em Lote: ${CONFIG[m].label}`;
             document.getElementById('finish-draw-btn').classList.remove('hidden');
-            document.getElementById('finish-draw-btn').innerText = "Cancelar";
-            showToast(`Selecione o local no mapa`); 
+            document.getElementById('finish-draw-btn').innerText = "Concluir";
+            showToast(`Clique no mapa para adicionar vários`); 
         }
 
         function toggleLinking() { 
@@ -427,7 +439,14 @@
             showToast("Selecione a origem"); 
         }
 
-        function closePanel() { document.getElementById('details-panel').classList.remove('show'); selectedId = null; render(); }
+        function closePanel() { 
+            const p = document.getElementById('details-panel');
+            p.classList.remove('show'); 
+            setTimeout(() => p.classList.add('hidden'), 300);
+            selectedId = null; 
+            render(); 
+        }
+        
         function toggleLogoMenu() { document.getElementById('logo-menu').classList.toggle('show'); }
         function handleLogoInteraction() { if (isLocked) { logoClicks++; if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } } else toggleLogoMenu(); }
         function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-900 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2000); }
