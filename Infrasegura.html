@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>InfraSegura v6.3 - Hierarquia Estruturada</title>
+    <title>InfraSegura v6.4 - Conexões Inteligentes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Leaflet Core -->
@@ -105,7 +105,16 @@
             box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5); 
             border: 2px solid rgba(255,255,255,0.3);
             text-transform: uppercase;
+            align-items: center;
+            gap: 15px;
         }
+
+        .mode-btn {
+            background: white; color: #3b82f6; padding: 4px 12px; border-radius: 999px;
+            font-size: 9px; font-weight: 900; text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        .mode-btn:hover { background: #f1f5f9; transform: scale(1.05); }
 
         .tree-node { border-left: 2px solid #1e293b; margin-left: 1.5rem; padding-left: 1rem; position: relative; }
         .tree-node::before { content: ""; position: absolute; left: -2px; top: 12px; width: 12px; height: 2px; background: #1e293b; }
@@ -132,11 +141,14 @@
 
     <div id="app-container">
         <!-- Barra de Indicador de Modo -->
-        <div id="mode-indicator-bar">Modo Ativo</div>
+        <div id="mode-indicator-bar">
+            <span id="mode-text">Modo Ativo</span>
+            <div id="mode-actions" class="flex gap-2"></div>
+        </div>
 
         <div id="vps-status">
             <div class="status-dot" id="status-dot"></div>
-            <span id="status-text">Conectando ao servidor...</span>
+            <span id="status-text">Sincronizando com vlf-vps...</span>
         </div>
 
         <!-- Alerta Crítico -->
@@ -189,7 +201,7 @@
 
         <div id="map"></div>
         <div id="list-view">
-            <h2 class="text-2xl font-black uppercase mb-8 tracking-tighter text-blue-500 border-b border-slate-800 pb-4">Topologia de Ativos</h2>
+            <h2 class="text-2xl font-black uppercase mb-8 tracking-tighter text-blue-500 border-b border-slate-800 pb-4">Hierarquia Técnica</h2>
             <div id="tree-container"></div>
         </div>
 
@@ -233,11 +245,11 @@
         let individualLayer, linksLayer, handlesLayer;
 
         const CONFIG = {
-            core_switch: { label: 'Switch Principal', color: '#6366f1', hasIp: true, icon: '<rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2"/>' },
-            converter: { label: 'Conversor', color: '#f59e0b', hasIp: false, icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>' },
-            switch: { label: 'Switch', color: '#10b981', hasIp: false, icon: '<rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/>' },
-            camera: { label: 'Câmera', color: '#3b82f6', hasIp: true, icon: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>' },
-            server: { label: 'Servidor', color: '#a78bfa', hasIp: true, icon: '<rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/>' }
+            core_switch: { label: 'Switch Principal', color: '#6366f1', hasIp: true, icon: '<rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2"/>', rank: 0 },
+            converter: { label: 'Conversor', color: '#f59e0b', hasIp: false, icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>', rank: 1 },
+            switch: { label: 'Switch', color: '#10b981', hasIp: false, icon: '<rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/>', rank: 2 },
+            camera: { label: 'Câmera', color: '#3b82f6', hasIp: true, icon: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>', rank: 3 },
+            server: { label: 'Servidor', color: '#a78bfa', hasIp: true, icon: '<rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/>', rank: 4 }
         };
 
         // --- VPS SYNC ---
@@ -250,7 +262,7 @@
                 document.getElementById('status-dot').classList.add('status-online');
                 document.getElementById('status-text').innerText = "VPS Sincronizada";
                 render();
-            } catch (e) { document.getElementById('status-text').innerText = "Erro de Sincronização"; }
+            } catch (e) { document.getElementById('status-text').innerText = "Erro Sincronização"; }
         }
 
         async function saveData() {
@@ -288,7 +300,9 @@
             drawingNodeId = null;
             linkSourceId = null;
             isMenuOpen = false;
-            document.getElementById('mode-indicator-bar').style.display = 'none';
+            const bar = document.getElementById('mode-indicator-bar');
+            bar.style.display = 'none';
+            document.getElementById('mode-actions').innerHTML = '';
             document.getElementById('fab-items').classList.remove('open');
             document.getElementById('fab-main').classList.remove('active');
             document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected'));
@@ -301,8 +315,14 @@
             if (CONFIG[n.type].hasIp) return activeStatuses[id] === 'offline';
             const connIds = links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
             let dependents = [];
-            if (n.type === 'switch' || n.type === 'core_switch') dependents = connIds.filter(cid => nodes.find(nn => nn.id === cid)?.type === 'camera' || nodes.find(nn => nn.id === cid)?.type === 'switch');
-            else if (n.type === 'converter') dependents = connIds.filter(cid => nodes.find(nn => nn.id === cid)?.type === 'switch');
+            if (n.type === 'switch' || n.type === 'core_switch') dependents = connIds.filter(cid => {
+                const nn = nodes.find(it => it.id === cid);
+                return nn && (nn.type === 'camera' || nn.type === 'switch');
+            });
+            else if (n.type === 'converter') dependents = connIds.filter(cid => {
+                const nn = nodes.find(it => it.id === cid);
+                return nn && nn.type === 'switch';
+            });
             if (dependents.length === 0) return false;
             return dependents.every(depId => isNodeOffline(depId, visited));
         }
@@ -386,12 +406,22 @@
                     showToast(`Origem: ${nodes.find(n => n.id === id).name}`); 
                 } 
                 else if (linkSourceId !== id) { 
-                    const lid = 'l'+Date.now();
-                    links.push({ id: lid, a: linkSourceId, b: id, vertices: [] }); 
+                    const n1 = nodes.find(n => n.id === linkSourceId);
+                    const n2 = nodes.find(n => n.id === id);
+                    
+                    // Lógica de Hierarquia Automática
+                    let parentId, childId;
+                    if (CONFIG[n1.type].rank <= CONFIG[n2.type].rank) {
+                        parentId = n1.id; childId = n2.id;
+                    } else {
+                        parentId = n2.id; childId = n1.id;
+                    }
+
+                    links.push({ id: 'l'+Date.now(), a: parentId, b: childId, vertices: [] }); 
                     saveData(); 
                     linkSourceId = null; 
                     render(); 
-                    showToast("Conectado. Selecione nova origem."); 
+                    showToast("Conectado conforme hierarquia."); 
                 } 
                 return; 
             } 
@@ -401,35 +431,26 @@
         function openDetails(id) {
             selectedId = id; const n = nodes.find(it => it.id === id);
             const panel = document.getElementById('details-panel');
-            panel.classList.remove('hidden'); 
-            setTimeout(() => panel.classList.add('show'), 10);
+            panel.classList.add('show');
             
             const connIds = links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
-            
-            // Busca de Pai (Parent) e Filhos (Children)
-            const parent = nodes.find(vn => connIds.includes(vn.id) && (
-                (n.type === 'camera' && (vn.type === 'switch' || vn.type === 'core_switch')) ||
-                (n.type === 'switch' && (vn.type === 'converter' || vn.type === 'core_switch')) ||
-                (n.type === 'converter' && vn.type === 'core_switch')
-            ));
-
-            const children = nodes.filter(vn => connIds.includes(vn.id) && vn.id !== parent?.id);
+            const parent = nodes.find(vn => connIds.includes(vn.id) && (CONFIG[vn.type].rank < CONFIG[n.type].rank));
+            const children = nodes.filter(vn => connIds.includes(vn.id) && (CONFIG[vn.type].rank > CONFIG[n.type].rank));
 
             let hierarchyHtml = `
                 <div class="space-y-4 pt-4 border-t border-slate-800">
-                    <div class="text-[9px] font-black uppercase text-blue-500 tracking-widest italic">Conexões de Rede</div>
+                    <div class="text-[9px] font-black uppercase text-blue-500 tracking-widest italic">Rede Hierárquica</div>
                     <div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800">
-                        <p class="text-[8px] text-slate-500 mb-1 uppercase">Sinal de Origem</p>
+                        <p class="text-[8px] text-slate-500 mb-1 uppercase">Origem do Sinal (Pai)</p>
                         <p class="text-xs font-bold ${parent ? 'text-indigo-400' : 'text-slate-600 italic'}">
-                            ${parent ? parent.name : 'Nenhum Ativo Pai'}
+                            ${parent ? parent.name : 'Nenhum'}
                         </p>
                     </div>
                     ${n.type !== 'camera' ? `
                     <div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800">
-                        <p class="text-[8px] text-slate-500 mb-1 uppercase">Ativos Dependentes (${children.length})</p>
+                        <p class="text-[8px] text-slate-500 mb-1 uppercase">Itens Jusante (Filhos: ${children.length})</p>
                         <div class="max-h-32 overflow-y-auto space-y-1">
-                            ${children.map(c => `<div class="text-[10px] flex justify-between font-medium"><span>${c.name}</span> <span class="${activeStatuses[c.id] === 'offline' ? 'text-red-500' : 'text-emerald-500'}">●</span></div>`).join('')}
-                            ${children.length === 0 ? '<p class="text-[10px] text-slate-600 italic">Vazio</p>' : ''}
+                            ${children.map(c => `<div class="text-[10px] flex justify-between"><span>${c.name}</span> <span class="${activeStatuses[c.id] === 'offline' ? 'text-red-500' : 'text-emerald-500'}">●</span></div>`).join('')}
                         </div>
                     </div>` : ''}
                 </div>`;
@@ -449,6 +470,20 @@
             render();
         }
 
+        function startDrawingPath(nodeId) { 
+            isDrawingPath = true; drawingNodeId = nodeId; closePanel(); 
+            const bar = document.getElementById('mode-indicator-bar');
+            const actions = document.getElementById('mode-actions');
+            bar.style.display = 'flex'; 
+            document.getElementById('mode-text').innerText = "Editando Traçado";
+            actions.innerHTML = `
+                <button onclick="resetTools()" class="mode-btn">Concluir Edição</button>
+                <button onclick="resetNodePath('${nodeId}')" class="mode-btn" style="background:#ef4444; color:white">Restaurar Traçado</button>
+            `;
+            document.getElementById('fab-main').classList.add('active');
+            showToast("Clique no mapa para criar pontos.");
+        }
+
         function addNode(type, latlng) { 
             const id = 'n'+Date.now(); 
             nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${nodes.length+1}`, ip: CONFIG[type].hasIp ? '192.168.1.100' : null }); 
@@ -466,45 +501,33 @@
         
         function setMode(m) { 
             currentMode = m; 
-            document.getElementById('mode-indicator-bar').style.display = 'block';
-            document.getElementById('mode-indicator-bar').innerText = `Inserindo: ${CONFIG[m].label}`;
+            document.getElementById('mode-indicator-bar').style.display = 'flex';
+            document.getElementById('mode-text').innerText = `Inserindo: ${CONFIG[m].label}`;
             document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected'));
             document.getElementById('tool-' + m).classList.add('selected');
-            showToast(`Toque no mapa para espalhar ${CONFIG[m].label}s`); 
-        }
-
-        function startDrawingPath(nodeId) { 
-            isDrawingPath = true; drawingNodeId = nodeId; closePanel(); 
-            document.getElementById('mode-indicator-bar').style.display = 'block'; 
-            document.getElementById('mode-indicator-bar').innerText = "Editando Traçado";
-            document.getElementById('fab-main').classList.add('active');
         }
 
         function toggleLinking() { 
             isLinking = true; currentMode = null;
-            document.getElementById('mode-indicator-bar').style.display = 'block';
-            document.getElementById('mode-indicator-bar').innerText = "Criando Conexões";
+            document.getElementById('mode-indicator-bar').style.display = 'flex';
+            document.getElementById('mode-text').innerText = "Criando Conexões";
             document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected'));
             document.getElementById('link-btn').classList.add('selected');
-            showToast("Origem e depois destino"); 
         }
 
-        function addVertexToPath(latlng) { 
-            const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId)); 
-            if (link) { if (!link.vertices) link.vertices = []; link.vertices.push([latlng.lat, latlng.lng]); render(); } 
-        }
-        function closePanel() { const p = document.getElementById('details-panel'); p.classList.remove('show'); setTimeout(() => p.classList.add('hidden'), 300); selectedId = null; render(); }
         function openOfflinePanel() { document.getElementById('offline-panel').classList.add('show'); }
         function closeOfflinePanel() { document.getElementById('offline-panel').classList.remove('show'); }
+        function closePanel() { document.getElementById('details-panel').classList.remove('show'); selectedId = null; render(); }
         function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; document.getElementById('logo-menu').classList.remove('show'); closePanel(); showToast("MODO OPERAÇÃO"); }
         function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked-mode'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } }
+        function addVertexToPath(latlng) { const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId)); if (link) { if (!link.vertices) link.vertices = []; link.vertices.push([latlng.lat, latlng.lng]); render(); } }
+        function resetNodePath(id) { const l = links.find(li => li.a === id || li.b === id); if (l) { l.vertices = []; render(); showToast("Linha restaurada."); } }
         function updateName(id, v) { nodes.find(n => n.id === id).name = v; saveData(); render(); }
         function updateIp(id, v) { nodes.find(n => n.id === id).ip = v; saveData(); render(); }
         function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
         function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(); render(); saveData(); }
         function handleLogoInteraction() { if (isLocked) { logoClicks++; if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } } else document.getElementById('logo-menu').classList.toggle('show'); }
         function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-900 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
-        
         function toggleView(v) { 
             document.getElementById('map').style.display = v==='map'?'block':'none';
             document.getElementById('list-view').style.display = v==='list'?'block':'none';
@@ -520,32 +543,20 @@
             const offlineMap = {}; nodes.forEach(n => offlineMap[n.id] = isNodeOffline(n.id));
             const getConnections = (id) => links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
             const processedIds = new Set();
-
-            // 1. Switches Principais
             const cores = nodes.filter(n => n.type === 'core_switch');
             cores.forEach(core => {
                 processedIds.add(core.id);
                 const coreEl = createTreeItem(core, offlineMap[core.id]);
                 const coreChildren = document.createElement('div');
                 coreChildren.className = 'tree-node';
-
-                // Buscar Conversores ou Switches diretos
                 getConnections(core.id).map(cid => nodes.find(n => n.id === cid)).forEach(item => {
                     if (!item || processedIds.has(item.id)) return;
-                    if (item.type === 'converter' || item.type === 'switch') {
-                        processSubTree(item, coreChildren, getConnections, processedIds, offlineMap);
-                    }
+                    if (item.type === 'converter' || item.type === 'switch') processSubTree(item, coreChildren, getConnections, processedIds, offlineMap);
                 });
                 coreEl.appendChild(coreChildren);
                 container.appendChild(coreEl);
             });
-
-            // 2. Conversores Órfãos
-            nodes.filter(n => n.type === 'converter' && !processedIds.has(n.id)).forEach(conv => {
-                processSubTree(conv, container, getConnections, processedIds, offlineMap);
-            });
-
-            // 3. O resto
+            nodes.filter(n => n.type === 'converter' && !processedIds.has(n.id)).forEach(conv => processSubTree(conv, container, getConnections, processedIds, offlineMap));
             nodes.filter(n => !processedIds.has(n.id)).forEach(item => container.appendChild(createTreeItem(item, offlineMap[item.id])));
         }
 
@@ -554,14 +565,10 @@
             const el = createTreeItem(node, offlineMap[node.id]);
             const childrenContainer = document.createElement('div');
             childrenContainer.className = 'tree-node';
-            
             getConnections(node.id).map(cid => nodes.find(n => n.id === cid)).forEach(child => {
                 if (!child || processedIds.has(child.id)) return;
-                if ((node.type === 'converter' && child.type === 'switch') || (node.type === 'switch' && child.type === 'camera')) {
-                    processSubTree(child, childrenContainer, getConnections, processedIds, offlineMap);
-                }
+                if ((node.type === 'converter' && child.type === 'switch') || (node.type === 'switch' && child.type === 'camera')) processSubTree(child, childrenContainer, getConnections, processedIds, offlineMap);
             });
-
             if (childrenContainer.children.length > 0) el.appendChild(childrenContainer);
             parentEl.appendChild(el);
         }
@@ -569,14 +576,11 @@
         function createTreeItem(node, isOff) {
             const div = document.createElement('div');
             div.className = 'mb-2';
-            div.innerHTML = `<div class="tree-item ${isOff ? 'border-red-500/50' : ''}">
+            div.innerHTML = `<div class="tree-item ${isOff ? 'border-red-500/50 bg-red-500/5' : ''}">
                 <div class="p-2 rounded-lg" style="background: ${isOff ? '#ef4444' : CONFIG[node.type].color}">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg>
                 </div>
-                <div class="flex-1">
-                    <p class="text-xs font-bold uppercase">${node.name}</p>
-                    ${node.ip ? `<p class="text-[8px] font-mono text-slate-500">${node.ip}</p>` : ''}
-                </div>
+                <div class="flex-1"><p class="text-xs font-bold uppercase">${node.name}</p></div>
                 ${isOff ? '<span class="text-[8px] bg-red-600 px-1.5 rounded uppercase font-black">OFFLINE</span>' : ''}
             </div>`;
             return div;
