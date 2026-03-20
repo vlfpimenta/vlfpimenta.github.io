@@ -31,30 +31,24 @@
             background: transparent !important; border: none !important; box-shadow: none !important;
         }
 
-        /* ÍCONE OFFLINE (PIN ATUAL) */
         .marker-pin {
             width: 44px; height: 44px; border-radius: 50% 50% 50% 0;
             position: absolute; transform: rotate(-45deg); left: 50%; top: 50%;
             margin: -22px 0 0 -22px; border: 3px solid #ffffff;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 1000 !important;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
         .marker-pin svg { transform: rotate(45deg); color: white; }
         .marker-pin.selected { border-color: #3b82f6; box-shadow: 0 0 25px #3b82f6; transform: rotate(-45deg) scale(1.1); }
 
-        /* ÍCONE ONLINE (BOLINHA DISCRETA) */
         .online-dot {
             width: 14px; height: 14px; border-radius: 50%;
             border: 2px solid rgba(255,255,255,0.8);
             box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
-        .online-dot.selected {
-            border-color: #3b82f6;
-            box-shadow: 0 0 12px #3b82f6;
-            transform: scale(1.4);
-        }
+        .online-dot.selected { border-color: #3b82f6; box-shadow: 0 0 12px #3b82f6; transform: scale(1.4); }
 
         .vertex-handle {
             width: 12px; height: 12px; background: #3b82f6; border: 2px solid white;
@@ -318,7 +312,7 @@
                     if (n.type === 'camera') suppressed = connIds.some(cid => { const o = nodes.find(on => on.id === cid); return o && (o.type === 'switch' || o.type === 'core_switch') && offlineMap[cid]; });
                     else if (n.type === 'switch') suppressed = connIds.some(cid => { const o = nodes.find(on => on.id === cid); return o && (o.type === 'converter' || o.type === 'core_switch') && offlineMap[cid]; });
                     else if (n.type === 'converter') suppressed = connIds.some(cid => { const o = nodes.find(on => on.id === cid); return o && o.type === 'core_switch' && offlineMap[cid]; });
-                    if (!suppressed) alerts.push({ id: n.id, name: n.name, type: CONFIG[n.type].label.toUpperCase() });
+                    if (!suppressed) alerts.push({ id: n.id, name: n.name, type: n.type });
                 }
             });
             return alerts;
@@ -327,7 +321,8 @@
         function render() {
             individualLayer.clearLayers(); linksLayer.clearLayers(); handlesLayer.clearLayers();
             const statusMap = {}; nodes.forEach(n => statusMap[n.id] = isNodeOffline(n.id));
-            
+            const isEditingMode = !!(currentMode || isLinking || isDrawingPath);
+
             links.forEach((link) => {
                 const n1 = nodes.find(n => n.id === link.a); const n2 = nodes.find(n => n.id === link.b);
                 if (n1 && n2) {
@@ -352,27 +347,18 @@
             });
             
             nodes.forEach(node => {
-                const isSelected = (selectedId === node.id); 
-                const isOff = statusMap[node.id];
+                const isSelected = (selectedId === node.id); const isOff = statusMap[node.id];
                 let color = CONFIG[node.type].color; 
-                
                 let html, iconSize, iconAnchor;
-
-                // --- LOGICA DE TRANSFORMAÇÃO VISUAL ---
-                if (isOff) {
-                    // Modo Alerta: Pin Pulsante e grande
-                    html = `<div class="marker-pin ${isSelected ? 'selected' : ''} pulse-orange" style="background-color: #ef4444">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg>
-                            </div>`;
-                    iconSize = [44, 44];
-                    iconAnchor = [22, 44];
+                if (isOff || isEditingMode) {
+                    const pulseClass = isOff ? 'pulse-orange' : '';
+                    const pinColor = isOff ? '#ef4444' : color;
+                    html = `<div class="marker-pin ${isSelected ? 'selected' : ''} ${pulseClass}" style="background-color: ${pinColor}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg></div>`;
+                    iconSize = [44, 44]; iconAnchor = [22, 44];
                 } else {
-                    // Modo Normal: Bolinha discreta
                     html = `<div class="online-dot ${isSelected ? 'selected' : ''}" style="background-color: ${color}"></div>`;
-                    iconSize = [14, 14];
-                    iconAnchor = [7, 7];
+                    iconSize = [14, 14]; iconAnchor = [7, 7];
                 }
-
                 const icon = L.divIcon({ html, iconSize, iconAnchor });
                 const m = L.marker([node.lat, node.lng], { icon, draggable: !isLocked }).addTo(individualLayer);
                 m.on('click', (e) => { L.DomEvent.stopPropagation(e); if(isLocked) return; handleNodeClick(node.id); });
@@ -381,14 +367,61 @@
             updateAlertBadge(getDiagnostics());
         }
 
+        // --- RELATÓRIO INTELIGENTE ---
         function updateAlertBadge(diag) {
             const fab = document.getElementById('alert-fab');
             const count = document.getElementById('alert-count');
+            
             if (diag.length > 0) {
-                fab.style.display = 'flex'; count.innerText = diag.length;
+                fab.style.display = 'flex';
+                count.innerText = diag.length;
+                
                 document.getElementById('offline-list').innerHTML = diag.map(a => {
-                    const n = nodes.find(node => node.id === a.id);
-                    return `<div onclick="toggleView('map'); map.flyTo([${n.lat}, ${n.lng}], 18); openDetails('${a.id}');" class="p-5 bg-slate-950 border border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-500/10 transition-all shadow-xl"><div class="text-[9px] font-black text-red-500 uppercase mb-1 italic tracking-widest">${a.type} OFFLINE</div><h4 class="font-black text-sm text-white uppercase">${n.name}</h4></div>`;
+                    const node = nodes.find(n => n.id === a.id);
+                    const connIds = links.filter(l => l.a === a.id || l.b === a.id).map(l => l.a === a.id ? l.b : l.a);
+                    
+                    let relationHtml = "";
+
+                    // Lógica de diagnóstico conforme solicitado
+                    if (node.type === 'camera') {
+                        const sw = nodes.find(n => connIds.includes(n.id) && n.type === 'switch');
+                        const conv = nodes.find(n => n.type === 'converter' && links.some(l => (l.a === n.id || l.b === n.id) && (l.a === sw?.id || l.b === sw?.id)));
+                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]">
+                            <p class="text-red-400 font-black mb-1">CAMINHO TÉCNICO:</p>
+                            <p>● Switch: ${sw ? sw.name : 'N/A'}</p>
+                            <p>● Conversor: ${conv ? conv.name : 'N/A'}</p>
+                        </div>`;
+                    } 
+                    else if (node.type === 'switch') {
+                        const cams = nodes.filter(n => connIds.includes(n.id) && n.type === 'camera');
+                        const conv = nodes.find(n => connIds.includes(n.id) && n.type === 'converter');
+                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]">
+                            <p class="text-red-400 font-black mb-1">IMPACTO & ORIGEM:</p>
+                            <p>● Conversor Pai: ${conv ? conv.name : 'N/A'}</p>
+                            <p>● Câmeras Afetadas: ${cams.length > 0 ? cams.map(c => c.name).join(', ') : 'Nenhuma'}</p>
+                        </div>`;
+                    }
+                    else if (node.type === 'converter') {
+                        const sws = nodes.filter(n => connIds.includes(n.id) && n.type === 'switch');
+                        const allCams = nodes.filter(n => n.type === 'camera' && links.some(l => (l.a === n.id || l.b === n.id) && sws.some(s => s.id === l.a || s.id === l.b)));
+                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]">
+                            <p class="text-red-400 font-black mb-1">CASCATA DE ERRO:</p>
+                            <p>● Switches: ${sws.length > 0 ? sws.map(s => s.name).join(', ') : 'Nenhum'}</p>
+                            <p>● Câmeras sob Jusante: ${allCams.length > 0 ? allCams.map(c => c.name).join(', ') : 'Nenhuma'}</p>
+                        </div>`;
+                    }
+                    else if (node.type === 'core_switch') {
+                        relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]">
+                            <p class="text-red-400 font-black mb-1">FALHA TOTAL DE BACKBONE:</p>
+                            <p>● Todos os ativos da rede estão sem comunicação com a central.</p>
+                        </div>`;
+                    }
+
+                    return `<div onclick="toggleView('map'); map.flyTo([${node.lat}, ${node.lng}], 18); openDetails('${a.id}');" class="p-5 bg-slate-950 border border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-500/10 transition-all shadow-xl">
+                        <div class="text-[9px] font-black text-red-500 uppercase mb-1 italic tracking-widest">${CONFIG[node.type].label} OFFLINE</div>
+                        <h4 class="font-black text-sm text-white uppercase">${node.name}</h4>
+                        ${relationHtml}
+                    </div>`;
                 }).join('');
             } else { fab.style.display = 'none'; closeOfflinePanel(); }
         }
@@ -430,8 +463,7 @@
 
         function addVertexToPath(latlng) { 
             const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId)); 
-            if (!link) return;
-            if (!link.vertices) link.vertices = [];
+            if (!link) return; if (!link.vertices) link.vertices = [];
             const n1 = nodes.find(n => n.id === link.a); const n2 = nodes.find(n => n.id === link.b);
             const pathPoints = [[n1.lat, n1.lng], ...link.vertices, [n2.lat, n2.lng]];
             let minDistance = Infinity; let insertIndex = link.vertices.length;
@@ -474,7 +506,7 @@
                 getConnections(core.id).map(cid => nodes.find(n => n.id === cid)).forEach(item => { if (!item || processedIds.has(item.id)) return; if (item.type === 'converter' || item.type === 'switch') processSubTree(item, coreChildren, getConnections, processedIds, offlineMap); });
                 coreEl.appendChild(coreChildren); container.appendChild(coreEl);
             });
-            nodes.filter(n => n.type === 'converter' && !processedIds.has(n.id)).forEach(conv => processSubTree(conv, container, getConnections, processedIds, offlineMap));
+            nodes.filter(n => n.type === 'converter' && !processedIds.has(n.id)).forEach(conv => processSubTree(conv, container, getConnections, processedIds, offlineMap);
             nodes.filter(n => !processedIds.has(n.id)).forEach(item => container.appendChild(createTreeItem(item, offlineMap[item.id])));
         }
 
