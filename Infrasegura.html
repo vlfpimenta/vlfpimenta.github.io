@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>InfraSegura v6.7 - Mesa de Projetos</title>
+    <title>InfraSegura v6.8 - Mesa de Projetos Privada</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,7 +14,8 @@
         body { background: #020617; color: #f1f5f9; font-family: ui-sans-serif, system-ui, sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
         #map, #list-view { height: calc(100vh - var(--header-h)); width: 100%; margin-top: var(--header-h); position: absolute; top: 0; left: 0; }
         #list-view { background: #020617; z-index: 5; overflow-y: auto; display: none; padding: 2rem; }
-        #map { z-index: 1; background: #020617; }
+        #map { z-index: 1; background: #000; } /* Fundo preto puro para a mesa */
+        
         .locked-mode .leaflet-marker-icon, .locked-mode .leaflet-interactive { pointer-events: none !important; }
         .leaflet-div-icon, .custom-div-icon, .leaflet-marker-icon { background: transparent !important; border: none !important; box-shadow: none !important; }
 
@@ -43,6 +44,7 @@
         #mode-indicator-bar { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 4500; background: #3b82f6; color: white; padding: 10px 24px; border-radius: 9999px; font-size: 11px; font-weight: 900; display: none; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5); border: 2px solid rgba(255,255,255,0.3); text-transform: uppercase; align-items: center; gap: 15px; }
         .mode-btn { background: white; color: #3b82f6; padding: 4px 12px; border-radius: 999px; font-size: 9px; font-weight: 900; text-transform: uppercase; transition: all 0.2s; }
         .mode-btn:hover { background: #f1f5f9; transform: scale(1.05); }
+        #vps-status { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 6000; font-size: 9px; font-weight: 900; text-transform: uppercase; color: #64748b; background: #0f172a; padding: 4px 12px; border-radius: 9999px; border: 1px solid #1e293b; display: flex; align-items: center; gap: 6px; }
         .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; }
         .status-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
         #details-panel, #offline-panel { transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none; transform: translateX(100%); z-index: 4000; }
@@ -87,7 +89,7 @@
                         <button onclick="document.getElementById('bg-input').click()" class="w-full p-3 hover:bg-indigo-600 rounded-xl transition-all text-left flex justify-between">Planta de Fundo <span>🖼️</span></button>
                         <button onclick="resetToWorldMap()" class="w-full p-3 hover:bg-slate-700 rounded-xl transition-all text-left flex justify-between">Mapa Mundi <span>🌍</span></button>
                         <hr class="border-slate-800 my-1">
-                        <button onclick="toggleAppLock()" class="w-full p-3 hover:bg-orange-600 rounded-xl transition-all text-left">Bloquear Painel</button>
+                        <button onclick="toggleAppLock()" class="w-full p-3 hover:bg-orange-600 rounded-2xl transition-all text-left">Bloquear Painel</button>
                     </div>
                 </div>
                 <input type="file" id="import-input" class="hidden" accept=".json" onchange="importMap(event)">
@@ -158,6 +160,7 @@
         let isLocked = false; let logoClicks = 0; let isMenuOpen = false;
         let individualLayer, linksLayer, handlesLayer, worldTiles, bgImageLayer;
         let currentBackgroundBase64 = null;
+        let minZoomLimit = 15;
 
         const CONFIG = {
             core_switch: { label: 'Switch Principal', color: '#6366f1', hasIp: true, icon: '<rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2"/>', rank: 0 },
@@ -199,29 +202,44 @@
             reader.readAsDataURL(file);
         }
 
-        // --- LÓGICA DE FUNDO ESTICADO E ZOOM LIVRE ---
+        // --- APLICAÇÃO DE FUNDO COM TRAVA DE MOVIMENTO ---
         function applyBackground(base64) {
             currentBackgroundBase64 = base64;
             if (worldTiles) map.removeLayer(worldTiles);
             if (bgImageLayer) map.removeLayer(bgImageLayer);
 
-            // Estica a imagem para preencher exatamente o que está na tela no momento
             const bounds = map.getBounds();
             bgImageLayer = L.imageOverlay(base64, bounds, { zIndex: 0 }).addTo(map);
-
-            // Configurações de Zoom para Planta Técnica
-            map.setMinZoom(map.getZoom()); // Zoom out máximo é o estado atual (toda a imagem na tela)
-            map.setMaxZoom(22); // Permite um zoom in "infinito"
             
-            showToast("Planta de Fundo Aplicada.");
+            // Fixa o limite para não deixar o mapa "escapar" da imagem
+            map.setMaxBounds(bounds);
+            minZoomLimit = map.getZoom();
+            map.setMinZoom(minZoomLimit);
+            map.setMaxZoom(24);
+
+            // Se o zoom for o mínimo (imagem toda na tela), desativa arrasto
+            checkMapDragState();
+
+            showToast("Planta Fixada com Sucesso.");
             document.getElementById('logo-menu').classList.remove('show');
+        }
+
+        function checkMapDragState() {
+            if (!currentBackgroundBase64) return;
+            if (map.getZoom() <= minZoomLimit) {
+                map.dragging.disable();
+            } else {
+                map.dragging.enable();
+            }
         }
 
         function resetToWorldMap() {
             currentBackgroundBase64 = null;
             if (bgImageLayer) map.removeLayer(bgImageLayer);
             if (!map.hasLayer(worldTiles)) worldTiles.addTo(map);
-            map.setMinZoom(1); map.setMaxZoom(18); // Volta limites do mapa real
+            map.setMaxBounds(null);
+            map.setMinZoom(1); map.setMaxZoom(18);
+            map.dragging.enable();
             showToast("Mapa Mundi Ativo.");
             document.getElementById('logo-menu').classList.remove('show');
         }
@@ -254,6 +272,10 @@
                 else if (currentMode) addNode(currentMode, e.latlng); 
                 else { closePanel(); closeOfflinePanel(); document.getElementById('logo-menu').classList.remove('show'); } 
             });
+
+            // Escutador de Zoom para travar/destravar arrasto
+            map.on('zoomend', checkMapDragState);
+
             loadData();
             setTimeout(() => map.invalidateSize(), 200);
         };
@@ -268,7 +290,6 @@
             render();
         }
 
-        // --- LÓGICA DE STATUS: SWITCH SÓ CAI SE TUDO ESTIVER OFFLINE ---
         function isNodeOffline(id, visited = new Set()) {
             if (visited.has(id)) return false; visited.add(id);
             const n = nodes.find(it => it.id === id); if (!n) return true;
@@ -320,7 +341,7 @@
                             const g = L.marker(mid, { draggable: true, icon: L.divIcon({ className: 'midpoint-handle', iconSize: [10, 10] }) }).addTo(handlesLayer);
                             g.on('dragstart', () => { if (!link.vertices) link.vertices = []; link.vertices.splice(i, 0, mid); });
                             g.on('drag', (e) => { link.vertices[i] = [e.target.getLatLng().lat, e.target.getLatLng().lng]; render(); });
-                            g.on('dragend', () => { saveData(); render(); });
+                            ghost.on('dragend', () => { saveData(); render(); });
                         }
                     }
                 }
@@ -361,7 +382,7 @@
                 if (!linkSourceId) { linkSourceId = id; showToast(`Origem: ${nodes.find(n => n.id === id).name}`); } 
                 else if (linkSourceId !== id) { 
                     const n1 = nodes.find(n => n.id === linkSourceId); const n2 = nodes.find(n => n.id === id);
-                    if (n1.type === 'camera' && n2.type === 'camera') { showToast("Erro."); linkSourceId = null; render(); return; }
+                    if (n1.type === 'camera' && n2.type === 'camera') { showToast("Câmeras não conectam em câmeras."); linkSourceId = null; render(); return; }
                     let pId = (CONFIG[n1.type].rank <= CONFIG[n2.type].rank) ? n1.id : n2.id;
                     links.push({ id: 'l'+Date.now(), a: pId, b: (pId === n1.id ? n2.id : n1.id), vertices: [] }); saveData(); linkSourceId = null; render();
                 } 
@@ -370,19 +391,13 @@
             openDetails(id); 
         }
 
-        function openDetails(id) {
-            selectedId = id; const n = nodes.find(it => it.id === id);
-            const panel = document.getElementById('details-panel'); panel.classList.add('show');
-            document.getElementById('details-content').innerHTML = `<div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase font-black tracking-tight"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0"></div>${CONFIG[n.type].hasIp ? `<div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-2 uppercase text-center">IP</p><input type="text" value="${n.ip || '0.0.0.0'}" onchange="updateIp('${id}', this.value)" class="bg-slate-950 w-full p-2 rounded-lg border border-slate-800 font-mono text-center text-blue-400 outline-none"><button onclick="toggleStatus('${id}')" class="w-full mt-3 py-3 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl transition-all">Simular Status</button></div>` : ''}<button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase shadow-lg mt-4">Editar Traçado</button><button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Ativo</button>`;
-            render();
-        }
-
+        function openDetails(id) { selectedId = id; const n = nodes.find(it => it.id === id); const p = document.getElementById('details-panel'); p.classList.add('show'); document.getElementById('details-content').innerHTML = `<div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase font-black tracking-tight"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0"></div>${CONFIG[n.type].hasIp ? `<div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-2 uppercase text-center">IP</p><input type="text" value="${n.ip || '0.0.0.0'}" onchange="updateIp('${id}', this.value)" class="bg-slate-950 w-full p-2 rounded-lg border border-slate-800 font-mono text-center text-blue-400 outline-none"><button onclick="toggleStatus('${id}')" class="w-full mt-3 py-3 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl transition-all">Simular Status</button></div>` : ''}<button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase shadow-lg mt-4">Editar Traçado</button><button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Ativo</button>`; render(); }
         function startDrawingPath(nodeId) { isDrawingPath = true; drawingNodeId = nodeId; closePanel(); const bar = document.getElementById('mode-indicator-bar'); const actions = document.getElementById('mode-actions'); bar.style.display = 'flex'; document.getElementById('mode-text').innerText = "Editando Traçado"; actions.innerHTML = `<button onclick="resetTools()" class="mode-btn">Concluir</button>`; document.getElementById('fab-main').classList.add('active'); render(); }
         function addVertexToPath(latlng) { const l = links.find(li => (li.a === drawingNodeId || li.b === drawingNodeId)); if (!l) return; if (!l.vertices) l.vertices = []; const n1 = nodes.find(n => n.id === l.a); const n2 = nodes.find(n => n.id === l.b); const points = [[n1.lat, n1.lng], ...l.vertices, [n2.lat, n2.lng]]; let minDist = Infinity; let idx = l.vertices.length; for (let i = 0; i < points.length - 1; i++) { const d = L.LineUtil.pointToSegmentDistance(map.latLngToLayerPoint(latlng), map.latLngToLayerPoint(points[i]), map.latLngToLayerPoint(points[i+1])); if (d < minDist) { minDist = d; idx = i; } } l.vertices.splice(idx, 0, [latlng.lat, latlng.lng]); render(); }
         function addNode(type, latlng) { const id = 'n'+Date.now(); const count = nodes.filter(n => n.type === type).length + 1; nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${count}`, ip: CONFIG[type].hasIp ? '192.168.1.100' : null }); saveData(); render(); showToast(`${CONFIG[type].label} adicionado.`); }
         function toggleFab() { if (isLocked) return; if (currentMode || isLinking || isDrawingPath) { resetTools(); return; } isMenuOpen = !isMenuOpen; document.getElementById('fab-items').classList.toggle('open', isMenuOpen); document.getElementById('fab-main').classList.toggle('active', isMenuOpen); render(); }
-        function setMode(m) { currentMode = m; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = `Inserindo: ${CONFIG[m].label}`; document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('tool-' + m).classList.add('selected'); }
-        function toggleLinking() { isLinking = true; currentMode = null; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = "Criando Conexões"; document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('link-btn').classList.add('selected'); }
+        function setMode(m) { currentMode = m; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = `Inserindo: ${CONFIG[m].label}`; document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('tool-' + m).classList.add('selected'); render(); }
+        function toggleLinking() { isLinking = true; currentMode = null; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = "Criando Conexões"; document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('link-btn').classList.add('selected'); render(); }
         function openOfflinePanel() { document.getElementById('offline-panel').classList.add('show'); }
         function closeOfflinePanel() { document.getElementById('offline-panel').classList.remove('show'); }
         function closePanel() { document.getElementById('details-panel').classList.remove('show'); selectedId = null; render(); }
@@ -394,7 +409,7 @@
         function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
         function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(); render(); saveData(); }
         function handleLogoInteraction() { if (isLocked) { logoClicks++; if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } } else document.getElementById('logo-menu').classList.toggle('show'); }
-        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-950 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-900 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
         function toggleView(v) { document.getElementById('map').style.display = v==='map'?'block':'none'; document.getElementById('list-view').style.display = v==='list'?'block':'none'; if(v==='list') renderListView(); else map.invalidateSize(); }
         function locateMe() { if(!currentBackgroundBase64) navigator.geolocation.getCurrentPosition(p => map.flyTo([p.coords.latitude, p.coords.longitude], 17)); else showToast("Modo Planta Ativo."); }
 
