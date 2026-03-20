@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>InfraSegura v6.2 - Edição Contínua Fluida</title>
+    <title>InfraSegura v6.3 - Hierarquia Estruturada</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Leaflet Core -->
@@ -178,17 +178,18 @@
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </div>
             <div id="fab-items" class="fab-items">
-                <button onclick="setMode('server')" id="tool-server" class="fab-item-btn tool-btn" title="Servidor" style="color: #a78bfa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/></svg></button>
-                <button onclick="setMode('camera')" id="tool-camera" class="fab-item-btn tool-btn" title="Câmera" style="color: #60a5fa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>
-                <button onclick="setMode('switch')" id="tool-switch" class="fab-item-btn tool-btn" title="Switch" style="color: #34d399"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/></svg></button>
+                <button onclick="setMode('core_switch')" id="tool-core_switch" class="fab-item-btn tool-btn" title="Switch Principal" style="color: #6366f1"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2"/></svg></button>
                 <button onclick="setMode('converter')" id="tool-converter" class="fab-item-btn tool-btn" title="Conversor" style="color: #fbbf24"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></button>
+                <button onclick="setMode('switch')" id="tool-switch" class="fab-item-btn tool-btn" title="Switch" style="color: #34d399"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/></svg></button>
+                <button onclick="setMode('camera')" id="tool-camera" class="fab-item-btn tool-btn" title="Câmera" style="color: #60a5fa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>
+                <button onclick="setMode('server')" id="tool-server" class="fab-item-btn tool-btn" title="Servidor" style="color: #a78bfa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/></svg></button>
                 <button onclick="toggleLinking()" id="link-btn" class="fab-item-btn tool-btn" title="Conectar" style="color: #94a3b8"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54"/></svg></button>
             </div>
         </div>
 
         <div id="map"></div>
         <div id="list-view">
-            <h2 class="text-2xl font-black uppercase mb-8 tracking-tighter text-blue-500">Hierarquia de Ativos</h2>
+            <h2 class="text-2xl font-black uppercase mb-8 tracking-tighter text-blue-500 border-b border-slate-800 pb-4">Topologia de Ativos</h2>
             <div id="tree-container"></div>
         </div>
 
@@ -232,10 +233,11 @@
         let individualLayer, linksLayer, handlesLayer;
 
         const CONFIG = {
-            server: { label: 'Servidor', color: '#a78bfa', hasIp: true, icon: '<rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/>' },
-            camera: { label: 'Câmera', color: '#3b82f6', hasIp: true, icon: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>' },
+            core_switch: { label: 'Switch Principal', color: '#6366f1', hasIp: true, icon: '<rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2"/>' },
+            converter: { label: 'Conversor', color: '#f59e0b', hasIp: false, icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>' },
             switch: { label: 'Switch', color: '#10b981', hasIp: false, icon: '<rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/>' },
-            converter: { label: 'Conversor', color: '#f59e0b', hasIp: false, icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>' }
+            camera: { label: 'Câmera', color: '#3b82f6', hasIp: true, icon: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>' },
+            server: { label: 'Servidor', color: '#a78bfa', hasIp: true, icon: '<rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/>' }
         };
 
         // --- VPS SYNC ---
@@ -299,7 +301,7 @@
             if (CONFIG[n.type].hasIp) return activeStatuses[id] === 'offline';
             const connIds = links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
             let dependents = [];
-            if (n.type === 'switch') dependents = connIds.filter(cid => nodes.find(nn => nn.id === cid)?.type === 'camera');
+            if (n.type === 'switch' || n.type === 'core_switch') dependents = connIds.filter(cid => nodes.find(nn => nn.id === cid)?.type === 'camera' || nodes.find(nn => nn.id === cid)?.type === 'switch');
             else if (n.type === 'converter') dependents = connIds.filter(cid => nodes.find(nn => nn.id === cid)?.type === 'switch');
             if (dependents.length === 0) return false;
             return dependents.every(depId => isNodeOffline(depId, visited));
@@ -313,8 +315,9 @@
                 if (offlineMap[n.id]) {
                     let suppressed = false;
                     const connIds = links.filter(l => l.a === n.id || l.b === n.id).map(l => l.a === n.id ? l.b : l.a);
-                    if (n.type === 'camera') suppressed = connIds.some(cid => { const o = nodes.find(on => on.id === cid); return o && o.type === 'switch' && offlineMap[cid]; });
-                    else if (n.type === 'switch') suppressed = connIds.some(cid => { const o = nodes.find(on => on.id === cid); return o && o.type === 'converter' && offlineMap[cid]; });
+                    if (n.type === 'camera') suppressed = connIds.some(cid => { const o = nodes.find(on => on.id === cid); return o && (o.type === 'switch' || o.type === 'core_switch') && offlineMap[cid]; });
+                    else if (n.type === 'switch') suppressed = connIds.some(cid => { const o = nodes.find(on => on.id === cid); return o && (o.type === 'converter' || o.type === 'core_switch') && offlineMap[cid]; });
+                    else if (n.type === 'converter') suppressed = connIds.some(cid => { const o = nodes.find(on => on.id === cid); return o && o.type === 'core_switch' && offlineMap[cid]; });
                     if (!suppressed) alerts.push({ id: n.id, name: n.name, type: CONFIG[n.type].label.toUpperCase() });
                 }
             });
@@ -386,7 +389,7 @@
                     const lid = 'l'+Date.now();
                     links.push({ id: lid, a: linkSourceId, b: id, vertices: [] }); 
                     saveData(); 
-                    linkSourceId = null; // Mantém modo de conexão ativo
+                    linkSourceId = null; 
                     render(); 
                     showToast("Conectado. Selecione nova origem."); 
                 } 
@@ -402,16 +405,45 @@
             setTimeout(() => panel.classList.add('show'), 10);
             
             const connIds = links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
-            let itemsHtml = '';
-            if (n.type === 'switch' || n.type === 'converter') {
-                const deps = nodes.filter(vn => connIds.includes(vn.id));
-                itemsHtml = `<div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-1 uppercase">Conectados (${deps.length})</p><div class="max-h-32 overflow-y-auto space-y-1">${deps.map(c => `<div class="text-[10px] flex justify-between"><span>${c.name}</span> <span class="${activeStatuses[c.id] === 'offline' ? 'text-red-500' : 'text-emerald-500'}">●</span></div>`).join('')}</div></div>`;
-            }
+            
+            // Busca de Pai (Parent) e Filhos (Children)
+            const parent = nodes.find(vn => connIds.includes(vn.id) && (
+                (n.type === 'camera' && (vn.type === 'switch' || vn.type === 'core_switch')) ||
+                (n.type === 'switch' && (vn.type === 'converter' || vn.type === 'core_switch')) ||
+                (n.type === 'converter' && vn.type === 'core_switch')
+            ));
+
+            const children = nodes.filter(vn => connIds.includes(vn.id) && vn.id !== parent?.id);
+
+            let hierarchyHtml = `
+                <div class="space-y-4 pt-4 border-t border-slate-800">
+                    <div class="text-[9px] font-black uppercase text-blue-500 tracking-widest italic">Conexões de Rede</div>
+                    <div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800">
+                        <p class="text-[8px] text-slate-500 mb-1 uppercase">Sinal de Origem</p>
+                        <p class="text-xs font-bold ${parent ? 'text-indigo-400' : 'text-slate-600 italic'}">
+                            ${parent ? parent.name : 'Nenhum Ativo Pai'}
+                        </p>
+                    </div>
+                    ${n.type !== 'camera' ? `
+                    <div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800">
+                        <p class="text-[8px] text-slate-500 mb-1 uppercase">Ativos Dependentes (${children.length})</p>
+                        <div class="max-h-32 overflow-y-auto space-y-1">
+                            ${children.map(c => `<div class="text-[10px] flex justify-between font-medium"><span>${c.name}</span> <span class="${activeStatuses[c.id] === 'offline' ? 'text-red-500' : 'text-emerald-500'}">●</span></div>`).join('')}
+                            ${children.length === 0 ? '<p class="text-[10px] text-slate-600 italic">Vazio</p>' : ''}
+                        </div>
+                    </div>` : ''}
+                </div>`;
+
             document.getElementById('details-content').innerHTML = `
                 <div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase font-black tracking-tight"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0"></div>
-                ${CONFIG[n.type].hasIp ? `<button onclick="toggleStatus('${id}')" class="w-full py-4 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl">Simular Teste</button>` : ''}
-                ${itemsHtml}
-                <button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase shadow-lg">Traçar Caminho</button>
+                ${CONFIG[n.type].hasIp ? `
+                <div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-800">
+                    <p class="text-[8px] text-slate-500 mb-2 uppercase text-center">Endereço IP</p>
+                    <input type="text" value="${n.ip || '0.0.0.0'}" onchange="updateIp('${id}', this.value)" class="bg-slate-950 w-full p-2 rounded-lg border border-slate-800 font-mono text-center text-blue-400 outline-none">
+                    <button onclick="toggleStatus('${id}')" class="w-full mt-3 py-3 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl transition-all">Simular Status</button>
+                </div>` : ''}
+                ${hierarchyHtml}
+                <button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase shadow-lg mt-4">Editar Traçado</button>
                 <button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Ativo</button>
             `;
             render();
@@ -419,18 +451,14 @@
 
         function addNode(type, latlng) { 
             const id = 'n'+Date.now(); 
-            nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${nodes.length+1}` }); 
+            nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${nodes.length+1}`, ip: CONFIG[type].hasIp ? '192.168.1.100' : null }); 
             saveData(); render();
-            showToast(`${CONFIG[type].label} adicionado. Continue no mapa.`);
+            showToast(`${CONFIG[type].label} adicionado.`);
         }
 
         function toggleFab() { 
             if (isLocked) return;
-            // Se algum modo estiver ativo, o botão principal funciona como "Concluir/X"
-            if (currentMode || isLinking || isDrawingPath) { 
-                resetTools(); 
-                return; 
-            }
+            if (currentMode || isLinking || isDrawingPath) { resetTools(); return; }
             isMenuOpen = !isMenuOpen;
             document.getElementById('fab-items').classList.toggle('open', isMenuOpen);
             document.getElementById('fab-main').classList.toggle('active', isMenuOpen);
@@ -440,11 +468,8 @@
             currentMode = m; 
             document.getElementById('mode-indicator-bar').style.display = 'block';
             document.getElementById('mode-indicator-bar').innerText = `Inserindo: ${CONFIG[m].label}`;
-            
-            // Highlight na ferramenta selecionada
             document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected'));
             document.getElementById('tool-' + m).classList.add('selected');
-            
             showToast(`Toque no mapa para espalhar ${CONFIG[m].label}s`); 
         }
 
@@ -453,53 +478,33 @@
             document.getElementById('mode-indicator-bar').style.display = 'block'; 
             document.getElementById('mode-indicator-bar').innerText = "Editando Traçado";
             document.getElementById('fab-main').classList.add('active');
-            showToast("Toque no mapa para criar vértices. Clique no + para sair.");
         }
 
         function toggleLinking() { 
-            isLinking = true; 
-            currentMode = null;
+            isLinking = true; currentMode = null;
             document.getElementById('mode-indicator-bar').style.display = 'block';
             document.getElementById('mode-indicator-bar').innerText = "Criando Conexões";
-            
             document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected'));
             document.getElementById('link-btn').classList.add('selected');
-            
             showToast("Origem e depois destino"); 
         }
 
         function addVertexToPath(latlng) { 
             const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId)); 
-            if (link) { 
-                if (!link.vertices) link.vertices = []; 
-                link.vertices.push([latlng.lat, latlng.lng]); 
-                render(); 
-            } 
+            if (link) { if (!link.vertices) link.vertices = []; link.vertices.push([latlng.lat, latlng.lng]); render(); } 
         }
-        function closePanel() { 
-            const p = document.getElementById('details-panel'); 
-            p.classList.remove('show'); 
-            setTimeout(() => p.classList.add('hidden'), 300); 
-            selectedId = null; 
-            render(); 
-        }
-        function openOfflinePanel() { 
-            const p = document.getElementById('offline-panel'); 
-            p.classList.remove('hidden'); 
-            setTimeout(() => p.classList.add('show'), 10); 
-        }
-        function closeOfflinePanel() { 
-            const p = document.getElementById('offline-panel'); 
-            p.classList.remove('show'); 
-            setTimeout(() => p.classList.add('hidden'), 300); 
-        }
+        function closePanel() { const p = document.getElementById('details-panel'); p.classList.remove('show'); setTimeout(() => p.classList.add('hidden'), 300); selectedId = null; render(); }
+        function openOfflinePanel() { document.getElementById('offline-panel').classList.add('show'); }
+        function closeOfflinePanel() { document.getElementById('offline-panel').classList.remove('show'); }
         function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; document.getElementById('logo-menu').classList.remove('show'); closePanel(); showToast("MODO OPERAÇÃO"); }
         function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked-mode'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } }
         function updateName(id, v) { nodes.find(n => n.id === id).name = v; saveData(); render(); }
+        function updateIp(id, v) { nodes.find(n => n.id === id).ip = v; saveData(); render(); }
         function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
         function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(); render(); saveData(); }
         function handleLogoInteraction() { if (isLocked) { logoClicks++; if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } } else document.getElementById('logo-menu').classList.toggle('show'); }
         function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-900 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+        
         function toggleView(v) { 
             document.getElementById('map').style.display = v==='map'?'block':'none';
             document.getElementById('list-view').style.display = v==='list'?'block':'none';
@@ -508,35 +513,59 @@
             if(v==='list') renderListView(); else map.invalidateSize();
         }
         function locateMe() { navigator.geolocation.getCurrentPosition(p => map.flyTo([p.coords.latitude, p.coords.longitude], 17)); }
+
         function renderListView() {
             const container = document.getElementById('tree-container');
             container.innerHTML = '';
             const offlineMap = {}; nodes.forEach(n => offlineMap[n.id] = isNodeOffline(n.id));
             const getConnections = (id) => links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
             const processedIds = new Set();
-            const converters = nodes.filter(n => n.type === 'converter');
-            converters.forEach(conv => {
-                processedIds.add(conv.id);
-                const convEl = createTreeItem(conv, offlineMap[conv.id]);
-                const childrenContainer = document.createElement('div');
-                childrenContainer.className = 'tree-node';
-                getConnections(conv.id).map(cid => nodes.find(n => n.id === cid)).filter(n => n && n.type === 'switch').forEach(sw => {
-                    processedIds.add(sw.id);
-                    const swEl = createTreeItem(sw, offlineMap[sw.id]);
-                    const swChildren = document.createElement('div');
-                    swChildren.className = 'tree-node';
-                    getConnections(sw.id).map(cid => nodes.find(n => n.id === cid)).filter(n => n && n.type === 'camera').forEach(cam => {
-                        processedIds.add(cam.id);
-                        swChildren.appendChild(createTreeItem(cam, offlineMap[cam.id]));
-                    });
-                    swEl.appendChild(swChildren);
-                    childrenContainer.appendChild(swEl);
+
+            // 1. Switches Principais
+            const cores = nodes.filter(n => n.type === 'core_switch');
+            cores.forEach(core => {
+                processedIds.add(core.id);
+                const coreEl = createTreeItem(core, offlineMap[core.id]);
+                const coreChildren = document.createElement('div');
+                coreChildren.className = 'tree-node';
+
+                // Buscar Conversores ou Switches diretos
+                getConnections(core.id).map(cid => nodes.find(n => n.id === cid)).forEach(item => {
+                    if (!item || processedIds.has(item.id)) return;
+                    if (item.type === 'converter' || item.type === 'switch') {
+                        processSubTree(item, coreChildren, getConnections, processedIds, offlineMap);
+                    }
                 });
-                convEl.appendChild(childrenContainer);
-                container.appendChild(convEl);
+                coreEl.appendChild(coreChildren);
+                container.appendChild(coreEl);
             });
+
+            // 2. Conversores Órfãos
+            nodes.filter(n => n.type === 'converter' && !processedIds.has(n.id)).forEach(conv => {
+                processSubTree(conv, container, getConnections, processedIds, offlineMap);
+            });
+
+            // 3. O resto
             nodes.filter(n => !processedIds.has(n.id)).forEach(item => container.appendChild(createTreeItem(item, offlineMap[item.id])));
         }
+
+        function processSubTree(node, parentEl, getConnections, processedIds, offlineMap) {
+            processedIds.add(node.id);
+            const el = createTreeItem(node, offlineMap[node.id]);
+            const childrenContainer = document.createElement('div');
+            childrenContainer.className = 'tree-node';
+            
+            getConnections(node.id).map(cid => nodes.find(n => n.id === cid)).forEach(child => {
+                if (!child || processedIds.has(child.id)) return;
+                if ((node.type === 'converter' && child.type === 'switch') || (node.type === 'switch' && child.type === 'camera')) {
+                    processSubTree(child, childrenContainer, getConnections, processedIds, offlineMap);
+                }
+            });
+
+            if (childrenContainer.children.length > 0) el.appendChild(childrenContainer);
+            parentEl.appendChild(el);
+        }
+
         function createTreeItem(node, isOff) {
             const div = document.createElement('div');
             div.className = 'mb-2';
@@ -544,7 +573,10 @@
                 <div class="p-2 rounded-lg" style="background: ${isOff ? '#ef4444' : CONFIG[node.type].color}">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg>
                 </div>
-                <div class="flex-1"><p class="text-xs font-bold uppercase">${node.name}</p></div>
+                <div class="flex-1">
+                    <p class="text-xs font-bold uppercase">${node.name}</p>
+                    ${node.ip ? `<p class="text-[8px] font-mono text-slate-500">${node.ip}</p>` : ''}
+                </div>
                 ${isOff ? '<span class="text-[8px] bg-red-600 px-1.5 rounded uppercase font-black">OFFLINE</span>' : ''}
             </div>`;
             return div;
