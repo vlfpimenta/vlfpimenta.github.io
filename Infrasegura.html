@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>InfraSegura v6.0 - Fluxo Simplificado</title>
+    <title>InfraSegura v6.1 - Modos Persistentes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Leaflet Core -->
@@ -121,7 +121,7 @@
 
     <div id="app-container">
         <!-- Barra de Indicador de Modo -->
-        <div id="mode-indicator-bar">Modo de Edição Ativo</div>
+        <div id="mode-indicator-bar">Modo Ativo</div>
 
         <div id="vps-status">
             <div class="status-dot" id="status-dot"></div>
@@ -366,10 +366,17 @@
         function handleNodeClick(id) { 
             if (isDrawingPath) return; 
             if (isLinking) { 
-                if (!linkSourceId) { linkSourceId = id; showToast(`Origem: ${nodes.find(n => n.id === id).name}`); } 
+                if (!linkSourceId) { 
+                    linkSourceId = id; 
+                    showToast(`Origem selecionada: ${nodes.find(n => n.id === id).name}`); 
+                } 
                 else if (linkSourceId !== id) { 
-                    links.push({ id: 'l'+Date.now(), a: linkSourceId, b: id, vertices: [] }); 
-                    saveData(); resetTools(); showToast("Conectado"); 
+                    const lid = 'l'+Date.now();
+                    links.push({ id: lid, a: linkSourceId, b: id, vertices: [] }); 
+                    saveData(); 
+                    linkSourceId = null; // Apenas limpa a origem, mantém isLinking = true
+                    render(); 
+                    showToast("Conectado. Selecione nova origem ou clique no + para fechar."); 
                 } 
                 return; 
             } 
@@ -402,7 +409,7 @@
             const id = 'n'+Date.now(); 
             nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${nodes.length+1}` }); 
             saveData(); render();
-            showToast(`${CONFIG[type].label} adicionado`);
+            showToast(`${CONFIG[type].label} adicionado. Continue tocando no mapa ou clique no + para fechar.`);
         }
 
         function toggleFab() { 
@@ -421,31 +428,38 @@
             isMenuOpen = false;
             document.getElementById('fab-items').classList.remove('open');
             currentMode = m; 
-            document.getElementById('mode-indicator-bar').style.display = 'flex';
-            document.getElementById('mode-indicator-bar').innerText = `Adição em Lote: ${CONFIG[m].label}`;
+            document.getElementById('mode-indicator-bar').style.display = 'block';
+            document.getElementById('mode-indicator-bar').innerText = `Ação em Lote: ${CONFIG[m].label}`;
             document.getElementById('fab-main').classList.add('active');
             showToast(`Toque no mapa para espalhar ${CONFIG[m].label}s`); 
         }
 
         function startDrawingPath(nodeId) { 
             isDrawingPath = true; drawingNodeId = nodeId; closePanel(); 
-            document.getElementById('mode-indicator-bar').style.display = 'flex'; 
-            document.getElementById('mode-indicator-bar').innerText = "Traçando: Clique no mapa";
+            document.getElementById('mode-indicator-bar').style.display = 'block'; 
+            document.getElementById('mode-indicator-bar').innerText = "Traçando Caminho";
             document.getElementById('fab-main').classList.add('active');
-            showToast("Para concluir, clique no +");
+            showToast("Para concluir a edição da linha, clique no +");
         }
 
         function toggleLinking() { 
             isMenuOpen = false;
             document.getElementById('fab-items').classList.remove('open');
             isLinking = true; 
-            document.getElementById('mode-indicator-bar').style.display = 'flex';
-            document.getElementById('mode-indicator-bar').innerText = "Modo Conexão Ativo";
+            document.getElementById('mode-indicator-bar').style.display = 'block';
+            document.getElementById('mode-indicator-bar').innerText = "Conexão de Dados";
             document.getElementById('fab-main').classList.add('active');
-            showToast("Selecione a origem"); 
+            showToast("Selecione a origem e depois o destino"); 
         }
 
-        function addVertexToPath(latlng) { const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId)); if (link) { if (!link.vertices) link.vertices = []; link.vertices.push([latlng.lat, latlng.lng]); render(); } }
+        function addVertexToPath(latlng) { 
+            const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId)); 
+            if (link) { 
+                if (!link.vertices) link.vertices = []; 
+                link.vertices.push([latlng.lat, latlng.lng]); 
+                render(); 
+            } 
+        }
         function closePanel() { const p = document.getElementById('details-panel'); p.classList.remove('show'); setTimeout(() => p.classList.add('hidden'), 300); selectedId = null; render(); }
         function openOfflinePanel() { const p = document.getElementById('offline-panel'); p.classList.remove('hidden'); setTimeout(() => p.classList.add('show'), 10); }
         function closeOfflinePanel() { const p = document.getElementById('offline-panel'); p.classList.remove('show'); setTimeout(() => p.classList.add('hidden'), 300); }
