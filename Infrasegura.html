@@ -6,11 +6,9 @@
     <title>InfraSegura v6.4 - Conexões Inteligentes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Leaflet Core -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Leaflet MarkerCluster -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
@@ -140,7 +138,6 @@
 <body class="bg-slate-950 text-slate-100 overflow-hidden font-sans">
 
     <div id="app-container">
-        <!-- Barra de Indicador de Modo -->
         <div id="mode-indicator-bar">
             <span id="mode-text">Modo Ativo</span>
             <div id="mode-actions" class="flex gap-2"></div>
@@ -151,13 +148,11 @@
             <span id="status-text">Sincronizando com vlf-vps...</span>
         </div>
 
-        <!-- Alerta Crítico -->
         <div id="alert-fab" onclick="openOfflinePanel()" class="alert-fab">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div id="alert-count" class="absolute -top-1 -right-1 bg-white text-red-600 w-7 h-7 rounded-full flex items-center justify-center font-black text-xs border-2 border-red-600">0</div>
         </div>
 
-        <!-- Header -->
         <header class="fixed top-0 left-0 right-0 h-[var(--header-h)] bg-[#0f172a] border-b-2 border-slate-800 z-[2000] flex items-center justify-between px-4 sm:px-8 shadow-2xl">
             <div class="flex items-center relative">
                 <button onclick="handleLogoInteraction()" class="flex items-center space-x-3 hover:bg-slate-800/50 p-2 rounded-xl transition-all active:scale-95">
@@ -205,8 +200,7 @@
             <div id="tree-container"></div>
         </div>
 
-        <!-- Painéis Deslizantes -->
-        <div id="offline-panel" class="fixed right-6 top-24 bottom-24 w-96 bg-slate-900 border-2 border-red-500/40 rounded-[3rem] p-8 hidden flex flex-col shadow-4xl mobile-full text-white">
+        <div id="offline-panel" class="fixed right-6 top-24 bottom-24 w-96 bg-slate-900 border-2 border-red-500/40 rounded-[3rem] p-8 flex flex-col shadow-4xl mobile-full text-white">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-sm font-black uppercase text-red-500 tracking-widest italic">Falhas Detectadas</h3>
                 <button onclick="closeOfflinePanel()" class="p-2 hover:bg-slate-800 rounded-full transition-colors"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
@@ -214,7 +208,7 @@
             <div id="offline-list" class="flex-1 overflow-y-auto space-y-3 pr-2"></div>
         </div>
 
-        <div id="details-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-slate-800 rounded-[3rem] p-8 hidden flex flex-col shadow-4xl mobile-full text-white overflow-hidden">
+        <div id="details-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-slate-800 rounded-[3rem] p-8 flex flex-col shadow-4xl mobile-full text-white overflow-hidden">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Ativo</h3>
                 <button onclick="closePanel()" class="p-2 hover:bg-slate-800 rounded-full transition-colors">
