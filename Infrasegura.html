@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>InfraSegura v5.9 - Estabilidade e Fluxo</title>
+    <title>InfraSegura v6.0 - Fluxo Simplificado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Leaflet Core -->
@@ -71,6 +71,7 @@
             width: 64px; height: 64px; border-radius: 50%; background-color: #3b82f6; 
             color: white; display: flex; align-items: center; justify-content: center; 
             box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4); cursor: pointer; border: 3px solid #60a5fa;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .fab-main.active { transform: rotate(135deg); background-color: #ef4444; border-color: #f87171; }
         .fab-items { display: flex; flex-direction: column-reverse; gap: 12px; pointer-events: none; opacity: 0; transform: translateY(15px); transition: 0.3s ease; }
@@ -78,19 +79,21 @@
         .fab-item-btn { width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: #1e293b; border: 2px solid #334155; position: relative; }
         .fab-item-btn.selected { border-color: #3b82f6; background-color: #0f172a; }
 
+        .alert-fab {
+            position: fixed; left: 24px; bottom: 24px; z-index: 5000;
+            width: 64px; height: 64px; border-radius: 50%; background-color: #ef4444;
+            color: white; display: none; align-items: center; justify-content: center;
+            box-shadow: 0 8px 30px rgba(239, 68, 68, 0.6); cursor: pointer; border: 3px solid #f87171;
+        }
+
         #mode-indicator-bar { 
             position: fixed; top: 80px; left: 50%; transform: translateX(-50%); 
             z-index: 4500; background: #3b82f6; color: white; 
-            padding: 8px 20px; border-radius: 9999px; 
+            padding: 10px 24px; border-radius: 9999px; 
             font-size: 11px; font-weight: 900; display: none; 
             box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5); 
             border: 2px solid rgba(255,255,255,0.3);
-            align-items: center; gap: 16px;
-        }
-        
-        #finish-draw-btn {
-            background: white; color: #3b82f6; padding: 4px 12px; border-radius: 999px;
-            font-size: 10px; font-weight: 900; text-transform: uppercase;
+            text-transform: uppercase;
         }
 
         .tree-node { border-left: 2px solid #1e293b; margin-left: 1.5rem; padding-left: 1rem; position: relative; }
@@ -101,30 +104,37 @@
         .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; }
         .status-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
 
-        /* Painel Detalhes - Transições */
-        #details-panel { transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0; transform: translateX(100%); }
-        #details-panel.show { opacity: 1; transform: translateX(0); }
+        #details-panel, #offline-panel { transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none; transform: translateX(100%); }
+        #details-panel.show, #offline-panel.show { opacity: 1; transform: translateX(0); pointer-events: auto; }
 
         @media (max-width: 768px) {
             .mobile-full { width: 100% !important; left: 0 !important; border-radius: 2rem 2rem 0 0 !important; height: 75vh !important; top: auto !important; bottom: 0 !important; }
-            #details-panel { transform: translateY(100%); }
-            #details-panel.show { transform: translateY(0); }
+            #details-panel, #offline-panel { transform: translateY(100%); }
+            #details-panel.show, #offline-panel.show { transform: translateY(0); }
         }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .pulse-orange { animation: pulse-orange 2s infinite; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 overflow-hidden font-sans">
 
     <div id="app-container">
-        <div id="mode-indicator-bar" class="flex">
-            <span id="mode-text">Modo de Edição</span>
-            <button id="finish-draw-btn" onclick="resetTools()" class="hidden">Concluir</button>
-        </div>
+        <!-- Barra de Indicador de Modo -->
+        <div id="mode-indicator-bar">Modo de Edição Ativo</div>
 
         <div id="vps-status">
             <div class="status-dot" id="status-dot"></div>
             <span id="status-text">Sincronizando com vlf-vps...</span>
         </div>
 
+        <!-- Alerta Crítico -->
+        <div id="alert-fab" onclick="openOfflinePanel()" class="alert-fab">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div id="alert-count" class="absolute -top-1 -right-1 bg-white text-red-600 w-7 h-7 rounded-full flex items-center justify-center font-black text-xs border-2 border-red-600">0</div>
+        </div>
+
+        <!-- Header -->
         <header class="fixed top-0 left-0 right-0 h-[var(--header-h)] bg-[#0f172a] border-b-2 border-slate-800 z-[2000] flex items-center justify-between px-4 sm:px-8 shadow-2xl">
             <div class="flex items-center relative">
                 <button onclick="handleLogoInteraction()" class="flex items-center space-x-3 hover:bg-slate-800/50 p-2 rounded-xl transition-all active:scale-95">
@@ -171,7 +181,16 @@
             <div id="tree-container"></div>
         </div>
 
-        <div id="details-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-slate-800 rounded-[3rem] p-8 z-[1000] hidden flex flex-col shadow-4xl mobile-full text-white overflow-hidden">
+        <!-- Painéis Deslizantes -->
+        <div id="offline-panel" class="fixed right-6 top-24 bottom-24 w-96 bg-slate-900 border-2 border-red-500/40 rounded-[3rem] p-8 z-[3000] hidden flex flex-col shadow-4xl mobile-full text-white">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-sm font-black uppercase text-red-500 tracking-widest italic">Falhas Detectadas</h3>
+                <button onclick="closeOfflinePanel()" class="p-2 hover:bg-slate-800 rounded-full transition-colors"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+            </div>
+            <div id="offline-list" class="flex-1 overflow-y-auto space-y-3 pr-2"></div>
+        </div>
+
+        <div id="details-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-slate-800 rounded-[3rem] p-8 z-[3000] hidden flex flex-col shadow-4xl mobile-full text-white overflow-hidden">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Ativo</h3>
                 <button onclick="closePanel()" class="p-2 hover:bg-slate-800 rounded-full transition-colors">
@@ -197,7 +216,7 @@
         let isLinking = false; let isDrawingPath = false; 
         let drawingNodeId = null; let linkSourceId = null; 
         let activeStatuses = {}; let currentMode = null; 
-        let isLocked = false; let logoClicks = 0;
+        let isLocked = false; let logoClicks = 0; let isMenuOpen = false;
 
         let individualLayer, linksLayer, handlesLayer;
 
@@ -218,9 +237,7 @@
                 document.getElementById('status-dot').classList.add('status-online');
                 document.getElementById('status-text').innerText = "VPS Conectada";
                 render();
-            } catch (e) {
-                document.getElementById('status-text').innerText = "Erro Conexão VPS";
-            }
+            } catch (e) { document.getElementById('status-text').innerText = "Erro Conexão VPS"; }
         }
 
         async function saveData() {
@@ -245,7 +262,7 @@
                 if (isLocked) return;
                 if (isDrawingPath) addVertexToPath(e.latlng);
                 else if (currentMode) addNode(currentMode, e.latlng); 
-                else { closePanel(); document.getElementById('logo-menu').classList.remove('show'); } 
+                else { closePanel(); closeOfflinePanel(); document.getElementById('logo-menu').classList.remove('show'); } 
             });
 
             loadData();
@@ -257,8 +274,10 @@
             isDrawingPath = false;
             drawingNodeId = null;
             linkSourceId = null;
+            isMenuOpen = false;
             document.getElementById('mode-indicator-bar').style.display = 'none';
-            document.querySelectorAll('.fab-item-btn').forEach(b => b.classList.remove('selected'));
+            document.getElementById('fab-items').classList.remove('open');
+            document.getElementById('fab-main').classList.remove('active');
             render();
         }
 
@@ -274,6 +293,22 @@
             return dependents.every(depId => isNodeOffline(depId, visited));
         }
 
+        function getDiagnostics() {
+            const offlineMap = {};
+            nodes.forEach(n => offlineMap[n.id] = isNodeOffline(n.id));
+            const alerts = [];
+            nodes.forEach(n => {
+                if (offlineMap[n.id]) {
+                    let suppressed = false;
+                    const connIds = links.filter(l => l.a === n.id || l.b === n.id).map(l => l.a === n.id ? l.b : l.a);
+                    if (n.type === 'camera') suppressed = connIds.some(cid => { const o = nodes.find(on => on.id === cid); return o && o.type === 'switch' && offlineMap[cid]; });
+                    else if (n.type === 'switch') suppressed = connIds.some(cid => { const o = nodes.find(on => on.id === cid); return o && o.type === 'converter' && offlineMap[cid]; });
+                    if (!suppressed) alerts.push({ id: n.id, name: n.name, type: CONFIG[n.type].label.toUpperCase() });
+                }
+            });
+            return alerts;
+        }
+
         function render() {
             individualLayer.clearLayers(); linksLayer.clearLayers(); handlesLayer.clearLayers();
             const statusMap = {}; nodes.forEach(n => statusMap[n.id] = isNodeOffline(n.id));
@@ -283,15 +318,14 @@
                 if (n1 && n2) {
                     const off = (statusMap[n1.id] || statusMap[n2.id]);
                     const path = [[n1.lat, n1.lng], ...(link.vertices || []), [n2.lat, n2.lng]];
-                    const poly = L.polyline(path, { color: off ? '#ef4444' : '#3b82f6', weight: 6, opacity: 0.8, className: off ? 'offline-line' : 'data-flow-line' }).addTo(linksLayer);
+                    L.polyline(path, { color: off ? '#ef4444' : '#3b82f6', weight: 6, opacity: 0.8, className: off ? 'offline-line' : 'data-flow-line' }).addTo(linksLayer);
                     
                     if (!isLocked && (selectedId === link.a || selectedId === link.b)) {
                         (link.vertices || []).forEach((v, vIdx) => {
                             const handle = L.marker(v, { draggable: true, icon: L.divIcon({ className: 'vertex-handle', iconSize: [12, 12] }) }).addTo(handlesLayer);
                             handle.on('drag', (e) => {
                                 link.vertices[vIdx] = [e.target.getLatLng().lat, e.target.getLatLng().lng];
-                                poly.setLatLngs([[n1.lat, n1.lng], ...link.vertices, [n2.lat, n2.lng]]);
-                                saveData();
+                                render(); saveData();
                             });
                         });
                     }
@@ -302,58 +336,31 @@
                 const isSelected = (selectedId === node.id); const isOff = statusMap[node.id];
                 let color = CONFIG[node.type].color; if (isOff) color = '#ef4444';
                 const icon = L.divIcon({ 
-                    html: `<div class="marker-pin ${isSelected ? 'selected' : ''}" style="background-color: ${color}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg></div>`, 
+                    html: `<div class="marker-pin ${isSelected ? 'selected' : ''} ${isOff ? 'pulse-orange' : ''}" style="background-color: ${color}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg></div>`, 
                     iconSize: [44, 44], iconAnchor: [22, 44]
                 });
                 const m = L.marker([node.lat, node.lng], { icon, draggable: !isLocked }).addTo(individualLayer);
                 m.on('click', (e) => { L.DomEvent.stopPropagation(e); if(isLocked) return; handleNodeClick(node.id); });
                 m.on('dragend', (e) => { const p = e.target.getLatLng(); node.lat = p.lat; node.lng = p.lng; render(); saveData(); });
             });
+
+            updateAlertBadge(getDiagnostics());
         }
 
-        function renderListView() {
-            const container = document.getElementById('tree-container');
-            container.innerHTML = '';
-            const offlineMap = {}; nodes.forEach(n => offlineMap[n.id] = isNodeOffline(n.id));
-            const getConnections = (id) => links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
-            const processedIds = new Set();
-            const converters = nodes.filter(n => n.type === 'converter');
-            
-            converters.forEach(conv => {
-                processedIds.add(conv.id);
-                const convEl = createTreeItem(conv, offlineMap[conv.id]);
-                const childrenContainer = document.createElement('div');
-                childrenContainer.className = 'tree-node';
-                getConnections(conv.id).map(cid => nodes.find(n => n.id === cid)).filter(n => n && n.type === 'switch').forEach(sw => {
-                    processedIds.add(sw.id);
-                    const swEl = createTreeItem(sw, offlineMap[sw.id]);
-                    const swChildren = document.createElement('div');
-                    swChildren.className = 'tree-node';
-                    getConnections(sw.id).map(cid => nodes.find(n => n.id === cid)).filter(n => n && n.type === 'camera').forEach(cam => {
-                        processedIds.add(cam.id);
-                        swChildren.appendChild(createTreeItem(cam, offlineMap[cam.id]));
-                    });
-                    swEl.appendChild(swChildren);
-                    childrenContainer.appendChild(swEl);
-                });
-                convEl.appendChild(childrenContainer);
-                container.appendChild(convEl);
-            });
-
-            nodes.filter(n => !processedIds.has(n.id)).forEach(item => container.appendChild(createTreeItem(item, offlineMap[item.id])));
-        }
-
-        function createTreeItem(node, isOff) {
-            const div = document.createElement('div');
-            div.className = 'mb-2';
-            div.innerHTML = `<div class="tree-item ${isOff ? 'border-red-500/50' : ''}">
-                <div class="p-2 rounded-lg" style="background: ${isOff ? '#ef4444' : CONFIG[node.type].color}">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg>
-                </div>
-                <div class="flex-1"><p class="text-xs font-bold uppercase">${node.name}</p></div>
-                ${isOff ? '<span class="text-[8px] bg-red-600 px-1.5 rounded uppercase">Erro</span>' : ''}
-            </div>`;
-            return div;
+        function updateAlertBadge(diag) {
+            const fab = document.getElementById('alert-fab');
+            const count = document.getElementById('alert-count');
+            if (diag.length > 0) {
+                fab.style.display = 'flex';
+                count.innerText = diag.length;
+                document.getElementById('offline-list').innerHTML = diag.map(a => {
+                    const n = nodes.find(node => node.id === a.id);
+                    return `<div onclick="toggleView('map'); map.flyTo([${n.lat}, ${n.lng}], 18); openDetails('${a.id}');" class="p-5 bg-slate-950 border border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-500/10 transition-all shadow-xl">
+                        <div class="text-[9px] font-black text-red-500 uppercase mb-1 italic tracking-widest">${a.type} OFFLINE</div>
+                        <h4 class="font-black text-sm text-white uppercase">${n.name}</h4>
+                    </div>`;
+                }).join('');
+            } else { fab.style.display = 'none'; closeOfflinePanel(); }
         }
 
         function handleNodeClick(id) { 
@@ -362,9 +369,7 @@
                 if (!linkSourceId) { linkSourceId = id; showToast(`Origem: ${nodes.find(n => n.id === id).name}`); } 
                 else if (linkSourceId !== id) { 
                     links.push({ id: 'l'+Date.now(), a: linkSourceId, b: id, vertices: [] }); 
-                    saveData();
-                    resetTools();
-                    showToast("Conectado"); 
+                    saveData(); resetTools(); showToast("Conectado"); 
                 } 
                 return; 
             } 
@@ -396,60 +401,61 @@
         function addNode(type, latlng) { 
             const id = 'n'+Date.now(); 
             nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${nodes.length+1}` }); 
-            saveData(); 
-            // resetTools() REMOVIDO para permitir adição em lote
-            render();
+            saveData(); render();
             showToast(`${CONFIG[type].label} adicionado`);
         }
 
-        function updateName(id, v) { nodes.find(n => n.id === id).name = v; saveData(); render(); }
-        function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
-        function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(); render(); saveData(); }
-        function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; document.getElementById('logo-menu').classList.remove('show'); closePanel(); showToast("MODO VISUALIZAÇÃO"); }
-        function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked-mode'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } }
+        function toggleFab() { 
+            if (isLocked) return;
+            // Se algum modo estiver ativo, o botão principal funciona como encerramento
+            if (currentMode || isLinking || isDrawingPath) { 
+                resetTools(); 
+                return; 
+            }
+            isMenuOpen = !isMenuOpen;
+            document.getElementById('fab-items').classList.toggle('open', isMenuOpen);
+            document.getElementById('fab-main').classList.toggle('active', isMenuOpen);
+        }
         
+        function setMode(m) { 
+            isMenuOpen = false;
+            document.getElementById('fab-items').classList.remove('open');
+            currentMode = m; 
+            document.getElementById('mode-indicator-bar').style.display = 'flex';
+            document.getElementById('mode-indicator-bar').innerText = `Adição em Lote: ${CONFIG[m].label}`;
+            document.getElementById('fab-main').classList.add('active');
+            showToast(`Toque no mapa para espalhar ${CONFIG[m].label}s`); 
+        }
+
         function startDrawingPath(nodeId) { 
             isDrawingPath = true; drawingNodeId = nodeId; closePanel(); 
             document.getElementById('mode-indicator-bar').style.display = 'flex'; 
-            document.getElementById('mode-text').innerText = "Traçando: Clique no mapa";
-            document.getElementById('finish-draw-btn').classList.remove('hidden'); 
-            document.getElementById('finish-draw-btn').innerText = "Concluir";
-        }
-
-        function addVertexToPath(latlng) { const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId)); if (link) { if (!link.vertices) link.vertices = []; link.vertices.push([latlng.lat, latlng.lng]); render(); } }
-        function toggleFab() { document.getElementById('fab-items').classList.toggle('open'); }
-        
-        function setMode(m) { 
-            resetTools();
-            currentMode = m; 
-            document.getElementById('mode-indicator-bar').style.display = 'flex';
-            document.getElementById('mode-text').innerText = `Ação em Lote: ${CONFIG[m].label}`;
-            document.getElementById('finish-draw-btn').classList.remove('hidden');
-            document.getElementById('finish-draw-btn').innerText = "Concluir";
-            showToast(`Clique no mapa para adicionar vários`); 
+            document.getElementById('mode-indicator-bar').innerText = "Traçando: Clique no mapa";
+            document.getElementById('fab-main').classList.add('active');
+            showToast("Para concluir, clique no +");
         }
 
         function toggleLinking() { 
-            resetTools();
+            isMenuOpen = false;
+            document.getElementById('fab-items').classList.remove('open');
             isLinking = true; 
             document.getElementById('mode-indicator-bar').style.display = 'flex';
-            document.getElementById('mode-text').innerText = "Modo Conexão: Selecione dois ativos";
-            document.getElementById('finish-draw-btn').classList.remove('hidden');
-            document.getElementById('finish-draw-btn').innerText = "Cancelar";
+            document.getElementById('mode-indicator-bar').innerText = "Modo Conexão Ativo";
+            document.getElementById('fab-main').classList.add('active');
             showToast("Selecione a origem"); 
         }
 
-        function closePanel() { 
-            const p = document.getElementById('details-panel');
-            p.classList.remove('show'); 
-            setTimeout(() => p.classList.add('hidden'), 300);
-            selectedId = null; 
-            render(); 
-        }
-        
-        function toggleLogoMenu() { document.getElementById('logo-menu').classList.toggle('show'); }
-        function handleLogoInteraction() { if (isLocked) { logoClicks++; if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } } else toggleLogoMenu(); }
-        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-900 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2000); }
+        function addVertexToPath(latlng) { const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId)); if (link) { if (!link.vertices) link.vertices = []; link.vertices.push([latlng.lat, latlng.lng]); render(); } }
+        function closePanel() { const p = document.getElementById('details-panel'); p.classList.remove('show'); setTimeout(() => p.classList.add('hidden'), 300); selectedId = null; render(); }
+        function openOfflinePanel() { const p = document.getElementById('offline-panel'); p.classList.remove('hidden'); setTimeout(() => p.classList.add('show'), 10); }
+        function closeOfflinePanel() { const p = document.getElementById('offline-panel'); p.classList.remove('show'); setTimeout(() => p.classList.add('hidden'), 300); }
+        function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; document.getElementById('logo-menu').classList.remove('show'); closePanel(); showToast("MODO VISUALIZAÇÃO"); }
+        function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked-mode'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } }
+        function updateName(id, v) { nodes.find(n => n.id === id).name = v; saveData(); render(); }
+        function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
+        function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(); render(); saveData(); }
+        function handleLogoInteraction() { if (isLocked) { logoClicks++; if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } } else document.getElementById('logo-menu').classList.toggle('show'); }
+        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-900 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
         function toggleView(v) { 
             document.getElementById('map').style.display = v==='map'?'block':'none';
             document.getElementById('list-view').style.display = v==='list'?'block':'none';
@@ -458,6 +464,47 @@
             if(v==='list') renderListView(); else map.invalidateSize();
         }
         function locateMe() { navigator.geolocation.getCurrentPosition(p => map.flyTo([p.coords.latitude, p.coords.longitude], 17)); }
+        function renderListView() {
+            const container = document.getElementById('tree-container');
+            container.innerHTML = '';
+            const offlineMap = {}; nodes.forEach(n => offlineMap[n.id] = isNodeOffline(n.id));
+            const getConnections = (id) => links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
+            const processedIds = new Set();
+            const converters = nodes.filter(n => n.type === 'converter');
+            converters.forEach(conv => {
+                processedIds.add(conv.id);
+                const convEl = createTreeItem(conv, offlineMap[conv.id]);
+                const childrenContainer = document.createElement('div');
+                childrenContainer.className = 'tree-node';
+                getConnections(conv.id).map(cid => nodes.find(n => n.id === cid)).filter(n => n && n.type === 'switch').forEach(sw => {
+                    processedIds.add(sw.id);
+                    const swEl = createTreeItem(sw, offlineMap[sw.id]);
+                    const swChildren = document.createElement('div');
+                    swChildren.className = 'tree-node';
+                    getConnections(sw.id).map(cid => nodes.find(n => n.id === cid)).filter(n => n && n.type === 'camera').forEach(cam => {
+                        processedIds.add(cam.id);
+                        swChildren.appendChild(createTreeItem(cam, offlineMap[cam.id]));
+                    });
+                    swEl.appendChild(swChildren);
+                    childrenContainer.appendChild(swEl);
+                });
+                convEl.appendChild(childrenContainer);
+                container.appendChild(convEl);
+            });
+            nodes.filter(n => !processedIds.has(n.id)).forEach(item => container.appendChild(createTreeItem(item, offlineMap[item.id])));
+        }
+        function createTreeItem(node, isOff) {
+            const div = document.createElement('div');
+            div.className = 'mb-2';
+            div.innerHTML = `<div class="tree-item ${isOff ? 'border-red-500/50' : ''}">
+                <div class="p-2 rounded-lg" style="background: ${isOff ? '#ef4444' : CONFIG[node.type].color}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg>
+                </div>
+                <div class="flex-1"><p class="text-xs font-bold uppercase">${node.name}</p></div>
+                ${isOff ? '<span class="text-[8px] bg-red-600 px-1.5 rounded uppercase font-black">OFFLINE</span>' : ''}
+            </div>`;
+            return div;
+        }
     </script>
 </body>
 </html>
