@@ -116,7 +116,7 @@
 
         <header class="fixed top-0 left-0 right-0 h-[var(--header-h)] bg-[#0f172a] border-b-2 border-slate-800 z-[2000] flex items-center justify-between px-4 sm:px-8 shadow-2xl">
             <div class="flex items-center relative">
-                <button onclick="handleLogoInteraction()" class="flex items-center space-x-3 hover:bg-slate-800/50 p-2 rounded-xl transition-all active:scale-95">
+                <button onclick="handleLogoInteraction(event)" class="flex items-center space-x-3 hover:bg-slate-800/50 p-2 rounded-xl transition-all active:scale-95">
                     <div class="logo-container p-2.5 bg-blue-600 rounded-xl border border-blue-400">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     </div>
@@ -124,15 +124,13 @@
                 </button>
 
                 <div id="logo-menu">
-                    <div class="p-4 border-b border-slate-800 bg-slate-950/50 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Configurações</div>
+                    <div class="p-4 border-b border-slate-800 bg-slate-950/50 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Projeto</div>
                     <div class="p-2 space-y-1 text-white text-[10px] font-bold uppercase">
                         <button onclick="openSaveModal()" class="w-full p-3 hover:bg-blue-600 rounded-xl transition-all text-left flex justify-between">Salvar Projeto <span>💾</span></button>
                         <button onclick="document.getElementById('import-input').click()" class="w-full p-3 hover:bg-emerald-600 rounded-xl transition-all text-left flex justify-between">Abrir Projeto <span>📂</span></button>
                         <hr class="border-slate-800 my-1">
                         <button onclick="document.getElementById('bg-input').click()" class="w-full p-3 hover:bg-indigo-600 rounded-xl transition-all text-left flex justify-between">Planta de Fundo <span>🖼️</span></button>
                         <button onclick="resetToWorldMap()" class="w-full p-3 hover:bg-slate-700 rounded-xl transition-all text-left flex justify-between">Mapa Mundi <span>🌍</span></button>
-                        <hr class="border-slate-800 my-1">
-                        <button onclick="toggleAppLock()" class="w-full p-3 hover:bg-orange-600 rounded-xl transition-all text-left">Bloquear Painel</button>
                     </div>
                 </div>
                 <input type="file" id="import-input" class="hidden" accept=".json" onchange="importMap(event)">
@@ -144,15 +142,24 @@
                 <button onclick="toggleView('list', event)" id="btn-list" class="px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 hover:text-white transition-all uppercase">Lista</button>
             </div>
 
-            <div class="flex gap-2">
-                <button onclick="fitAllNodes()" title="Ajustar Visão" class="p-3 bg-slate-800 hover:bg-blue-600 rounded-xl border border-slate-700 shadow-lg active:scale-90 transition-all">
+            <div class="flex gap-2 relative">
+                <button onclick="fitAllNodes(true)" title="Ajustar Visão" class="p-3 bg-slate-800 hover:bg-blue-600 rounded-xl border border-slate-700 shadow-lg active:scale-90 transition-all">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M15 3h6v6M9 21H3v-6M21 15v6h-6M3 9V3h6"/></svg>
                 </button>
-                <button onclick="locateMe()" class="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 shadow-lg active:scale-90 transition-transform">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+                <button onclick="toggleSettingsMenu(event)" title="Configurações" class="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 shadow-lg active:scale-90 transition-transform text-white">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
+
+                <div id="settingsMenu" class="absolute top-[55px] right-0 w-52 bg-[#0f172a] border-2 border-slate-700 rounded-2xl shadow-2xl hidden z-[3000] p-2">
+                    <button onclick="toggleAppLock()" class="w-full p-3 hover:bg-orange-600 rounded-xl transition-all text-left flex justify-between text-white text-[10px] font-bold uppercase">Bloquear Tela <span>🔒</span></button>
+                </div>
             </div>
         </header>
+
+        <!-- Botão de localização menor no canto do mapa -->
+        <button id="map-locate-btn" onclick="locateMeAndFly(event)" class="absolute top-[80px] right-4 z-[1000] p-2 bg-slate-900/60 hover:bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl shadow-lg transition-all text-white/80 hover:text-white" title="Minha Localização">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+        </button>
 
         <div id="fab-container" class="fab-container">
             <div id="fab-main" onclick="toggleFab()" class="fab-main">
@@ -225,6 +232,7 @@
         let individualLayer, linksLayer, handlesLayer, worldTiles, bgImageLayer;
         let currentBackgroundBase64 = null; let minZoomLimit = 15;
         let previousMapView = null;
+        let userLocationMarker = null;
 
         const CONFIG = {
             core_switch: { label: 'Switch Principal', color: '#6366f1', hasIp: true, icon: '<rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2"/>', rank: 0 },
@@ -237,6 +245,7 @@
         function openSaveModal() {
             document.getElementById('save-modal').classList.remove('hidden');
             document.getElementById('logo-menu').classList.remove('show');
+            document.getElementById('settingsMenu').classList.add('hidden');
         }
 
         function closeSaveModal() {
@@ -261,8 +270,10 @@
                     const data = JSON.parse(e.target.result);
                     nodes = data.nodes || []; links = data.links || [];
                     if (data.background) applyBackground(data.background); else resetToWorldMap();
-                    if (data.view) map.setView(data.view.center, data.view.zoom);
-                    render(); showToast("Carregado.");
+                    render(); 
+                    // Enquadramento automático com delay seguro na importação
+                    setTimeout(() => fitAllNodes(false), 300);
+                    showToast("Projeto Carregado.");
                 } catch (err) { showToast("Erro no arquivo."); }
             };
             reader.readAsText(file);
@@ -285,6 +296,7 @@
             map.setMinZoom(minZoomLimit); map.setMaxZoom(28);
             checkDrag(); showToast("Planta Aplicada.");
             document.getElementById('logo-menu').classList.remove('show');
+            document.getElementById('settingsMenu').classList.add('hidden');
         }
 
         function checkDrag() { if (currentBackgroundBase64 && map.getZoom() <= minZoomLimit) map.dragging.disable(); else map.dragging.enable(); }
@@ -296,14 +308,21 @@
             map.setMaxBounds(null); map.setMinZoom(1); map.setMaxZoom(28);
             map.dragging.enable();
             document.getElementById('logo-menu').classList.remove('show');
+            document.getElementById('settingsMenu').classList.add('hidden');
         }
 
         async function loadData() {
             try {
                 const response = await fetch(`${VPS_API_URL}/data`);
                 const data = await response.json();
-                nodes = data.nodes || []; links = data.links || []; render();
-            } catch (e) { render(); }
+                nodes = data.nodes || []; links = data.links || []; 
+                render();
+                // Enquadramento automático com delay seguro no primeiro carregamento
+                setTimeout(() => fitAllNodes(false), 300);
+            } catch (e) { 
+                render(); 
+                setTimeout(() => fitAllNodes(false), 300);
+            }
         }
 
         async function saveData() {
@@ -312,18 +331,35 @@
             } catch (e) { }
         }
 
-        function fitAllNodes() {
-            if (nodes.length === 0) return;
-            const coords = nodes.map(n => [n.lat, n.lng]);
-            const bounds = L.latLngBounds(coords);
-            map.flyToBounds(bounds, { padding: [50, 50], duration: 1 });
-            showToast("Visão Ajustada");
+        function fitAllNodes(animate = true) {
+            let targetBounds = null;
+            
+            if (nodes.length > 0) {
+                const coords = nodes.map(n => [n.lat, n.lng]);
+                targetBounds = L.latLngBounds(coords);
+            } else if (bgImageLayer) {
+                targetBounds = bgImageLayer.getBounds();
+            }
+
+            if (targetBounds && targetBounds.isValid()) {
+                if (animate) {
+                    map.flyToBounds(targetBounds, { padding: [50, 50], duration: 1 });
+                } else {
+                    // FitBounds é instantâneo e melhor para usar assim que a página renderiza
+                    map.fitBounds(targetBounds, { padding: [50, 50] });
+                }
+                if(animate) showToast("Visão Ajustada");
+            } else {
+                if(animate) map.flyTo([-23.5505, -46.6333], 10);
+                else map.setView([-23.5505, -46.6333], 10);
+            }
         }
 
         window.onload = () => {
-            map = L.map('map', { zoomControl: false, tap: false, maxZoom: 28 }).setView([-23.5505, -46.6333], 15);
+            map = L.map('map', { zoomControl: false, tap: false, maxZoom: 28 }).setView([-23.5505, -46.6333], 10);
             worldTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 28, maxNativeZoom: 18 }).addTo(map);
             linksLayer = L.layerGroup().addTo(map); individualLayer = L.layerGroup().addTo(map); handlesLayer = L.layerGroup().addTo(map);
+            
             map.on('click', (e) => { 
                 if (isLocked) return;
                 if (isDrawingPath) addVertexToPath(e.latlng);
@@ -332,12 +368,50 @@
                     closePanel(e); 
                     closeOfflinePanel(e); 
                     document.getElementById('logo-menu').classList.remove('show'); 
+                    document.getElementById('settingsMenu').classList.add('hidden'); 
                     toggleView('map', e); 
                 } 
             });
             map.on('zoomend', checkDrag);
+
+            // Rastreador silencioso de localização (não move a câmera)
+            map.on('locationfound', function(e) {
+                if (!userLocationMarker) {
+                    const locIcon = L.divIcon({ 
+                        html: `<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-[0_0_15px_rgba(59,130,246,0.9)] animate-pulse"></div>`, 
+                        className: '', iconSize: [16, 16], iconAnchor: [8, 8] 
+                    });
+                    userLocationMarker = L.marker(e.latlng, {icon: locIcon, interactive: false, zIndexOffset: 1000}).addTo(map);
+                } else {
+                    userLocationMarker.setLatLng(e.latlng);
+                }
+            });
+            map.locate({setView: false, watch: true, enableHighAccuracy: true});
+
             loadData();
         };
+
+        function locateMeAndFly(e) {
+            if(e) e.stopPropagation();
+            map.locate({setView: true, maxZoom: 18});
+        }
+
+        function toggleSettingsMenu(e) {
+            if(e) e.stopPropagation();
+            document.getElementById('settingsMenu').classList.toggle('hidden');
+            document.getElementById('logo-menu').classList.remove('show');
+        }
+
+        function handleLogoInteraction(e) { 
+            if(e) e.stopPropagation();
+            if (isLocked) { 
+                logoClicks++; 
+                if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } 
+            } else {
+                document.getElementById('logo-menu').classList.toggle('show');
+                document.getElementById('settingsMenu').classList.add('hidden');
+            }
+        }
 
         function resetTools() {
             currentMode = null; isLinking = false; isDrawingPath = false; drawingNodeId = null; linkSourceId = null; isMenuOpen = false;
@@ -349,10 +423,8 @@
             render();
         }
 
-        // Nova lógica de agrupamento de falhas (Bottom-up + Top-down)
         function getStatusMap() {
             let statusMap = {};
-            // Primeiramente marca todos que estão manualmente em estado offline (somente itens que suportam IP)
             nodes.forEach(n => statusMap[n.id] = (CONFIG[n.type].hasIp && activeStatuses[n.id] === 'offline'));
 
             let changed = true;
@@ -360,14 +432,12 @@
                 changed = false;
                 nodes.forEach(n => {
                     if (!statusMap[n.id]) {
-                        // Varredura de Cima para Baixo (Se o PAI cair, o FILHO cai)
                         const parentLink = links.find(l => l.b === n.id);
                         if (parentLink && statusMap[parentLink.a]) {
                             statusMap[n.id] = true;
                             changed = true;
                         }
                         
-                        // Varredura de Baixo para Cima (Se TODOS os FILHOS caírem e eu for um equipamento sem IP, eu caio)
                         if (!CONFIG[n.type].hasIp) {
                             const childrenIds = links.filter(l => l.a === n.id).map(l => l.b);
                             if (childrenIds.length > 0) {
@@ -484,12 +554,11 @@
 
         function render() {
             individualLayer.clearLayers(); linksLayer.clearLayers(); handlesLayer.clearLayers();
-            const statusMap = getStatusMap(); // Obter mapa consolidado de status online/offline
+            const statusMap = getStatusMap();
             const isEditingMode = !!(currentMode || isLinking || isDrawingPath || isMenuOpen);
 
             let pathIds = selectedId ? getPathLinkIds(selectedId) : null;
 
-            // Busca quais links recebem internet de baixo para cima (do gateway até o core)
             let internetLinks = new Set();
             let queue = nodes.filter(n => n.isGateway).map(n => n.id);
             let visitedNodes = new Set(queue);
@@ -530,10 +599,9 @@
                     const path = [[n1.lat, n1.lng], ...(link.vertices || []), [n2.lat, n2.lng]];
                     L.polyline(path, { color: lineColor, weight: 6, opacity: 0.8, className: off ? 'offline-line' : 'data-flow-line' }).addTo(linksLayer);
                     
-                    // Desenha o globinho se a linha faz parte do uplink de internet
                     if (internetLinks.has(link.id) && !off) {
                         const p1 = path[0];
-                        const p2 = path[1] || path[path.length - 1]; // Meio do primeiro segmento
+                        const p2 = path[1] || path[path.length - 1]; 
                         const midPoint = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
 
                         const globeHtml = `<div class="bg-blue-500 rounded-full border-2 border-slate-900 p-0.5 shadow-[0_0_10px_rgba(59,130,246,0.8)]"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></div>`;
@@ -584,12 +652,9 @@
             const fab = document.getElementById('alert-fab'); 
             const count = document.getElementById('alert-count');
             
-            // Ocultação de Ruído: Filtra apenas os equipamentos raiz do problema.
-            // Se um pai também está offline, esconde o filho da lista.
             const rootOfflineNodes = nodes.filter(n => {
                 if (!statusMap[n.id]) return false;
                 const parentLink = links.find(l => l.b === n.id);
-                // Se não tem pai, ou o pai NÃO está offline, ele é a raiz do problema
                 return !parentLink || !statusMap[parentLink.a];
             });
 
@@ -621,6 +686,7 @@
         function openDetails(id) {
             saveMapView();
             document.getElementById('offline-panel').classList.remove('show');
+            document.getElementById('settingsMenu').classList.add('hidden');
 
             selectedId = id; const node = nodes.find(it => it.id === id);
             const panel = document.getElementById('details-panel'); panel.classList.add('show');
@@ -690,6 +756,7 @@
             if(e) e.stopPropagation(); 
             saveMapView();
             document.getElementById('details-panel').classList.remove('show');
+            document.getElementById('settingsMenu').classList.add('hidden');
             document.getElementById('offline-panel').classList.add('show'); 
             selectedId = null; render();
         }
@@ -708,17 +775,17 @@
             restoreMapView();
         }
         
-        function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; document.getElementById('logo-menu').classList.remove('show'); closePanel(); showToast("MODO OPERAÇÃO"); }
+        function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; document.getElementById('logo-menu').classList.remove('show'); document.getElementById('settingsMenu').classList.add('hidden'); closePanel(); showToast("MODO OPERAÇÃO"); }
         function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked-mode'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } }
         function updateName(id, v) { nodes.find(n => n.id === id).name = v; saveData(); render(); }
         function updateIp(id, v) { nodes.find(n => n.id === id).ip = v; saveData(); render(); }
         function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
         function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(); render(); saveData(); }
-        function handleLogoInteraction() { if (isLocked) { logoClicks++; if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } } else document.getElementById('logo-menu').classList.toggle('show'); }
         function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-950 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
         
         function toggleView(v, e) { 
             if(e) e.stopPropagation();
+            document.getElementById('settingsMenu').classList.add('hidden');
             const list = document.getElementById('list-view');
             const btnMap = document.getElementById('btn-map');
             const btnList = document.getElementById('btn-list');
@@ -780,9 +847,6 @@
             return div;
         }
 
-        function locateMe() { map.locate({setView: true, maxZoom: 16}); }
     </script>
 </body>
 </html>
-
-
