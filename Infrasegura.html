@@ -9,10 +9,12 @@
     <!-- Leaflet Core -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <!-- Leaflet MarkerCluster -->
+
+    <!-- MarkerCluster removido, pois ainda não está em uso -->
+    <!--
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    -->
 
     <style>
         :root { --header-h: 64px; }
@@ -26,7 +28,6 @@
         #list-view { background: #020617; z-index: 5; overflow-y: auto; display: none; padding: 2rem; }
         #map { z-index: 1; background: #020617; }
         
-        /* Modo bloqueado permite apenas mover o mapa */
         .locked-mode .leaflet-marker-icon, 
         .locked-mode .leaflet-interactive { pointer-events: none !important; }
 
@@ -72,6 +73,7 @@
             width: 64px; height: 64px; border-radius: 50%; background-color: #3b82f6; 
             color: white; display: flex; align-items: center; justify-content: center; 
             box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4); cursor: pointer; border: 3px solid #60a5fa;
+            transition: transform 0.15s ease-out;
         }
         .fab-main.active { transform: rotate(135deg); background-color: #ef4444; border-color: #f87171; }
         .fab-items { display: flex; flex-direction: column-reverse; gap: 12px; pointer-events: none; opacity: 0; transform: translateY(15px); transition: 0.3s ease; }
@@ -111,7 +113,7 @@
     <div id="app-container">
         <div id="mode-indicator-bar" class="flex">
             <span id="mode-text">Modo de Edição</span>
-            <button id="finish-draw-btn" onclick="stopDrawing()" class="hidden">Concluir Edição</button>
+            <button id="finish-draw-btn" class="hidden">Concluir Edição</button>
         </div>
 
         <div id="vps-status">
@@ -121,7 +123,7 @@
 
         <header class="fixed top-0 left-0 right-0 h-[var(--header-h)] bg-[#0f172a] border-b-2 border-slate-800 z-[2000] flex items-center justify-between px-4 sm:px-8 shadow-2xl">
             <div class="flex items-center relative">
-                <button onclick="handleLogoInteraction()" class="flex items-center space-x-3 hover:bg-slate-800/50 p-2 rounded-xl transition-all active:scale-95">
+                <button id="logo-btn" class="flex items-center space-x-3 hover:bg-slate-800/50 p-2 rounded-xl transition-all active:scale-95">
                     <div class="logo-container p-2.5 bg-blue-600 rounded-xl border border-blue-400">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     </div>
@@ -131,31 +133,31 @@
                 <div id="logo-menu">
                     <div class="p-5 border-b border-slate-800 bg-slate-950/50 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Gestão VPS</div>
                     <div class="p-2 space-y-1 text-white text-xs font-bold uppercase">
-                        <button onclick="toggleAppLock()" class="w-full p-4 hover:bg-orange-600 rounded-2xl transition-all text-left">Bloquear Painel</button>
+                        <button id="lock-btn" class="w-full p-4 hover:bg-orange-600 rounded-2xl transition-all text-left">Bloquear Painel</button>
                     </div>
                 </div>
             </div>
 
             <div class="flex items-center space-x-1.5 bg-slate-950 border border-slate-800 p-1 rounded-2xl">
-                <button onclick="toggleView('map')" id="btn-map" class="px-5 py-2 rounded-xl text-[11px] font-black bg-blue-600 text-white shadow-xl transition-all uppercase">Mapa</button>
-                <button onclick="toggleView('list')" id="btn-list" class="px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 hover:text-white transition-all uppercase">Lista</button>
+                <button id="btn-map" class="px-5 py-2 rounded-xl text-[11px] font-black bg-blue-600 text-white shadow-xl transition-all uppercase">Mapa</button>
+                <button id="btn-list" class="px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 hover:text-white transition-all uppercase">Lista</button>
             </div>
 
-            <button onclick="locateMe()" class="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 shadow-lg active:scale-90 transition-transform">
+            <button id="locate-btn" class="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 shadow-lg active:scale-90 transition-transform">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
             </button>
         </header>
 
         <div id="fab-container" class="fab-container">
-            <div id="fab-main" onclick="toggleFab()" class="fab-main">
+            <div id="fab-main" class="fab-main">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </div>
             <div id="fab-items" class="fab-items">
-                <button onclick="setMode('server')" class="fab-item-btn" title="Servidor" style="color: #a78bfa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/></svg></button>
-                <button onclick="setMode('camera')" class="fab-item-btn" title="Câmera" style="color: #60a5fa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>
-                <button onclick="setMode('switch')" class="fab-item-btn" title="Switch" style="color: #34d399"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/></svg></button>
-                <button onclick="setMode('converter')" class="fab-item-btn" title="Conversor" style="color: #fbbf24"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></button>
-                <button onclick="toggleLinking()" id="link-btn" class="fab-item-btn" title="Conectar" style="color: #94a3b8"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54"/></svg></button>
+                <button data-mode="server" class="fab-item-btn" title="Servidor" style="color: #a78bfa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/></svg></button>
+                <button data-mode="camera" class="fab-item-btn" title="Câmera" style="color: #60a5fa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>
+                <button data-mode="switch" class="fab-item-btn" title="Switch" style="color: #34d399"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/></svg></button>
+                <button data-mode="converter" class="fab-item-btn" title="Conversor" style="color: #fbbf24"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></button>
+                <button id="link-btn" class="fab-item-btn" title="Conectar" style="color: #94a3b8"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54"/></svg></button>
             </div>
         </div>
 
@@ -168,7 +170,7 @@
         <div id="details-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-slate-800 rounded-[3rem] p-8 z-[1000] hidden flex flex-col shadow-4xl mobile-full text-white overflow-hidden">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Ativo</h3>
-                <button onclick="closePanel()" class="p-2 hover:bg-slate-800 rounded-full"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+                <button id="close-panel-btn" class="p-2 hover:bg-slate-800 rounded-full"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
             </div>
             <div id="details-content" class="flex-1 overflow-y-auto space-y-6"></div>
         </div>
@@ -177,22 +179,35 @@
             <div class="w-full max-w-xs bg-slate-900 border-2 border-slate-700 rounded-[2.5rem] p-10 text-center text-white shadow-4xl">
                 <h3 class="text-xl font-black uppercase mb-8 tracking-tighter">Segurança</h3>
                 <input type="password" id="unlock-pass" class="w-full bg-slate-950 border-2 border-slate-800 rounded-2xl p-5 text-center text-2xl mb-6 outline-none focus:border-blue-500 text-white" placeholder="•••••">
-                <button onclick="checkUnlock()" class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase shadow-lg">Desbloquear</button>
+                <button id="unlock-btn" class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase shadow-lg">Desbloquear</button>
             </div>
         </div>
     </div>
 
     <script>
-        // URL DA SUA API VPS (HTTPS OBRIGATÓRIO)
         const VPS_API_URL = "https://infrasec.vlfp.com.br/api"; 
 
-        let nodes = []; let links = []; let map; let selectedId = null;
-        let isLinking = false; let isDrawingPath = false; 
-        let drawingNodeId = null; let linkSourceId = null; 
-        let activeStatuses = {}; let currentMode = null; 
-        let isLocked = false; let logoClicks = 0;
+        // Estado principal
+        let nodes = [];
+        let links = [];
+        let map;
+        let selectedId = null;
+        let isLinking = false;
+        let isDrawingPath = false;
+        let drawingNodeId = null;
+        let linkSourceId = null;
+        let activeStatuses = {};
+        let currentMode = null;
+        let isLocked = false;
+        let logoClicks = 0;
+        let logoClickTimeout;
 
         let individualLayer, linksLayer, handlesLayer;
+
+        // refs de DOM cacheadas
+        let statusDotEl, statusTextEl, fabContainerEl, logoMenuEl, passwordModalEl;
+        let modeBarEl, finishDrawBtnEl, detailsPanelEl, detailsContentEl, treeContainerEl;
+        let mapEl, listViewEl, btnMapEl, btnListEl, fabMainEl, fabItemsEl;
 
         const CONFIG = {
             server: { label: 'Servidor', color: '#a78bfa', hasIp: true, icon: '<rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/>' },
@@ -201,130 +216,190 @@
             converter: { label: 'Conversor', color: '#f59e0b', hasIp: false, icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>' }
         };
 
-        // --- VPS SYNC ---
-        async function loadData() {
-            try {
-                const response = await fetch(`${VPS_API_URL}/data`);
-                const data = await response.json();
-                nodes = data.nodes || [];
-                links = data.links || [];
-                document.getElementById('status-dot').classList.add('status-online');
-                document.getElementById('status-text').innerText = "VPS Conectada";
-                render();
-            } catch (e) {
-                document.getElementById('status-text').innerText = "Erro Conexão VPS";
-            }
+        // debounce simples para evitar excesso de chamadas à API [web:26][web:34]
+        function debounce(fn, delay = 400) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn(...args), delay);
+            };
         }
 
-        async function saveData() {
+        const saveDataDebounced = debounce(async () => {
             try {
                 await fetch(`${VPS_API_URL}/save`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nodes, links })
                 });
-            } catch (e) { console.error("Sync Error"); }
+            } catch (e) {
+                console.error("Sync Error", e);
+            }
+        });
+
+        async function loadData() {
+            try {
+                const response = await fetch(`${VPS_API_URL}/data`);
+                const data = await response.json();
+                nodes = Array.isArray(data.nodes) ? data.nodes : [];
+                links = Array.isArray(data.links) ? data.links : [];
+                statusDotEl.classList.add('status-online');
+                statusTextEl.innerText = "VPS Conectada";
+                render();
+            } catch (e) {
+                console.error(e);
+                statusTextEl.innerText = "Erro Conexão VPS";
+                // fallback simples: inicia vazio
+                nodes = nodes || [];
+                links = links || [];
+                render();
+            }
         }
 
-        window.onload = () => {
-            map = L.map('map', { zoomControl: false, tap: true, maxZoom: 18, dragging: true }).setView([-23.5505, -46.6333], 15);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-            
-            linksLayer = L.layerGroup().addTo(map);
-            individualLayer = L.layerGroup().addTo(map);
-            handlesLayer = L.layerGroup().addTo(map);
-
-            map.on('click', (e) => { 
-                if (isLocked) return;
-                if (isDrawingPath) addVertexToPath(e.latlng);
-                else if (currentMode) addNode(currentMode, e.latlng); 
-                else { closePanel(); document.getElementById('logo-menu').classList.remove('show'); } 
-            });
-
-            loadData();
-        };
-
         function isNodeOffline(id, visited = new Set()) {
-            if (visited.has(id)) return false; visited.add(id);
-            const n = nodes.find(it => it.id === id); if (!n) return true;
+            if (visited.has(id)) return false;
+            visited.add(id);
+            const n = nodes.find(it => it.id === id);
+            if (!n) {
+                console.warn('Nó não encontrado em isNodeOffline', id);
+                return true;
+            }
             if (CONFIG[n.type].hasIp) return activeStatuses[id] === 'offline';
-            const connIds = links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
+            const connIds = links
+                .filter(l => l.a === id || l.b === id)
+                .map(l => l.a === id ? l.b : l.a);
             let dependents = [];
-            if (n.type === 'switch') dependents = connIds.filter(cid => nodes.find(nn => nn.id === cid)?.type === 'camera');
-            else if (n.type === 'converter') dependents = connIds.filter(cid => nodes.find(nn => nn.id === cid)?.type === 'switch');
+            if (n.type === 'switch') {
+                dependents = connIds.filter(cid => nodes.find(nn => nn.id === cid)?.type === 'camera');
+            } else if (n.type === 'converter') {
+                dependents = connIds.filter(cid => nodes.find(nn => nn.id === cid)?.type === 'switch');
+            }
             if (dependents.length === 0) return false;
             return dependents.every(depId => isNodeOffline(depId, visited));
         }
 
         function render() {
-            individualLayer.clearLayers(); linksLayer.clearLayers(); handlesLayer.clearLayers();
-            const statusMap = {}; nodes.forEach(n => statusMap[n.id] = isNodeOffline(n.id));
+            individualLayer.clearLayers();
+            linksLayer.clearLayers();
+            handlesLayer.clearLayers();
 
-            links.forEach((link) => {
-                const n1 = nodes.find(n => n.id === link.a); const n2 = nodes.find(n => n.id === link.b);
-                if (n1 && n2) {
-                    const off = (statusMap[n1.id] || statusMap[n2.id]);
-                    const path = [[n1.lat, n1.lng], ...(link.vertices || []), [n2.lat, n2.lng]];
-                    const poly = L.polyline(path, { color: off ? '#ef4444' : '#3b82f6', weight: 6, opacity: 0.8, className: off ? 'offline-line' : 'data-flow-line' }).addTo(linksLayer);
-                    
-                    if (!isLocked && (selectedId === link.a || selectedId === link.b)) {
-                        (link.vertices || []).forEach((v, vIdx) => {
-                            const handle = L.marker(v, { draggable: true, icon: L.divIcon({ className: 'vertex-handle', iconSize: [12, 12] }) }).addTo(handlesLayer);
-                            handle.on('drag', (e) => {
-                                link.vertices[vIdx] = [e.target.getLatLng().lat, e.target.getLatLng().lng];
-                                poly.setLatLngs([[n1.lat, n1.lng], ...link.vertices, [n2.lat, n2.lng]]);
-                                saveData();
-                            });
-                        });
-                    }
-                }
+            const statusMap = {};
+            nodes.forEach(n => {
+                statusMap[n.id] = isNodeOffline(n.id);
             });
 
+            renderLinks(statusMap);
+            renderNodes(statusMap);
+        }
+
+        function renderLinks(statusMap) {
+            links.forEach((link) => {
+                const n1 = nodes.find(n => n.id === link.a);
+                const n2 = nodes.find(n => n.id === link.b);
+                if (!n1 || !n2) return;
+
+                const off = (statusMap[n1.id] || statusMap[n2.id]);
+                const path = [[n1.lat, n1.lng], ...(link.vertices || []), [n2.lat, n2.lng]];
+                const poly = L.polyline(path, {
+                    color: off ? '#ef4444' : '#3b82f6',
+                    weight: 6,
+                    opacity: 0.8,
+                    className: off ? 'offline-line' : 'data-flow-line'
+                }).addTo(linksLayer);
+
+                if (!isLocked && (selectedId === link.a || selectedId === link.b)) {
+                    (link.vertices || []).forEach((v, vIdx) => {
+                        const handle = L.marker(v, {
+                            draggable: true,
+                            icon: L.divIcon({ className: 'vertex-handle', iconSize: [12, 12] })
+                        }).addTo(handlesLayer);
+
+                        handle.on('dragend', (e) => {
+                            const pos = e.target.getLatLng();
+                            link.vertices[vIdx] = [pos.lat, pos.lng];
+                            poly.setLatLngs([[n1.lat, n1.lng], ...link.vertices, [n2.lat, n2.lng]]);
+                            saveDataDebounced();
+                        });
+                    });
+                }
+            });
+        }
+
+        function renderNodes(statusMap) {
             nodes.forEach(node => {
-                const isSelected = (selectedId === node.id); const isOff = statusMap[node.id];
-                let color = CONFIG[node.type].color; if (isOff) color = '#ef4444';
+                const isSelected = (selectedId === node.id);
+                const isOff = statusMap[node.id];
+                let color = CONFIG[node.type].color;
+                if (isOff) color = '#ef4444';
+
                 const icon = L.divIcon({ 
                     html: `<div class="marker-pin ${isSelected ? 'selected' : ''}" style="background-color: ${color}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg></div>`, 
                     iconSize: [44, 44], iconAnchor: [22, 44]
                 });
+
                 const m = L.marker([node.lat, node.lng], { icon, draggable: !isLocked }).addTo(individualLayer);
-                m.on('click', (e) => { L.DomEvent.stopPropagation(e); if(isLocked) return; handleNodeClick(node.id); });
-                m.on('dragend', (e) => { const p = e.target.getLatLng(); node.lat = p.lat; node.lng = p.lng; render(); saveData(); });
+
+                m.on('click', (e) => {
+                    L.DomEvent.stopPropagation(e);
+                    if (isLocked) return;
+                    handleNodeClick(node.id);
+                });
+
+                m.on('dragend', (e) => {
+                    const p = e.target.getLatLng();
+                    node.lat = p.lat;
+                    node.lng = p.lng;
+                    render();
+                    saveDataDebounced();
+                });
             });
         }
 
         function renderListView() {
-            const container = document.getElementById('tree-container');
-            container.innerHTML = '';
-            const offlineMap = {}; nodes.forEach(n => offlineMap[n.id] = isNodeOffline(n.id));
-            const getConnections = (id) => links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
-            
+            treeContainerEl.innerHTML = '';
+            const offlineMap = {};
+            nodes.forEach(n => {
+                offlineMap[n.id] = isNodeOffline(n.id);
+            });
+            const getConnections = (id) => links
+                .filter(l => l.a === id || l.b === id)
+                .map(l => l.a === id ? l.b : l.a);
+
             const processedIds = new Set();
             const converters = nodes.filter(n => n.type === 'converter');
-            
+
             converters.forEach(conv => {
                 processedIds.add(conv.id);
                 const convEl = createTreeItem(conv, offlineMap[conv.id]);
                 const childrenContainer = document.createElement('div');
                 childrenContainer.className = 'tree-node';
-                
-                getConnections(conv.id).map(cid => nodes.find(n => n.id === cid)).filter(n => n && n.type === 'switch').forEach(sw => {
-                    processedIds.add(sw.id);
-                    const swEl = createTreeItem(sw, offlineMap[sw.id]);
-                    const swChildren = document.createElement('div');
-                    swChildren.className = 'tree-node';
-                    getConnections(sw.id).map(cid => nodes.find(n => n.id === cid)).filter(n => n && n.type === 'camera').forEach(cam => {
-                        processedIds.add(cam.id);
-                        swChildren.appendChild(createTreeItem(cam, offlineMap[cam.id]));
+
+                getConnections(conv.id)
+                    .map(cid => nodes.find(n => n.id === cid))
+                    .filter(n => n && n.type === 'switch')
+                    .forEach(sw => {
+                        processedIds.add(sw.id);
+                        const swEl = createTreeItem(sw, offlineMap[sw.id]);
+                        const swChildren = document.createElement('div');
+                        swChildren.className = 'tree-node';
+                        getConnections(sw.id)
+                            .map(cid => nodes.find(n => n.id === cid))
+                            .filter(n => n && n.type === 'camera')
+                            .forEach(cam => {
+                                processedIds.add(cam.id);
+                                swChildren.appendChild(createTreeItem(cam, offlineMap[cam.id]));
+                            });
+                        swEl.appendChild(swChildren);
+                        childrenContainer.appendChild(swEl);
                     });
-                    swEl.appendChild(swChildren);
-                    childrenContainer.appendChild(swEl);
-                });
+
                 convEl.appendChild(childrenContainer);
-                container.appendChild(convEl);
+                treeContainerEl.appendChild(convEl);
             });
 
-            nodes.filter(n => !processedIds.has(n.id)).forEach(item => container.appendChild(createTreeItem(item, offlineMap[item.id])));
+            nodes
+                .filter(n => !processedIds.has(n.id))
+                .forEach(item => treeContainerEl.appendChild(createTreeItem(item, offlineMap[item.id])));
         }
 
         function createTreeItem(node, isOff) {
@@ -340,52 +415,287 @@
             return div;
         }
 
-        // --- UI CONTROLS ---
-        function handleNodeClick(id) { if (isDrawingPath) return; if (isLinking) { if (!linkSourceId) { linkSourceId = id; showToast(`Origem: ${nodes.find(n => n.id === id).name}`); } else if (linkSourceId !== id) { links.push({ id: 'l'+Date.now(), a: linkSourceId, b: id, vertices: [] }); linkSourceId = null; render(); saveData(); } return; } openDetails(id); }
-        function openDetails(id) {
-            selectedId = id; const n = nodes.find(it => it.id === id);
-            const panel = document.getElementById('details-panel');
-            panel.classList.remove('hidden'); panel.classList.add('show');
-            const connIds = links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
-            let itemsHtml = '';
-            if (n.type === 'switch' || n.type === 'converter') {
-                const deps = nodes.filter(vn => connIds.includes(vn.id));
-                itemsHtml = `<div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-1 uppercase">Conectados (${deps.length})</p><div class="max-h-32 overflow-y-auto space-y-1">${deps.map(c => `<div class="text-[10px] flex justify-between"><span>${c.name}</span> <span class="${activeStatuses[c.id] === 'offline' ? 'text-red-500' : 'text-emerald-500'}">●</span></div>`).join('')}</div></div>`;
+        function handleNodeClick(id) {
+            if (isDrawingPath) return;
+            if (isLinking) {
+                if (!linkSourceId) {
+                    linkSourceId = id;
+                    showToast(`Origem: ${nodes.find(n => n.id === id).name}`);
+                } else if (linkSourceId !== id) {
+                    links.push({ id: 'l' + Date.now(), a: linkSourceId, b: id, vertices: [] });
+                    linkSourceId = null;
+                    render();
+                    saveDataDebounced();
+                }
+                return;
             }
-            document.getElementById('details-content').innerHTML = `
-                <div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase font-black tracking-tight"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0"></div>
-                ${CONFIG[n.type].hasIp ? `<button onclick="toggleStatus('${id}')" class="w-full py-4 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl">Simular Teste</button>` : ''}
-                ${itemsHtml}
-                <button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase">Editar Trajeto</button>
-                <button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Ativo</button>
+            openDetails(id);
+        }
+
+        function buildDetailsHtml(n, deps, hasIp) {
+            const connectedHtml = (n.type === 'switch' || n.type === 'converter')
+                ? `<div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800">
+                        <p class="text-[8px] text-slate-500 mb-1 uppercase">Conectados (${deps.length})</p>
+                        <div class="max-h-32 overflow-y-auto space-y-1">
+                            ${deps.map(c => `<div class="text-[10px] flex justify-between">
+                                <span>${c.name}</span>
+                                <span class="${activeStatuses[c.id] === 'offline' ? 'text-red-500' : 'text-emerald-500'}">●</span>
+                            </div>`).join('')}
+                        </div>
+                   </div>`
+                : '';
+
+            const testBtnHtml = hasIp
+                ? `<button onclick="toggleStatus('${n.id}')" class="w-full py-4 rounded-xl text-[10px] font-black ${activeStatuses[n.id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl">Simular Teste</button>`
+                : '';
+
+            return `
+                <div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase font-black tracking-tight">
+                    <input type="text" value="${n.name}" onchange="updateName('${n.id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0">
+                </div>
+                ${testBtnHtml}
+                ${connectedHtml}
+                <button onclick="startDrawingPath('${n.id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase">Editar Trajeto</button>
+                <button onclick="deleteNode('${n.id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Ativo</button>
             `;
+        }
+
+        function openDetails(id) {
+            selectedId = id;
+            const n = nodes.find(it => it.id === id);
+            const connIds = links
+                .filter(l => l.a === id || l.b === id)
+                .map(l => l.a === id ? l.b : l.a);
+            let deps = [];
+            if (n.type === 'switch' || n.type === 'converter') {
+                deps = nodes.filter(vn => connIds.includes(vn.id));
+            }
+            detailsContentEl.innerHTML = buildDetailsHtml(n, deps, CONFIG[n.type].hasIp);
+            detailsPanelEl.classList.remove('hidden');
             render();
         }
 
-        function addNode(type, latlng) { const id = 'n'+Date.now(); nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${nodes.length+1}` }); render(); saveData(); }
-        function updateName(id, v) { nodes.find(n => n.id === id).name = v; saveData(); render(); }
-        function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
-        function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(); render(); saveData(); }
-        function toggleAppLock() { isLocked = true; document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; document.getElementById('logo-menu').classList.remove('show'); closePanel(); showToast("MODO VISUALIZAÇÃO"); }
-        function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked-mode'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } }
-        function startDrawingPath(nodeId) { isDrawingPath = true; drawingNodeId = nodeId; closePanel(); document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('finish-draw-btn').classList.remove('hidden'); }
-        function addVertexToPath(latlng) { const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId)); if (link) { if (!link.vertices) link.vertices = []; link.vertices.push([latlng.lat, latlng.lng]); render(); } }
-        function stopDrawing() { isDrawingPath = false; document.getElementById('mode-indicator-bar').style.display = 'none'; saveData(); render(); }
-        function toggleFab() { document.getElementById('fab-items').classList.toggle('open'); }
-        function setMode(m) { currentMode = m; isLinking = false; showToast(`Adicionando ${m}`); }
-        function toggleLinking() { isLinking = true; currentMode = null; showToast("Modo Conexão"); }
-        function closePanel() { document.getElementById('details-panel').classList.remove('show'); selectedId = null; render(); }
-        function toggleLogoMenu() { document.getElementById('logo-menu').classList.toggle('show'); }
-        function handleLogoInteraction() { if (isLocked) { logoClicks++; if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } } else toggleLogoMenu(); }
-        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-900 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2000); }
-        function toggleView(v) { 
-            document.getElementById('map').style.display = v==='map'?'block':'none';
-            document.getElementById('list-view').style.display = v==='list'?'block':'none';
-            document.getElementById('btn-map').className = v==='map'?"px-5 py-2 rounded-xl text-[11px] font-black bg-blue-600 text-white shadow-xl uppercase":"px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 uppercase";
-            document.getElementById('btn-list').className = v==='list'?"px-5 py-2 rounded-xl text-[11px] font-black bg-blue-600 text-white shadow-xl uppercase":"px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 uppercase";
-            if(v==='list') renderListView(); else map.invalidateSize();
+        function addNode(type, latlng) {
+            const id = 'n' + Date.now();
+            nodes.push({
+                id,
+                type,
+                lat: latlng.lat,
+                lng: latlng.lng,
+                name: `${CONFIG[type].label} ${nodes.length + 1}`
+            });
+            render();
+            saveDataDebounced();
         }
-        function locateMe() { navigator.geolocation.getCurrentPosition(p => map.flyTo([p.coords.latitude, p.coords.longitude], 17)); }
+
+        function updateName(id, v) {
+            const n = nodes.find(n => n.id === id);
+            if (!n) return;
+            n.name = v;
+            saveDataDebounced();
+            render();
+        }
+
+        function toggleStatus(id) {
+            activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline';
+            openDetails(id);
+            render();
+        }
+
+        function deleteNode(id) {
+            nodes = nodes.filter(n => n.id !== id);
+            links = links.filter(l => l.a !== id && l.b !== id);
+            closePanel();
+            render();
+            saveDataDebounced();
+        }
+
+        function toggleAppLock() {
+            isLocked = true;
+            document.body.classList.add('locked-mode');
+            fabContainerEl.style.display = 'none';
+            logoMenuEl.classList.remove('show');
+            closePanel();
+            showToast("MODO VISUALIZAÇÃO");
+        }
+
+        function checkUnlock() {
+            const pass = document.getElementById('unlock-pass').value;
+            if (pass === '12345') {
+                isLocked = false;
+                document.body.classList.remove('locked-mode');
+                fabContainerEl.style.display = 'flex';
+                passwordModalEl.classList.add('hidden');
+                render();
+                showToast("PAINEL DESBLOQUEADO");
+            }
+        }
+
+        function startDrawingPath(nodeId) {
+            isDrawingPath = true;
+            drawingNodeId = nodeId;
+            closePanel();
+            modeBarEl.style.display = 'flex';
+            finishDrawBtnEl.classList.remove('hidden');
+        }
+
+        function addVertexToPath(latlng) {
+            const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId));
+            if (link) {
+                if (!link.vertices) link.vertices = [];
+                link.vertices.push([latlng.lat, latlng.lng]);
+                render();
+            }
+        }
+
+        function stopDrawing() {
+            isDrawingPath = false;
+            modeBarEl.style.display = 'none';
+            finishDrawBtnEl.classList.add('hidden');
+            saveDataDebounced();
+            render();
+        }
+
+        function toggleFab() {
+            fabItemsEl.classList.toggle('open');
+            fabMainEl.classList.toggle('active');
+        }
+
+        function setMode(m) {
+            currentMode = m;
+            isLinking = false;
+            showToast(`Adicionando ${CONFIG[m].label}`);
+        }
+
+        function toggleLinking() {
+            isLinking = true;
+            currentMode = null;
+            linkSourceId = null;
+            showToast("Modo Conexão");
+        }
+
+        function closePanel() {
+            detailsPanelEl.classList.add('hidden');
+            selectedId = null;
+            render();
+        }
+
+        function toggleLogoMenu() {
+            logoMenuEl.classList.toggle('show');
+        }
+
+        function handleLogoInteraction() {
+            if (isLocked) {
+                logoClicks++;
+                clearTimeout(logoClickTimeout);
+                logoClickTimeout = setTimeout(() => {
+                    logoClicks = 0;
+                }, 1500);
+                if (logoClicks >= 3) {
+                    logoClicks = 0;
+                    passwordModalEl.classList.remove('hidden');
+                }
+            } else {
+                toggleLogoMenu();
+            }
+        }
+
+        function showToast(m) {
+            const t = document.createElement('div');
+            t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-6 py-2.5 bg-slate-900 text-white text-[10px] font-black rounded-full z-[8000] border border-slate-700 shadow-xl";
+            t.innerText = m;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 2200);
+        }
+
+        function toggleView(v) {
+            mapEl.style.display = v === 'map' ? 'block' : 'none';
+            listViewEl.style.display = v === 'list' ? 'block' : 'none';
+            btnMapEl.className = v === 'map'
+                ? "px-5 py-2 rounded-xl text-[11px] font-black bg-blue-600 text-white shadow-xl uppercase"
+                : "px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 uppercase";
+            btnListEl.className = v === 'list'
+                ? "px-5 py-2 rounded-xl text-[11px] font-black bg-blue-600 text-white shadow-xl uppercase"
+                : "px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 uppercase";
+            if (v === 'list') renderListView(); else map.invalidateSize();
+        }
+
+        function locateMe() {
+            if (!navigator.geolocation) {
+                showToast("Geolocalização não suportada");
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (p) => {
+                    map.flyTo([p.coords.latitude, p.coords.longitude], 17);
+                },
+                () => {
+                    showToast("Não foi possível obter sua localização");
+                }
+            );
+        }
+
+        // Inicialização com DOMContentLoaded para melhor prática [web:27][web:30]
+        document.addEventListener('DOMContentLoaded', () => {
+            // cache de elementos
+            statusDotEl = document.getElementById('status-dot');
+            statusTextEl = document.getElementById('status-text');
+            fabContainerEl = document.getElementById('fab-container');
+            logoMenuEl = document.getElementById('logo-menu');
+            passwordModalEl = document.getElementById('password-modal');
+            modeBarEl = document.getElementById('mode-indicator-bar');
+            finishDrawBtnEl = document.getElementById('finish-draw-btn');
+            detailsPanelEl = document.getElementById('details-panel');
+            detailsContentEl = document.getElementById('details-content');
+            treeContainerEl = document.getElementById('tree-container');
+            mapEl = document.getElementById('map');
+            listViewEl = document.getElementById('list-view');
+            btnMapEl = document.getElementById('btn-map');
+            btnListEl = document.getElementById('btn-list');
+            fabMainEl = document.getElementById('fab-main');
+            fabItemsEl = document.getElementById('fab-items');
+
+            // mapa
+            map = L.map('map', { zoomControl: false, tap: true, maxZoom: 18, dragging: true })
+                .setView([-23.5505, -46.6333], 15);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+            
+            linksLayer = L.layerGroup().addTo(map);
+            individualLayer = L.layerGroup().addTo(map);
+            handlesLayer = L.layerGroup().addTo(map);
+
+            map.on('click', (e) => { 
+                if (isLocked) return;
+                if (isDrawingPath) {
+                    addVertexToPath(e.latlng);
+                } else if (currentMode) {
+                    addNode(currentMode, e.latlng);
+                } else {
+                    closePanel();
+                    logoMenuEl.classList.remove('show');
+                }
+            });
+
+            // listeners de UI
+            document.getElementById('logo-btn').addEventListener('click', handleLogoInteraction);
+            document.getElementById('lock-btn').addEventListener('click', toggleAppLock);
+            document.getElementById('close-panel-btn').addEventListener('click', closePanel);
+            document.getElementById('locate-btn').addEventListener('click', locateMe);
+            document.getElementById('unlock-btn').addEventListener('click', checkUnlock);
+            document.getElementById('unlock-pass').addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') checkUnlock();
+            });
+            finishDrawBtnEl.addEventListener('click', stopDrawing);
+            btnMapEl.addEventListener('click', () => toggleView('map'));
+            btnListEl.addEventListener('click', () => toggleView('list'));
+            fabMainEl.addEventListener('click', toggleFab);
+            document.querySelectorAll('.fab-item-btn[data-mode]').forEach(btn => {
+                btn.addEventListener('click', () => setMode(btn.getAttribute('data-mode')));
+            });
+            document.getElementById('link-btn').addEventListener('click', toggleLinking);
+
+            loadData();
+        });
     </script>
 </body>
 </html>
