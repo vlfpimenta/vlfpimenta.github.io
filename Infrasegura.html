@@ -298,16 +298,24 @@
             render();
         }
 
+        // --- CORREÇÃO NA PROPAGAÇÃO DO STATUS ---
         function isNodeOffline(id, visited = new Set()) {
             if (visited.has(id)) return false; visited.add(id);
             const n = nodes.find(it => it.id === id); if (!n) return true;
             if (CONFIG[n.type].hasIp) return activeStatuses[id] === 'offline';
+            
             const connIds = links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
-            let dependents = [];
-            if (n.type === 'switch' || n.type === 'core_switch') dependents = connIds.filter(cid => { const nn = nodes.find(it => it.id === cid); return nn && (nn.type === 'camera' || nn.type === 'switch'); });
-            else if (n.type === 'converter') dependents = connIds.filter(cid => { const nn = nodes.find(it => it.id === cid); return nn && nn.type === 'switch'; });
-            if (dependents.length === 0) return false;
-            return dependents.every(depId => isNodeOffline(depId, visited));
+            
+            // CRÍTICO: Para switches/conversores, SÓ olhamos para os FILHOS (itens jusante)
+            const downstream = connIds.filter(cid => {
+                const nn = nodes.find(it => it.id === cid);
+                return nn && CONFIG[nn.type].rank > CONFIG[n.type].rank;
+            });
+
+            if (downstream.length === 0) return false; // Se não tem nada ligado abaixo, ele fica online (bolinha)
+            
+            // Se TODOS os itens abaixo dele estiverem offline, ele fica offline
+            return downstream.every(depId => isNodeOffline(depId, visited));
         }
 
         function getDiagnostics() {
@@ -326,24 +334,23 @@
             return alerts;
         }
 
-        // --- FUNÇÃO PARA RASTREAR CAMINHO DE CASCATA ---
         function getCascadeImpactMap() {
             const impactMap = new Set();
             const offlineMap = {}; nodes.forEach(n => offlineMap[n.id] = isNodeOffline(n.id));
             
             nodes.forEach(node => {
-                if (offlineMap[node.id] && node.type === 'switch') {
-                    // Se este switch está offline, vamos subir o caminho upstream
+                if (offlineMap[node.id]) {
                     let current = node;
                     while (current) {
                         const connIds = links.filter(l => l.a === current.id || l.b === current.id).map(l => l.a === current.id ? l.b : l.a);
-                        const parent = nodes.find(n => connIds.includes(n.id) && CONFIG[n.type].rank < CONFIG[current.type].rank);
+                        // Subindo: Busca o pai que é switch ou conversor
+                        const parent = nodes.find(n => connIds.includes(n.id) && CONFIG[n.type].rank <= CONFIG[current.type].rank && n.id !== current.id);
                         
                         if (parent && parent.type === 'switch') {
-                            impactMap.add(parent.id); // Este switch é um "passante" afetado
+                            impactMap.add(parent.id);
                             current = parent;
                         } else {
-                            current = null; // Fim da cascata ou chegou no conversor
+                            current = null;
                         }
                     }
                 }
@@ -354,7 +361,7 @@
         function render() {
             individualLayer.clearLayers(); linksLayer.clearLayers(); handlesLayer.clearLayers();
             const statusMap = {}; nodes.forEach(n => statusMap[n.id] = isNodeOffline(n.id));
-            const cascadeMap = getCascadeImpactMap(); // Gera mapa de switches passantes afetados
+            const cascadeMap = getCascadeImpactMap();
             const isEditingMode = !!(currentMode || isLinking || isDrawingPath || isMenuOpen);
 
             links.forEach((link) => {
@@ -383,15 +390,14 @@
             nodes.forEach(node => {
                 const isSelected = (selectedId === node.id); 
                 const isOff = statusMap[node.id];
-                const isCascadingImpact = cascadeMap.has(node.id); // Verifica se este switch é um passante afetado
+                const isCascading = cascadeMap.has(node.id);
                 
                 let color = CONFIG[node.type].color; 
                 let html, iconSize, iconAnchor;
                 
-                // Se estiver OFFLINE ou for um PASSANTE AFETADO ou estiver em EDIÇÃO, mostra Pin Grande
-                if (isOff || isCascadingImpact || isEditingMode) {
-                    const pulseClass = (isOff || isCascadingImpact) ? 'pulse-orange' : '';
-                    const pinColor = (isOff || isCascadingImpact) ? '#ef4444' : color;
+                if (isOff || isCascading || isEditingMode) {
+                    const pulseClass = (isOff || isCascading) ? 'pulse-orange' : '';
+                    const pinColor = (isOff || isCascading) ? '#ef4444' : color;
                     html = `<div class="marker-pin ${isSelected ? 'selected' : ''} ${pulseClass}" style="background-color: ${pinColor}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg></div>`;
                     iconSize = [44, 44]; iconAnchor = [22, 44];
                 } else {
@@ -421,8 +427,7 @@
                         relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]"><p class="text-red-400 font-black mb-1">CAMINHO TÉCNICO:</p><p>● Switch: ${sw ? sw.name : 'N/A'}</p><p>● Conversor: ${conv ? conv.name : 'N/A'}</p></div>`;
                     } else if (node.type === 'switch') {
                         const cams = nodes.filter(n => connIds.includes(n.id) && n.type === 'camera');
-                        // Busca se há cascata upstream
-                        const parentSw = nodes.find(n => connIds.includes(n.id) && n.type === 'switch' && CONFIG[n.type].rank <= CONFIG[node.type].rank);
+                        const parentSw = nodes.find(n => connIds.includes(n.id) && n.type === 'switch' && n.id !== node.id);
                         const conv = nodes.find(n => connIds.includes(n.id) && n.type === 'converter');
                         relationHtml = `<div class="mt-4 p-3 bg-red-950/20 rounded-2xl border border-red-500/20 text-[10px]"><p class="text-red-400 font-black mb-1">IMPACTO & ORIGEM:</p>${parentSw ? `<p class="font-bold text-orange-400">⚠ Em cascata com: ${parentSw.name}</p>` : ''}<p>● Fonte de Sinal: ${conv ? conv.name : 'Cascata de Rede'}</p><p>● Câmeras Afetadas: ${cams.length > 0 ? cams.map(c => c.name).join(', ') : 'Nenhuma'}</p></div>`;
                     } else if (node.type === 'converter') {
@@ -457,7 +462,7 @@
             selectedId = id; const n = nodes.find(it => it.id === id);
             const panel = document.getElementById('details-panel'); panel.classList.add('show');
             const connIds = links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
-            const parent = nodes.find(vn => connIds.includes(vn.id) && (CONFIG[vn.type].rank <= CONFIG[n.type].rank));
+            const parent = nodes.find(vn => connIds.includes(vn.id) && (CONFIG[vn.type].rank <= CONFIG[n.type].rank) && vn.id !== id);
             const children = nodes.filter(vn => connIds.includes(vn.id) && (CONFIG[vn.type].rank > CONFIG[n.type].rank));
             let hierarchyHtml = `<div class="space-y-4 pt-4 border-t border-slate-800"><div class="text-[9px] font-black uppercase text-blue-500 tracking-widest italic">Rede Hierárquica</div><div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-1 uppercase">Origem do Sinal (Pai)</p><p class="text-xs font-bold ${parent ? 'text-indigo-400' : 'text-slate-600 italic'}">${parent ? parent.name : 'Nenhum'}</p></div>${n.type !== 'camera' ? `<div class="p-4 bg-slate-950/50 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-1 uppercase">Itens Jusante (Filhos: ${children.length})</p><div class="max-h-32 overflow-y-auto space-y-1">${children.map(c => `<div class="text-[10px] flex justify-between"><span>${c.name}</span> <span class="${activeStatuses[c.id] === 'offline' ? 'text-red-500' : 'text-emerald-500'}">●</span></div>`).join('')}</div></div>` : ''}</div>`;
             document.getElementById('details-content').innerHTML = `<div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase font-black tracking-tight"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0"></div>${CONFIG[n.type].hasIp ? `<div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-2 uppercase text-center">Endereço IP</p><input type="text" value="${n.ip || '0.0.0.0'}" onchange="updateIp('${id}', this.value)" class="bg-slate-950 w-full p-2 rounded-lg border border-slate-800 font-mono text-center text-blue-400 outline-none"><button onclick="toggleStatus('${id}')" class="w-full mt-3 py-3 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl transition-all">Simular Status</button></div>` : ''}${hierarchyHtml}<button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase shadow-lg mt-4">Editar Traçado</button><button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Ativo</button>`;
