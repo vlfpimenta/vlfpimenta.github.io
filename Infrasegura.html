@@ -252,14 +252,11 @@
 
         async function loadData() {
             try {
-                // Timeout para não ficar "sincronizando" pra sempre se o servidor estiver fora
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 3000);
-
                 const response = await fetch(`${VPS_API_URL}/data`, { signal: controller.signal });
                 const data = await response.json();
                 clearTimeout(timeoutId);
-
                 nodes = data.nodes || []; links = data.links || [];
                 document.getElementById('status-dot').classList.add('status-online');
                 document.getElementById('status-text').innerText = "VPS Sincronizada";
@@ -267,7 +264,7 @@
             } catch (e) { 
                 document.getElementById('status-text').innerText = "Modo Local Ativo"; 
                 document.getElementById('status-dot').classList.remove('status-online');
-                render(); // Renderiza mesmo se falhar a sincronia
+                render(); 
             }
         }
 
@@ -281,17 +278,13 @@
             map = L.map('map', { zoomControl: false, tap: true, maxZoom: 18, dragging: true }).setView([-23.5505, -46.6333], 15);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
             linksLayer = L.layerGroup().addTo(map); individualLayer = L.layerGroup().addTo(map); handlesLayer = L.layerGroup().addTo(map);
-            
             map.on('click', (e) => { 
                 if (isLocked) return;
                 if (isDrawingPath) addVertexToPath(e.latlng);
                 else if (currentMode) addNode(currentMode, e.latlng); 
                 else { closePanel(); closeOfflinePanel(); document.getElementById('logo-menu').classList.remove('show'); } 
             });
-            
             loadData();
-            
-            // Garantir que o mapa renderize no tamanho correto
             setTimeout(() => map.invalidateSize(), 200);
         };
 
@@ -336,7 +329,8 @@
         function render() {
             individualLayer.clearLayers(); linksLayer.clearLayers(); handlesLayer.clearLayers();
             const statusMap = {}; nodes.forEach(n => statusMap[n.id] = isNodeOffline(n.id));
-            const isEditingMode = !!(currentMode || isLinking || isDrawingPath);
+            // Variável `isEditingMode` para checar se algum modo de engenharia ou o menu estão ativos
+            const isEditingMode = !!(currentMode || isLinking || isDrawingPath || isMenuOpen);
 
             links.forEach((link) => {
                 const n1 = nodes.find(n => n.id === link.a); const n2 = nodes.find(n => n.id === link.b);
@@ -365,6 +359,7 @@
                 const isSelected = (selectedId === node.id); const isOff = statusMap[node.id];
                 let color = CONFIG[node.type].color; 
                 let html, iconSize, iconAnchor;
+                // --- LÓGICA DE TRANSFORMAÇÃO VISUAL (COM OVERRIDE PARA MODO DE INSERÇÃO/MENU) ---
                 if (isOff || isEditingMode) {
                     const pulseClass = isOff ? 'pulse-orange' : '';
                     const pinColor = isOff ? '#ef4444' : color;
@@ -461,7 +456,18 @@
         }
 
         function addNode(type, latlng) { const id = 'n'+Date.now(); const count = nodes.filter(n => n.type === type).length + 1; nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${count}`, ip: CONFIG[type].hasIp ? '192.168.1.100' : null }); saveData(); render(); showToast(`${CONFIG[type].label} adicionado.`); }
-        function toggleFab() { if (isLocked) return; if (currentMode || isLinking || isDrawingPath) { resetTools(); return; } isMenuOpen = !isMenuOpen; document.getElementById('fab-items').classList.toggle('open', isMenuOpen); document.getElementById('fab-main').classList.toggle('active', isMenuOpen); }
+        
+        // --- ATUALIZAÇÃO DO FAB: ALTERA O VISUAL IMEDIATAMENTE AO CLICAR ---
+        function toggleFab() { 
+            if (isLocked) return; 
+            if (currentMode || isLinking || isDrawingPath) { resetTools(); return; } 
+            isMenuOpen = !isMenuOpen; 
+            document.getElementById('fab-items').classList.toggle('open', isMenuOpen); 
+            document.getElementById('fab-main').classList.toggle('active', isMenuOpen); 
+            // Renderiza novamente para aplicar o visual grande (Menu Aberto) ou pequeno (Menu Fechado)
+            render(); 
+        }
+
         function setMode(m) { currentMode = m; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = `Inserindo: ${CONFIG[m].label}`; document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('tool-' + m).classList.add('selected'); }
         function toggleLinking() { isLinking = true; currentMode = null; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = "Criando Conexões"; document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('link-btn').classList.add('selected'); }
         function openOfflinePanel() { document.getElementById('offline-panel').classList.add('show'); }
