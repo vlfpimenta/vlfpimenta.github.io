@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>InfraSegura v6.1 - Modos Persistentes</title>
+    <title>InfraSegura v6.2 - Edição Contínua Fluida</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Leaflet Core -->
@@ -39,6 +39,7 @@
             margin: -22px 0 0 -22px; border: 3px solid #ffffff;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 1000 !important;
+            transition: transform 0.2s;
         }
         .marker-pin svg { transform: rotate(45deg); color: white; }
         .marker-pin.selected { border-color: #3b82f6; box-shadow: 0 0 25px #3b82f6; transform: rotate(-45deg) scale(1.1); }
@@ -76,8 +77,18 @@
         .fab-main.active { transform: rotate(135deg); background-color: #ef4444; border-color: #f87171; }
         .fab-items { display: flex; flex-direction: column-reverse; gap: 12px; pointer-events: none; opacity: 0; transform: translateY(15px); transition: 0.3s ease; }
         .fab-items.open { pointer-events: auto; opacity: 1; transform: translateY(0); }
-        .fab-item-btn { width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: #1e293b; border: 2px solid #334155; position: relative; }
-        .fab-item-btn.selected { border-color: #3b82f6; background-color: #0f172a; }
+        
+        .fab-item-btn { 
+            width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; 
+            justify-content: center; background-color: #1e293b; border: 2px solid #334155; 
+            position: relative; transition: all 0.2s;
+        }
+        .fab-item-btn.selected { 
+            border-color: #3b82f6; 
+            background-color: #0f172a; 
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+            transform: scale(1.1);
+        }
 
         .alert-fab {
             position: fixed; left: 24px; bottom: 24px; z-index: 5000;
@@ -104,7 +115,7 @@
         .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; }
         .status-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
 
-        #details-panel, #offline-panel { transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none; transform: translateX(100%); }
+        #details-panel, #offline-panel { transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none; transform: translateX(100%); z-index: 4000; }
         #details-panel.show, #offline-panel.show { opacity: 1; transform: translateX(0); pointer-events: auto; }
 
         @media (max-width: 768px) {
@@ -125,7 +136,7 @@
 
         <div id="vps-status">
             <div class="status-dot" id="status-dot"></div>
-            <span id="status-text">Sincronizando com vlf-vps...</span>
+            <span id="status-text">Conectando ao servidor...</span>
         </div>
 
         <!-- Alerta Crítico -->
@@ -167,22 +178,22 @@
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </div>
             <div id="fab-items" class="fab-items">
-                <button onclick="setMode('server')" id="tool-server" class="fab-item-btn" title="Servidor" style="color: #a78bfa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/></svg></button>
-                <button onclick="setMode('camera')" id="tool-camera" class="fab-item-btn" title="Câmera" style="color: #60a5fa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>
-                <button onclick="setMode('switch')" id="tool-switch" class="fab-item-btn" title="Switch" style="color: #34d399"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/></svg></button>
-                <button onclick="setMode('converter')" id="tool-converter" class="fab-item-btn" title="Conversor" style="color: #fbbf24"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></button>
-                <button onclick="toggleLinking()" id="link-btn" class="fab-item-btn" title="Conectar" style="color: #94a3b8"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54"/></svg></button>
+                <button onclick="setMode('server')" id="tool-server" class="fab-item-btn tool-btn" title="Servidor" style="color: #a78bfa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/></svg></button>
+                <button onclick="setMode('camera')" id="tool-camera" class="fab-item-btn tool-btn" title="Câmera" style="color: #60a5fa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>
+                <button onclick="setMode('switch')" id="tool-switch" class="fab-item-btn tool-btn" title="Switch" style="color: #34d399"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/></svg></button>
+                <button onclick="setMode('converter')" id="tool-converter" class="fab-item-btn tool-btn" title="Conversor" style="color: #fbbf24"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></button>
+                <button onclick="toggleLinking()" id="link-btn" class="fab-item-btn tool-btn" title="Conectar" style="color: #94a3b8"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54"/></svg></button>
             </div>
         </div>
 
         <div id="map"></div>
         <div id="list-view">
-            <h2 class="text-2xl font-black uppercase mb-8 tracking-tighter text-blue-500">Árvore de Ativos</h2>
+            <h2 class="text-2xl font-black uppercase mb-8 tracking-tighter text-blue-500">Hierarquia de Ativos</h2>
             <div id="tree-container"></div>
         </div>
 
         <!-- Painéis Deslizantes -->
-        <div id="offline-panel" class="fixed right-6 top-24 bottom-24 w-96 bg-slate-900 border-2 border-red-500/40 rounded-[3rem] p-8 z-[3000] hidden flex flex-col shadow-4xl mobile-full text-white">
+        <div id="offline-panel" class="fixed right-6 top-24 bottom-24 w-96 bg-slate-900 border-2 border-red-500/40 rounded-[3rem] p-8 hidden flex flex-col shadow-4xl mobile-full text-white">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-sm font-black uppercase text-red-500 tracking-widest italic">Falhas Detectadas</h3>
                 <button onclick="closeOfflinePanel()" class="p-2 hover:bg-slate-800 rounded-full transition-colors"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
@@ -190,7 +201,7 @@
             <div id="offline-list" class="flex-1 overflow-y-auto space-y-3 pr-2"></div>
         </div>
 
-        <div id="details-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-slate-800 rounded-[3rem] p-8 z-[3000] hidden flex flex-col shadow-4xl mobile-full text-white overflow-hidden">
+        <div id="details-panel" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-slate-800 rounded-[3rem] p-8 hidden flex flex-col shadow-4xl mobile-full text-white overflow-hidden">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Ativo</h3>
                 <button onclick="closePanel()" class="p-2 hover:bg-slate-800 rounded-full transition-colors">
@@ -203,7 +214,7 @@
         <div id="password-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
             <div class="w-full max-w-xs bg-slate-900 border-2 border-slate-700 rounded-[2.5rem] p-10 text-center text-white shadow-4xl">
                 <h3 class="text-xl font-black uppercase mb-8 tracking-tighter">Segurança</h3>
-                <input type="password" id="unlock-pass" class="w-full bg-slate-950 border-2 border-slate-800 rounded-2xl p-5 text-center text-2xl mb-6 outline-none focus:border-blue-500 text-white" placeholder="•••••">
+                <input type="password" id="unlock-pass" class="w-full bg-slate-950 border-2 border-slate-800 rounded-2xl p-5 text-center text-2xl tracking-[0.5em] mb-6 outline-none focus:border-blue-500 text-white" placeholder="•••••">
                 <button onclick="checkUnlock()" class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase shadow-lg">Desbloquear</button>
             </div>
         </div>
@@ -235,9 +246,9 @@
                 nodes = data.nodes || [];
                 links = data.links || [];
                 document.getElementById('status-dot').classList.add('status-online');
-                document.getElementById('status-text').innerText = "VPS Conectada";
+                document.getElementById('status-text').innerText = "VPS Sincronizada";
                 render();
-            } catch (e) { document.getElementById('status-text').innerText = "Erro Conexão VPS"; }
+            } catch (e) { document.getElementById('status-text').innerText = "Erro de Sincronização"; }
         }
 
         async function saveData() {
@@ -278,6 +289,7 @@
             document.getElementById('mode-indicator-bar').style.display = 'none';
             document.getElementById('fab-items').classList.remove('open');
             document.getElementById('fab-main').classList.remove('active');
+            document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected'));
             render();
         }
 
@@ -368,15 +380,15 @@
             if (isLinking) { 
                 if (!linkSourceId) { 
                     linkSourceId = id; 
-                    showToast(`Origem selecionada: ${nodes.find(n => n.id === id).name}`); 
+                    showToast(`Origem: ${nodes.find(n => n.id === id).name}`); 
                 } 
                 else if (linkSourceId !== id) { 
                     const lid = 'l'+Date.now();
                     links.push({ id: lid, a: linkSourceId, b: id, vertices: [] }); 
                     saveData(); 
-                    linkSourceId = null; // Apenas limpa a origem, mantém isLinking = true
+                    linkSourceId = null; // Mantém modo de conexão ativo
                     render(); 
-                    showToast("Conectado. Selecione nova origem ou clique no + para fechar."); 
+                    showToast("Conectado. Selecione nova origem."); 
                 } 
                 return; 
             } 
@@ -399,7 +411,7 @@
                 <div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase font-black tracking-tight"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0"></div>
                 ${CONFIG[n.type].hasIp ? `<button onclick="toggleStatus('${id}')" class="w-full py-4 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl">Simular Teste</button>` : ''}
                 ${itemsHtml}
-                <button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase">Editar Trajeto</button>
+                <button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase shadow-lg">Traçar Caminho</button>
                 <button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Ativo</button>
             `;
             render();
@@ -409,12 +421,12 @@
             const id = 'n'+Date.now(); 
             nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${nodes.length+1}` }); 
             saveData(); render();
-            showToast(`${CONFIG[type].label} adicionado. Continue tocando no mapa ou clique no + para fechar.`);
+            showToast(`${CONFIG[type].label} adicionado. Continue no mapa.`);
         }
 
         function toggleFab() { 
             if (isLocked) return;
-            // Se algum modo estiver ativo, o botão principal funciona como encerramento
+            // Se algum modo estiver ativo, o botão principal funciona como "Concluir/X"
             if (currentMode || isLinking || isDrawingPath) { 
                 resetTools(); 
                 return; 
@@ -425,31 +437,35 @@
         }
         
         function setMode(m) { 
-            isMenuOpen = false;
-            document.getElementById('fab-items').classList.remove('open');
             currentMode = m; 
             document.getElementById('mode-indicator-bar').style.display = 'block';
-            document.getElementById('mode-indicator-bar').innerText = `Ação em Lote: ${CONFIG[m].label}`;
-            document.getElementById('fab-main').classList.add('active');
+            document.getElementById('mode-indicator-bar').innerText = `Inserindo: ${CONFIG[m].label}`;
+            
+            // Highlight na ferramenta selecionada
+            document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('tool-' + m).classList.add('selected');
+            
             showToast(`Toque no mapa para espalhar ${CONFIG[m].label}s`); 
         }
 
         function startDrawingPath(nodeId) { 
             isDrawingPath = true; drawingNodeId = nodeId; closePanel(); 
             document.getElementById('mode-indicator-bar').style.display = 'block'; 
-            document.getElementById('mode-indicator-bar').innerText = "Traçando Caminho";
+            document.getElementById('mode-indicator-bar').innerText = "Editando Traçado";
             document.getElementById('fab-main').classList.add('active');
-            showToast("Para concluir a edição da linha, clique no +");
+            showToast("Toque no mapa para criar vértices. Clique no + para sair.");
         }
 
         function toggleLinking() { 
-            isMenuOpen = false;
-            document.getElementById('fab-items').classList.remove('open');
             isLinking = true; 
+            currentMode = null;
             document.getElementById('mode-indicator-bar').style.display = 'block';
-            document.getElementById('mode-indicator-bar').innerText = "Conexão de Dados";
-            document.getElementById('fab-main').classList.add('active');
-            showToast("Selecione a origem e depois o destino"); 
+            document.getElementById('mode-indicator-bar').innerText = "Criando Conexões";
+            
+            document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('link-btn').classList.add('selected');
+            
+            showToast("Origem e depois destino"); 
         }
 
         function addVertexToPath(latlng) { 
@@ -460,10 +476,24 @@
                 render(); 
             } 
         }
-        function closePanel() { const p = document.getElementById('details-panel'); p.classList.remove('show'); setTimeout(() => p.classList.add('hidden'), 300); selectedId = null; render(); }
-        function openOfflinePanel() { const p = document.getElementById('offline-panel'); p.classList.remove('hidden'); setTimeout(() => p.classList.add('show'), 10); }
-        function closeOfflinePanel() { const p = document.getElementById('offline-panel'); p.classList.remove('show'); setTimeout(() => p.classList.add('hidden'), 300); }
-        function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; document.getElementById('logo-menu').classList.remove('show'); closePanel(); showToast("MODO VISUALIZAÇÃO"); }
+        function closePanel() { 
+            const p = document.getElementById('details-panel'); 
+            p.classList.remove('show'); 
+            setTimeout(() => p.classList.add('hidden'), 300); 
+            selectedId = null; 
+            render(); 
+        }
+        function openOfflinePanel() { 
+            const p = document.getElementById('offline-panel'); 
+            p.classList.remove('hidden'); 
+            setTimeout(() => p.classList.add('show'), 10); 
+        }
+        function closeOfflinePanel() { 
+            const p = document.getElementById('offline-panel'); 
+            p.classList.remove('show'); 
+            setTimeout(() => p.classList.add('hidden'), 300); 
+        }
+        function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; document.getElementById('logo-menu').classList.remove('show'); closePanel(); showToast("MODO OPERAÇÃO"); }
         function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked-mode'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } }
         function updateName(id, v) { nodes.find(n => n.id === id).name = v; saveData(); render(); }
         function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
