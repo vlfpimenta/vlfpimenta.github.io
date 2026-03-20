@@ -123,8 +123,7 @@
                         <button onclick="openSaveModal()" class="w-full p-3 hover:bg-blue-600 rounded-xl transition-all text-left flex justify-between">Salvar Projeto <span>💾</span></button>
                         <button onclick="document.getElementById('import-input').click()" class="w-full p-3 hover:bg-emerald-600 rounded-xl transition-all text-left flex justify-between">Abrir Projeto <span>📂</span></button>
                         <hr class="border-slate-800 my-1">
-                        <button onclick="document.getElementById('bg-input').click()" class="w-full p-3 hover:bg-indigo-600 rounded-xl transition-all text-left flex justify-between">Planta de Fundo <span>🖼️</span></button>
-                        <button onclick="resetToWorldMap()" class="w-full p-3 hover:bg-slate-700 rounded-xl transition-all text-left flex justify-between">Mapa Mundi <span>🌍</span></button>
+                        <button onclick="openProjectSettings()" class="w-full p-3 hover:bg-indigo-600 rounded-xl transition-all text-left flex justify-between">Configurações do Projeto <span>⚙️</span></button>
                     </div>
                 </div>
                 <input type="file" id="import-input" class="hidden" accept=".json" onchange="importMap(event)">
@@ -137,8 +136,8 @@
             </div>
 
             <div id="settings-btn-container" class="flex gap-2 relative">
-                <button onclick="toggleSettingsMenu(event)" title="Configurações" class="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 shadow-lg active:scale-90 transition-transform text-white">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <button onclick="toggleSettingsMenu(event)" title="Configurações de Segurança" class="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 shadow-lg active:scale-90 transition-transform text-white">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                 </button>
 
                 <div id="settingsMenu" class="absolute top-[55px] right-0 w-52 bg-[#0f172a] border-2 border-slate-700 rounded-2xl shadow-2xl hidden z-[3000] p-2">
@@ -185,6 +184,34 @@
             <div id="tree-container"></div>
         </div>
 
+        <!-- NOVO MODAL DE CONFIGURAÇÕES DO PROJETO -->
+        <div id="project-settings-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
+            <div class="w-full max-w-sm bg-slate-900 border-2 border-slate-700 rounded-[2.5rem] p-8 text-white shadow-4xl relative">
+                <h3 class="text-xl font-black uppercase mb-6 tracking-tighter text-center">Configurações do Projeto</h3>
+                
+                <div class="mb-6">
+                    <p class="text-[10px] text-slate-500 uppercase font-black mb-3">Modo de Mapa</p>
+                    <div class="flex gap-2">
+                        <button onclick="document.getElementById('bg-input').click()" class="flex-1 bg-slate-800 hover:bg-indigo-600 py-3 rounded-xl font-black uppercase text-[9px] transition-all border border-slate-700">Planta de Fundo 🖼️</button>
+                        <button onclick="resetToWorldMap()" class="flex-1 bg-slate-800 hover:bg-indigo-600 py-3 rounded-xl font-black uppercase text-[9px] transition-all border border-slate-700">Mapa Mundi 🌍</button>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <p class="text-[10px] text-slate-500 uppercase font-black mb-3">Automação</p>
+                    <div class="p-4 bg-slate-950 rounded-2xl border border-slate-800 flex justify-between items-center cursor-pointer" onclick="toggleAutoLock()">
+                        <span class="text-[10px] text-slate-300 uppercase font-black tracking-widest">Carregar Bloqueado</span>
+                        <div class="w-10 h-5 rounded-full relative transition-colors bg-slate-700" id="toggle-autolock-bg">
+                            <div class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all left-0.5" id="toggle-autolock-knob"></div>
+                        </div>
+                    </div>
+                    <p class="text-[8px] text-slate-500 mt-2 text-center">Inicia o "Modo Operação" assim que o arquivo é aberto.</p>
+                </div>
+
+                <button onclick="closeProjectSettings()" class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs shadow-lg">Concluído</button>
+            </div>
+        </div>
+
         <div id="save-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
             <div class="w-full max-w-sm bg-slate-900 border-2 border-slate-700 rounded-[2.5rem] p-10 text-white shadow-4xl">
                 <h3 class="text-xl font-black uppercase mb-6 tracking-tighter text-center">Salvar Projeto</h3>
@@ -220,7 +247,7 @@
                 <input type="password" id="unlock-pass" onkeypress="if(event.key === 'Enter') handlePasswordAction()" class="w-full bg-slate-950 border-2 border-slate-800 rounded-2xl p-5 text-center text-2xl tracking-[0.5em] mb-6 outline-none focus:border-blue-500 text-white" placeholder="•••••">
                 <div class="flex gap-2">
                     <button id="pass-cancel-btn" onclick="closePasswordModal()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-black uppercase shadow-lg text-xs hidden">Cancelar</button>
-                    <button id="pass-action-btn" onclick="handlePasswordAction()" class="flex-1 bg-blue-600 py-4 rounded-2xl font-black uppercase shadow-lg text-xs">Desbloquear</button>
+                    <button id="pass-action-btn" onclick="handlePasswordAction()" class="flex-1 bg-blue-600 py-4 rounded-2xl font-black uppercase shadow-lg text-xs">Ação</button>
                 </div>
             </div>
         </div>
@@ -241,7 +268,8 @@
         let userLocationMarker = null;
         
         let appPasswordHash = null;
-        let passwordModalMode = 'unlock'; // unlock, setup, change_current, change_new
+        let passwordModalMode = 'unlock';
+        let autoLockOnLoad = false; // Nova variável de configuração
 
         const CONFIG = {
             core_switch: { label: 'Switch Principal', color: '#6366f1', hasIp: true, icon: '<rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2"/>', rank: 0 },
@@ -251,7 +279,7 @@
             server: { label: 'Servidor', color: '#a78bfa', hasIp: true, icon: '<rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/>', rank: 4 }
         };
 
-        // Função de Hash (Segurança Básica)
+        // --- SISTEMA DE SENHA ---
         async function hashPassword(msg) {
             const encoder = new TextEncoder();
             const data = encoder.encode(msg);
@@ -259,7 +287,6 @@
             return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // Controle do Modal de Senha
         function openPasswordModal(mode) {
             passwordModalMode = mode;
             const modal = document.getElementById('password-modal');
@@ -281,7 +308,7 @@
                 title.innerText = 'Bloqueado';
                 msg.innerText = 'Insira a senha para acessar';
                 actionBtn.innerText = 'Desbloquear';
-                cancelBtn.classList.add('hidden'); // Não pode cancelar na tela de bloqueio
+                cancelBtn.classList.add('hidden');
             } else if (mode === 'change_current') {
                 title.innerText = 'Segurança';
                 msg.innerText = 'Insira a senha atual';
@@ -310,20 +337,27 @@
                 appPasswordHash = hashed;
                 saveData();
                 closePasswordModal();
-                executeLock();
+                
+                // Se a pessoa ativou o autolock mas não tinha senha, volta pra tela de config e liga o toggle
+                if (document.getElementById('project-settings-modal').classList.contains('hidden') === false) {
+                    autoLockOnLoad = true;
+                    updateAutoLockUI();
+                    saveData();
+                } else {
+                    executeLock();
+                }
             } else if (passwordModalMode === 'unlock') {
                 if (hashed === appPasswordHash) {
                     isLocked = false; 
                     document.body.classList.remove('locked-mode'); 
                     document.getElementById('fab-container').style.display = 'flex'; 
                     
-                    // Restaura a movimentação e o zoom do mapa
                     map.touchZoom.enable();
                     map.doubleClickZoom.enable();
                     map.scrollWheelZoom.enable();
                     map.boxZoom.enable();
                     map.keyboard.enable();
-                    checkDrag(); // Restaura o dragging com base nas regras da planta de fundo
+                    checkDrag(); 
 
                     closePasswordModal();
                     showToast("Desbloqueado");
@@ -357,6 +391,47 @@
             }
         }
 
+        // --- SISTEMA DE MODAIS E CONFIGURAÇÕES ---
+        function openProjectSettings() {
+            document.getElementById('logo-menu').classList.remove('show');
+            document.getElementById('settingsMenu').classList.add('hidden');
+            updateAutoLockUI();
+            document.getElementById('project-settings-modal').classList.remove('hidden');
+        }
+
+        function closeProjectSettings() {
+            document.getElementById('project-settings-modal').classList.add('hidden');
+        }
+
+        function updateAutoLockUI() {
+            const bg = document.getElementById('toggle-autolock-bg');
+            const knob = document.getElementById('toggle-autolock-knob');
+            if (bg && knob) {
+                if (autoLockOnLoad) {
+                    bg.classList.replace('bg-slate-700', 'bg-blue-500');
+                    if(!bg.classList.contains('bg-blue-500')) bg.classList.add('bg-blue-500');
+                    knob.classList.replace('left-0.5', 'left-5');
+                    if(!knob.classList.contains('left-5')) knob.classList.add('left-5');
+                } else {
+                    bg.classList.replace('bg-blue-500', 'bg-slate-700');
+                    if(!bg.classList.contains('bg-slate-700')) bg.classList.add('bg-slate-700');
+                    knob.classList.replace('left-5', 'left-0.5');
+                    if(!knob.classList.contains('left-0.5')) knob.classList.add('left-0.5');
+                }
+            }
+        }
+
+        function toggleAutoLock() {
+            if (!autoLockOnLoad && !appPasswordHash) {
+                showToast("Defina uma senha de segurança primeiro!");
+                openPasswordModal('setup');
+                return;
+            }
+            autoLockOnLoad = !autoLockOnLoad;
+            updateAutoLockUI();
+            saveData();
+        }
+
         function toggleAppLock() { 
             resetTools(); 
             closePanel(null); 
@@ -375,10 +450,6 @@
             document.body.classList.add('locked-mode'); 
             document.getElementById('fab-container').style.display = 'none'; 
             
-            // Retorna a câmera para a visão geral
-            fitAllNodes(true);
-            
-            // Bloqueia completamente movimentação e zoom
             map.dragging.disable();
             map.touchZoom.disable();
             map.doubleClickZoom.disable();
@@ -386,6 +457,7 @@
             map.boxZoom.disable();
             map.keyboard.disable();
 
+            fitAllNodes(true);
             showToast("MODO OPERAÇÃO ATIVADO"); 
         }
 
@@ -401,8 +473,8 @@
 
         function confirmExport() {
             const filename = document.getElementById('save-filename').value || "Projeto_Rede";
-            // Inclui o hash da senha na exportação
-            const data = JSON.stringify({ nodes, links, background: currentBackgroundBase64, view: { center: map.getCenter(), zoom: map.getZoom() }, passwordHash: appPasswordHash });
+            // Salva as novas configs no JSON
+            const data = JSON.stringify({ nodes, links, background: currentBackgroundBase64, view: { center: map.getCenter(), zoom: map.getZoom() }, passwordHash: appPasswordHash, autoLockOnLoad: autoLockOnLoad });
             const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `${filename}.json`; a.click();
@@ -417,12 +489,19 @@
                 try {
                     const data = JSON.parse(e.target.result);
                     nodes = data.nodes || []; links = data.links || [];
-                    appPasswordHash = data.passwordHash || null; // Recupera a senha criptografada do arquivo
+                    appPasswordHash = data.passwordHash || null; 
+                    autoLockOnLoad = data.autoLockOnLoad || false;
                     
                     if (data.background) applyBackground(data.background); else resetToWorldMap();
                     saveData(); 
                     render(); 
-                    setTimeout(() => fitAllNodes(false), 300);
+                    
+                    // Carrega e checa se deve bloquear a tela automaticamente
+                    setTimeout(() => {
+                        fitAllNodes(false);
+                        if (autoLockOnLoad && appPasswordHash) executeLock();
+                    }, 300);
+                    
                     showToast("Projeto Carregado.");
                 } catch (err) { showToast("Erro no arquivo."); }
             };
@@ -449,9 +528,20 @@
             checkDrag(); showToast("Planta Aplicada.");
             document.getElementById('logo-menu').classList.remove('show');
             document.getElementById('settingsMenu').classList.add('hidden');
+            closeProjectSettings();
         }
 
-        function checkDrag() { if (currentBackgroundBase64 && map.getZoom() <= minZoomLimit) map.dragging.disable(); else map.dragging.enable(); }
+        function checkDrag() { 
+            if (isLocked) {
+                map.dragging.disable();
+                return;
+            }
+            if (currentBackgroundBase64 && map.getZoom() <= minZoomLimit) {
+                map.dragging.disable(); 
+            } else {
+                map.dragging.enable(); 
+            }
+        }
         
         function resetToWorldMap() {
             currentBackgroundBase64 = null;
@@ -461,9 +551,10 @@
             else if (currentMapLayer === 'satellite' && !map.hasLayer(satelliteLayer)) satelliteLayer.addTo(map);
             
             map.setMaxBounds(null); map.setMinZoom(1); map.setMaxZoom(28);
-            map.dragging.enable();
+            checkDrag();
             document.getElementById('logo-menu').classList.remove('show');
             document.getElementById('settingsMenu').classList.add('hidden');
+            closeProjectSettings();
         }
 
         function loadData() {
@@ -473,19 +564,23 @@
                     const parsed = JSON.parse(localData);
                     nodes = parsed.nodes || [];
                     links = parsed.links || [];
-                    appPasswordHash = parsed.passwordHash || null; // Recupera hash
+                    appPasswordHash = parsed.passwordHash || null;
+                    autoLockOnLoad = parsed.autoLockOnLoad || false;
                 }
             } catch (e) { 
                 console.error("Erro ao carregar dados locais", e);
             }
             render();
-            if(nodes.length > 0) setTimeout(() => fitAllNodes(false), 300);
+            
+            setTimeout(() => {
+                if(nodes.length > 0) fitAllNodes(false);
+                if(autoLockOnLoad && appPasswordHash) executeLock();
+            }, 300);
         }
 
         function saveData() {
             try {
-                // Salva localmente com a senha atrelada
-                localStorage.setItem('infrasegura_data', JSON.stringify({ nodes, links, passwordHash: appPasswordHash }));
+                localStorage.setItem('infrasegura_data', JSON.stringify({ nodes, links, passwordHash: appPasswordHash, autoLockOnLoad: autoLockOnLoad }));
             } catch (e) { 
                 console.error("Erro ao salvar dados locais", e);
             }
@@ -515,14 +610,12 @@
         }
 
         window.onload = () => {
-            // Inicializa mapa base
             map = L.map('map', { zoomControl: false, tap: false, maxZoom: 28 }).setView([-23.5505, -46.6333], 10);
             
-            // Define camadas
             darkMapLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 28, maxNativeZoom: 18 });
             satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 28, maxNativeZoom: 19 });
             
-            darkMapLayer.addTo(map); // Padrão
+            darkMapLayer.addTo(map);
             
             linksLayer = L.layerGroup().addTo(map); individualLayer = L.layerGroup().addTo(map); handlesLayer = L.layerGroup().addTo(map);
             
@@ -540,7 +633,6 @@
             });
             map.on('zoomend', checkDrag);
 
-            // Rastreia localização SEM mover a câmera (apenas desenha o ponto)
             map.on('locationfound', function(e) {
                 if (!userLocationMarker) {
                     const locIcon = L.divIcon({ 
