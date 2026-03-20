@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>InfraSegura v6.6 - Planta Técnica</title>
+    <title>InfraSegura v6.7 - Mesa de Projetos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
     <style>
         :root { --header-h: 64px; }
@@ -48,7 +47,6 @@
         .status-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
         #details-panel, #offline-panel { transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none; transform: translateX(100%); z-index: 4000; }
         #details-panel.show, #offline-panel.show { opacity: 1; transform: translateX(0); pointer-events: auto; }
-        @media (max-width: 768px) { .mobile-full { width: 100% !important; left: 0 !important; border-radius: 2rem 2rem 0 0 !important; height: 75vh !important; top: auto !important; bottom: 0 !important; } #details-panel, #offline-panel { transform: translateY(100%); } #details-panel.show, #offline-panel.show { transform: translateY(0); } }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .pulse-orange { animation: pulse-orange 2s infinite; }
     </style>
@@ -63,7 +61,7 @@
 
         <div id="vps-status">
             <div class="status-dot" id="status-dot"></div>
-            <span id="status-text">Sistema Pronto</span>
+            <span id="status-text">Pronto</span>
         </div>
 
         <div id="alert-fab" onclick="openOfflinePanel()" class="alert-fab">
@@ -81,13 +79,13 @@
                 </button>
 
                 <div id="logo-menu">
-                    <div class="p-4 border-b border-slate-800 bg-slate-950/50 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Gestão de Mapa</div>
+                    <div class="p-4 border-b border-slate-800 bg-slate-950/50 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Configurações</div>
                     <div class="p-2 space-y-1 text-white text-[10px] font-bold uppercase">
                         <button onclick="exportMap()" class="w-full p-3 hover:bg-blue-600 rounded-xl transition-all text-left flex justify-between">Salvar Projeto <span>💾</span></button>
                         <button onclick="document.getElementById('import-input').click()" class="w-full p-3 hover:bg-emerald-600 rounded-xl transition-all text-left flex justify-between">Abrir Projeto <span>📂</span></button>
                         <hr class="border-slate-800 my-1">
-                        <button onclick="document.getElementById('bg-input').click()" class="w-full p-3 hover:bg-indigo-600 rounded-xl transition-all text-left flex justify-between">Fundo: Planta <span>🖼️</span></button>
-                        <button onclick="resetToWorldMap()" class="w-full p-3 hover:bg-slate-700 rounded-xl transition-all text-left flex justify-between">Fundo: Mapa Mundi <span>🌍</span></button>
+                        <button onclick="document.getElementById('bg-input').click()" class="w-full p-3 hover:bg-indigo-600 rounded-xl transition-all text-left flex justify-between">Planta de Fundo <span>🖼️</span></button>
+                        <button onclick="resetToWorldMap()" class="w-full p-3 hover:bg-slate-700 rounded-xl transition-all text-left flex justify-between">Mapa Mundi <span>🌍</span></button>
                         <hr class="border-slate-800 my-1">
                         <button onclick="toggleAppLock()" class="w-full p-3 hover:bg-orange-600 rounded-xl transition-all text-left">Bloquear Painel</button>
                     </div>
@@ -169,14 +167,13 @@
             server: { label: 'Servidor', color: '#a78bfa', hasIp: true, icon: '<rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/>', rank: 4 }
         };
 
-        // --- EXPORTAR / IMPORTAR COM SUPORTE A FUNDO ---
         function exportMap() {
             const data = JSON.stringify({ nodes, links, background: currentBackgroundBase64, view: { center: map.getCenter(), zoom: map.getZoom() } });
             const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = `Projeto_Rede_${new Date().toISOString().split('T')[0]}.json`; a.click();
-            showToast("Projeto salvo.");
+            a.href = url; a.download = `Projeto_${new Date().toISOString().split('T')[0]}.json`; a.click();
+            showToast("Projeto Exportado.");
         }
 
         function importMap(event) {
@@ -188,14 +185,13 @@
                     nodes = data.nodes || []; links = data.links || [];
                     if (data.background) applyBackground(data.background); else resetToWorldMap();
                     if (data.view) map.setView(data.view.center, data.view.zoom);
-                    render(); showToast("Projeto carregado.");
+                    render(); showToast("Projeto Carregado.");
                     document.getElementById('logo-menu').classList.remove('show');
-                } catch (err) { showToast("Arquivo inválido."); }
+                } catch (err) { showToast("Arquivo Inválido."); }
             };
             reader.readAsText(file);
         }
 
-        // --- LÓGICA DE IMAGEM DE FUNDO ---
         function importBackground(event) {
             const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -203,25 +199,21 @@
             reader.readAsDataURL(file);
         }
 
+        // --- LÓGICA DE FUNDO ESTICADO E ZOOM LIVRE ---
         function applyBackground(base64) {
             currentBackgroundBase64 = base64;
             if (worldTiles) map.removeLayer(worldTiles);
             if (bgImageLayer) map.removeLayer(bgImageLayer);
 
-            const img = new Image();
-            img.onload = () => {
-                // Mapeia a imagem para o centro atual do mapa preservando proporção
-                const center = map.getCenter();
-                const factor = 0.0005; // Escala visual da planta
-                const bounds = [
-                    [center.lat - (img.height * factor), center.lng - (img.width * factor)],
-                    [center.lat + (img.height * factor), center.lng + (img.width * factor)]
-                ];
-                bgImageLayer = L.imageOverlay(base64, bounds).addTo(map);
-                map.fitBounds(bounds);
-                showToast("Fundo: Planta Aplicada.");
-            };
-            img.src = base64;
+            // Estica a imagem para preencher exatamente o que está na tela no momento
+            const bounds = map.getBounds();
+            bgImageLayer = L.imageOverlay(base64, bounds, { zIndex: 0 }).addTo(map);
+
+            // Configurações de Zoom para Planta Técnica
+            map.setMinZoom(map.getZoom()); // Zoom out máximo é o estado atual (toda a imagem na tela)
+            map.setMaxZoom(22); // Permite um zoom in "infinito"
+            
+            showToast("Planta de Fundo Aplicada.");
             document.getElementById('logo-menu').classList.remove('show');
         }
 
@@ -229,24 +221,25 @@
             currentBackgroundBase64 = null;
             if (bgImageLayer) map.removeLayer(bgImageLayer);
             if (!map.hasLayer(worldTiles)) worldTiles.addTo(map);
-            showToast("Fundo: Mapa Mundi.");
+            map.setMinZoom(1); map.setMaxZoom(18); // Volta limites do mapa real
+            showToast("Mapa Mundi Ativo.");
             document.getElementById('logo-menu').classList.remove('show');
         }
 
         async function loadData() {
             try {
-                const controller = new AbortController(); const t = setTimeout(() => controller.abort(), 3000);
-                const response = await fetch(`${VPS_API_URL}/data`, { signal: controller.signal });
-                const data = await response.json(); clearTimeout(t);
+                const response = await fetch(`${VPS_API_URL}/data`);
+                const data = await response.json();
                 nodes = data.nodes || []; links = data.links || []; render();
             } catch (e) { render(); }
         }
 
         async function saveData() {
             try {
-                const controller = new AbortController(); const t = setTimeout(() => controller.abort(), 2000);
-                await fetch(`${VPS_API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nodes, links }), signal: controller.signal });
-                clearTimeout(t);
+                await fetch(`${VPS_API_URL}/save`, { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ nodes, links })
+                });
             } catch (e) { }
         }
 
@@ -275,6 +268,7 @@
             render();
         }
 
+        // --- LÓGICA DE STATUS: SWITCH SÓ CAI SE TUDO ESTIVER OFFLINE ---
         function isNodeOffline(id, visited = new Set()) {
             if (visited.has(id)) return false; visited.add(id);
             const n = nodes.find(it => it.id === id); if (!n) return true;
@@ -376,7 +370,13 @@
             openDetails(id); 
         }
 
-        function openDetails(id) { selectedId = id; const n = nodes.find(it => it.id === id); const p = document.getElementById('details-panel'); p.classList.add('show'); document.getElementById('details-content').innerHTML = `<div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase font-black tracking-tight"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0"></div>${CONFIG[n.type].hasIp ? `<div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-2 uppercase text-center">IP</p><input type="text" value="${n.ip || '0.0.0.0'}" onchange="updateIp('${id}', this.value)" class="bg-slate-950 w-full p-2 rounded-lg border border-slate-800 font-mono text-center text-blue-400 outline-none"><button onclick="toggleStatus('${id}')" class="w-full mt-3 py-3 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl transition-all">Simular Status</button></div>` : ''}<button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase shadow-lg mt-4">Editar Traçado</button><button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Ativo</button>`; render(); }
+        function openDetails(id) {
+            selectedId = id; const n = nodes.find(it => it.id === id);
+            const panel = document.getElementById('details-panel'); panel.classList.add('show');
+            document.getElementById('details-content').innerHTML = `<div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase font-black tracking-tight"><input type="text" value="${n.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0"></div>${CONFIG[n.type].hasIp ? `<div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-2 uppercase text-center">IP</p><input type="text" value="${n.ip || '0.0.0.0'}" onchange="updateIp('${id}', this.value)" class="bg-slate-950 w-full p-2 rounded-lg border border-slate-800 font-mono text-center text-blue-400 outline-none"><button onclick="toggleStatus('${id}')" class="w-full mt-3 py-3 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl transition-all">Simular Status</button></div>` : ''}<button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase shadow-lg mt-4">Editar Traçado</button><button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Ativo</button>`;
+            render();
+        }
+
         function startDrawingPath(nodeId) { isDrawingPath = true; drawingNodeId = nodeId; closePanel(); const bar = document.getElementById('mode-indicator-bar'); const actions = document.getElementById('mode-actions'); bar.style.display = 'flex'; document.getElementById('mode-text').innerText = "Editando Traçado"; actions.innerHTML = `<button onclick="resetTools()" class="mode-btn">Concluir</button>`; document.getElementById('fab-main').classList.add('active'); render(); }
         function addVertexToPath(latlng) { const l = links.find(li => (li.a === drawingNodeId || li.b === drawingNodeId)); if (!l) return; if (!l.vertices) l.vertices = []; const n1 = nodes.find(n => n.id === l.a); const n2 = nodes.find(n => n.id === l.b); const points = [[n1.lat, n1.lng], ...l.vertices, [n2.lat, n2.lng]]; let minDist = Infinity; let idx = l.vertices.length; for (let i = 0; i < points.length - 1; i++) { const d = L.LineUtil.pointToSegmentDistance(map.latLngToLayerPoint(latlng), map.latLngToLayerPoint(points[i]), map.latLngToLayerPoint(points[i+1])); if (d < minDist) { minDist = d; idx = i; } } l.vertices.splice(idx, 0, [latlng.lat, latlng.lng]); render(); }
         function addNode(type, latlng) { const id = 'n'+Date.now(); const count = nodes.filter(n => n.type === type).length + 1; nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${count}`, ip: CONFIG[type].hasIp ? '192.168.1.100' : null }); saveData(); render(); showToast(`${CONFIG[type].label} adicionado.`); }
@@ -388,12 +388,13 @@
         function closePanel() { document.getElementById('details-panel').classList.remove('show'); selectedId = null; render(); }
         function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; document.getElementById('logo-menu').classList.remove('show'); closePanel(); showToast("MODO OPERAÇÃO"); }
         function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked-mode'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } }
+        function resetNodePath(id) { const l = links.find(li => li.a === id || li.b === id); if (l) { l.vertices = []; render(); showToast("Linha restaurada."); } }
         function updateName(id, v) { nodes.find(n => n.id === id).name = v; saveData(); render(); }
         function updateIp(id, v) { nodes.find(n => n.id === id).ip = v; saveData(); render(); }
         function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
         function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(); render(); saveData(); }
         function handleLogoInteraction() { if (isLocked) { logoClicks++; if (logoClicks >= 3) { logoClicks = 0; document.getElementById('password-modal').classList.remove('hidden'); } } else document.getElementById('logo-menu').classList.toggle('show'); }
-        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-900 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-950 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
         function toggleView(v) { document.getElementById('map').style.display = v==='map'?'block':'none'; document.getElementById('list-view').style.display = v==='list'?'block':'none'; if(v==='list') renderListView(); else map.invalidateSize(); }
         function locateMe() { if(!currentBackgroundBase64) navigator.geolocation.getCurrentPosition(p => map.flyTo([p.coords.latitude, p.coords.longitude], 17)); else showToast("Modo Planta Ativo."); }
 
