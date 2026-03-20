@@ -270,8 +270,16 @@
 
         async function saveData() {
             try {
-                await fetch(`${VPS_API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nodes, links }) });
-            } catch (e) { console.error("Sync Error"); }
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                await fetch(`${VPS_API_URL}/save`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ nodes, links }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+            } catch (e) { /* Falha silenciosa para não travar UI */ }
         }
 
         window.onload = () => {
@@ -298,23 +306,16 @@
             render();
         }
 
-        // --- CORREÇÃO NA PROPAGAÇÃO DO STATUS ---
         function isNodeOffline(id, visited = new Set()) {
             if (visited.has(id)) return false; visited.add(id);
             const n = nodes.find(it => it.id === id); if (!n) return true;
             if (CONFIG[n.type].hasIp) return activeStatuses[id] === 'offline';
-            
             const connIds = links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
-            
-            // CRÍTICO: Para switches/conversores, SÓ olhamos para os FILHOS (itens jusante)
             const downstream = connIds.filter(cid => {
                 const nn = nodes.find(it => it.id === cid);
                 return nn && CONFIG[nn.type].rank > CONFIG[n.type].rank;
             });
-
-            if (downstream.length === 0) return false; // Se não tem nada ligado abaixo, ele fica online (bolinha)
-            
-            // Se TODOS os itens abaixo dele estiverem offline, ele fica offline
+            if (downstream.length === 0) return false;
             return downstream.every(depId => isNodeOffline(depId, visited));
         }
 
@@ -334,6 +335,7 @@
             return alerts;
         }
 
+        // --- CORREÇÃO DO LOOP INFINITO NO RASTREAMENTO ---
         function getCascadeImpactMap() {
             const impactMap = new Set();
             const offlineMap = {}; nodes.forEach(n => offlineMap[n.id] = isNodeOffline(n.id));
@@ -341,10 +343,12 @@
             nodes.forEach(node => {
                 if (offlineMap[node.id]) {
                     let current = node;
-                    while (current) {
+                    let visitedPath = new Set(); // Trava de segurança contra loops
+                    while (current && !visitedPath.has(current.id)) {
+                        visitedPath.add(current.id);
                         const connIds = links.filter(l => l.a === current.id || l.b === current.id).map(l => l.a === current.id ? l.b : l.a);
-                        // Subindo: Busca o pai que é switch ou conversor
-                        const parent = nodes.find(n => connIds.includes(n.id) && CONFIG[n.type].rank <= CONFIG[current.type].rank && n.id !== current.id);
+                        // Subida: Procura switch pai que não foi visitado ainda
+                        const parent = nodes.find(n => connIds.includes(n.id) && CONFIG[n.type].rank <= CONFIG[current.type].rank && n.id !== current.id && !visitedPath.has(n.id));
                         
                         if (parent && parent.type === 'switch') {
                             impactMap.add(parent.id);
@@ -391,10 +395,8 @@
                 const isSelected = (selectedId === node.id); 
                 const isOff = statusMap[node.id];
                 const isCascading = cascadeMap.has(node.id);
-                
                 let color = CONFIG[node.type].color; 
                 let html, iconSize, iconAnchor;
-                
                 if (isOff || isCascading || isEditingMode) {
                     const pulseClass = (isOff || isCascading) ? 'pulse-orange' : '';
                     const pinColor = (isOff || isCascading) ? '#ef4444' : color;
