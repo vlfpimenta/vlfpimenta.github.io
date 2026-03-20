@@ -47,14 +47,8 @@
             border-radius: 50%; cursor: move; box-shadow: 0 0 8px rgba(0,0,0,0.5);
         }
 
-        .camera-cluster-custom {
-            background: #1e293b; border: 3px solid #3b82f6;
-            border-radius: 50%; color: white; font-weight: 900;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); font-size: 14px;
-        }
-
-        @keyframes flow { from { stroke-dashoffset: 60; } to { stroke-dashoffset: 0; } }
+        /* ANIMAÇÃO INVERTIDA: Agora de 0 para 60 */
+        @keyframes flow { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 60; } }
         .data-flow-line { stroke-dasharray: 10, 10; animation: flow 1s linear infinite; }
         .offline-line { stroke-dasharray: 5, 15; opacity: 0.3; stroke: #ef4444 !important; }
 
@@ -250,8 +244,7 @@
             try {
                 const response = await fetch(`${VPS_API_URL}/data`);
                 const data = await response.json();
-                nodes = data.nodes || [];
-                links = data.links || [];
+                nodes = data.nodes || []; links = data.links || [];
                 document.getElementById('status-dot').classList.add('status-online');
                 document.getElementById('status-text').innerText = "VPS Sincronizada";
                 render();
@@ -260,20 +253,14 @@
 
         async function saveData() {
             try {
-                await fetch(`${VPS_API_URL}/save`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nodes, links })
-                });
+                await fetch(`${VPS_API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nodes, links }) });
             } catch (e) { console.error("Sync Error"); }
         }
 
         window.onload = () => {
             map = L.map('map', { zoomControl: false, tap: true, maxZoom: 18, dragging: true }).setView([-23.5505, -46.6333], 15);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-            linksLayer = L.layerGroup().addTo(map);
-            individualLayer = L.layerGroup().addTo(map);
-            handlesLayer = L.layerGroup().addTo(map);
+            linksLayer = L.layerGroup().addTo(map); individualLayer = L.layerGroup().addTo(map); handlesLayer = L.layerGroup().addTo(map);
             map.on('click', (e) => { 
                 if (isLocked) return;
                 if (isDrawingPath) addVertexToPath(e.latlng);
@@ -285,8 +272,7 @@
 
         function resetTools() {
             currentMode = null; isLinking = false; isDrawingPath = false; drawingNodeId = null; linkSourceId = null; isMenuOpen = false;
-            const bar = document.getElementById('mode-indicator-bar');
-            bar.style.display = 'none';
+            document.getElementById('mode-indicator-bar').style.display = 'none';
             document.getElementById('mode-actions').innerHTML = '';
             document.getElementById('fab-items').classList.remove('open');
             document.getElementById('fab-main').classList.remove('active');
@@ -300,21 +286,14 @@
             if (CONFIG[n.type].hasIp) return activeStatuses[id] === 'offline';
             const connIds = links.filter(l => l.a === id || l.b === id).map(l => l.a === id ? l.b : l.a);
             let dependents = [];
-            if (n.type === 'switch' || n.type === 'core_switch') dependents = connIds.filter(cid => {
-                const nn = nodes.find(it => it.id === cid);
-                return nn && (nn.type === 'camera' || nn.type === 'switch');
-            });
-            else if (n.type === 'converter') dependents = connIds.filter(cid => {
-                const nn = nodes.find(it => it.id === cid);
-                return nn && nn.type === 'switch';
-            });
+            if (n.type === 'switch' || n.type === 'core_switch') dependents = connIds.filter(cid => { const nn = nodes.find(it => it.id === cid); return nn && (nn.type === 'camera' || nn.type === 'switch'); });
+            else if (n.type === 'converter') dependents = connIds.filter(cid => { const nn = nodes.find(it => it.id === cid); return nn && nn.type === 'switch'; });
             if (dependents.length === 0) return false;
             return dependents.every(depId => isNodeOffline(depId, visited));
         }
 
         function getDiagnostics() {
-            const offlineMap = {};
-            nodes.forEach(n => offlineMap[n.id] = isNodeOffline(n.id));
+            const offlineMap = {}; nodes.forEach(n => offlineMap[n.id] = isNodeOffline(n.id));
             const alerts = [];
             nodes.forEach(n => {
                 if (offlineMap[n.id]) {
@@ -349,10 +328,7 @@
             nodes.forEach(node => {
                 const isSelected = (selectedId === node.id); const isOff = statusMap[node.id];
                 let color = CONFIG[node.type].color; if (isOff) color = '#ef4444';
-                const icon = L.divIcon({ 
-                    html: `<div class="marker-pin ${isSelected ? 'selected' : ''} ${isOff ? 'pulse-orange' : ''}" style="background-color: ${color}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg></div>`, 
-                    iconSize: [44, 44], iconAnchor: [22, 44]
-                });
+                const icon = L.divIcon({ html: `<div class="marker-pin ${isSelected ? 'selected' : ''} ${isOff ? 'pulse-orange' : ''}" style="background-color: ${color}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg></div>`, iconSize: [44, 44], iconAnchor: [22, 44] });
                 const m = L.marker([node.lat, node.lng], { icon, draggable: !isLocked }).addTo(individualLayer);
                 m.on('click', (e) => { L.DomEvent.stopPropagation(e); if(isLocked) return; handleNodeClick(node.id); });
                 m.on('dragend', (e) => { const p = e.target.getLatLng(); node.lat = p.lat; node.lng = p.lng; render(); saveData(); });
@@ -367,23 +343,35 @@
                 fab.style.display = 'flex'; count.innerText = diag.length;
                 document.getElementById('offline-list').innerHTML = diag.map(a => {
                     const n = nodes.find(node => node.id === a.id);
-                    return `<div onclick="toggleView('map'); map.flyTo([${n.lat}, ${n.lng}], 18); openDetails('${a.id}');" class="p-5 bg-slate-950 border border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-500/10 transition-all shadow-xl">
-                        <div class="text-[9px] font-black text-red-500 uppercase mb-1 italic tracking-widest">${a.type} OFFLINE</div>
-                        <h4 class="font-black text-sm text-white uppercase">${n.name}</h4>
-                    </div>`;
+                    return `<div onclick="toggleView('map'); map.flyTo([${n.lat}, ${n.lng}], 18); openDetails('${a.id}');" class="p-5 bg-slate-950 border border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-500/10 transition-all shadow-xl"><div class="text-[9px] font-black text-red-500 uppercase mb-1 italic tracking-widest">${a.type} OFFLINE</div><h4 class="font-black text-sm text-white uppercase">${n.name}</h4></div>`;
                 }).join('');
             } else { fab.style.display = 'none'; closeOfflinePanel(); }
         }
 
+        // --- CORREÇÃO: BLOQUEIO DE CONEXÃO CAMERA-CAMERA ---
         function handleNodeClick(id) { 
             if (isDrawingPath) return; 
             if (isLinking) { 
-                if (!linkSourceId) { linkSourceId = id; showToast(`Origem: ${nodes.find(n => n.id === id).name}`); } 
-                else if (linkSourceId !== id) { 
-                    const n1 = nodes.find(n => n.id === linkSourceId); const n2 = nodes.find(n => n.id === id);
+                if (!linkSourceId) { 
+                    linkSourceId = id; 
+                    showToast(`Origem: ${nodes.find(n => n.id === id).name}`); 
+                } else if (linkSourceId !== id) { 
+                    const n1 = nodes.find(n => n.id === linkSourceId);
+                    const n2 = nodes.find(n => n.id === id);
+
+                    // Validação de tipo: Câmera não conecta em Câmera
+                    if (n1.type === 'camera' && n2.type === 'camera') {
+                        showToast("Erro: Câmeras não podem se conectar diretamente.");
+                        linkSourceId = null;
+                        render();
+                        return;
+                    }
+
                     let parentId, childId;
-                    if (CONFIG[n1.type].rank <= CONFIG[n2.type].rank) { parentId = n1.id; childId = n2.id; } else { parentId = n2.id; childId = n1.id; }
-                    links.push({ id: 'l'+Date.now(), a: parentId, b: childId, vertices: [] }); saveData(); linkSourceId = null; render(); showToast("Conectado conforme hierarquia."); 
+                    if (CONFIG[n1.type].rank <= CONFIG[n2.type].rank) { parentId = n1.id; childId = n2.id; } 
+                    else { parentId = n2.id; childId = n1.id; }
+                    links.push({ id: 'l'+Date.now(), a: parentId, b: childId, vertices: [] }); 
+                    saveData(); linkSourceId = null; render(); showToast("Conectado conforme hierarquia."); 
                 } 
                 return; 
             } 
@@ -409,36 +397,16 @@
             document.getElementById('fab-main').classList.add('active'); showToast("Clique no mapa para criar pontos.");
         }
 
-        // --- CORREÇÃO DA HIERARQUIA DE NOMES ---
         function addNode(type, latlng) { 
             const id = 'n'+Date.now(); 
-            // Filtra os nós para contar quantos já existem desta categoria específica
             const count = nodes.filter(n => n.type === type).length + 1;
-            
-            nodes.push({ 
-                id, 
-                type, 
-                lat: latlng.lat, 
-                lng: latlng.lng, 
-                name: `${CONFIG[type].label} ${count}`, // Nome sequencial por categoria
-                ip: CONFIG[type].hasIp ? '192.168.1.100' : null 
-            }); 
-            saveData(); render();
-            showToast(`${CONFIG[type].label} adicionado.`);
+            nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${count}`, ip: CONFIG[type].hasIp ? '192.168.1.100' : null }); 
+            saveData(); render(); showToast(`${CONFIG[type].label} adicionado.`);
         }
 
-        function toggleFab() { 
-            if (isLocked) return; if (currentMode || isLinking || isDrawingPath) { resetTools(); return; }
-            isMenuOpen = !isMenuOpen; document.getElementById('fab-items').classList.toggle('open', isMenuOpen); document.getElementById('fab-main').classList.toggle('active', isMenuOpen);
-        }
-        function setMode(m) { 
-            currentMode = m; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = `Inserindo: ${CONFIG[m].label}`;
-            document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('tool-' + m).classList.add('selected');
-        }
-        function toggleLinking() { 
-            isLinking = true; currentMode = null; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = "Criando Conexões";
-            document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('link-btn').classList.add('selected');
-        }
+        function toggleFab() { if (isLocked) return; if (currentMode || isLinking || isDrawingPath) { resetTools(); return; } isMenuOpen = !isMenuOpen; document.getElementById('fab-items').classList.toggle('open', isMenuOpen); document.getElementById('fab-main').classList.toggle('active', isMenuOpen); }
+        function setMode(m) { currentMode = m; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = `Inserindo: ${CONFIG[m].label}`; document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('tool-' + m).classList.add('selected'); }
+        function toggleLinking() { isLinking = true; currentMode = null; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = "Criando Conexões"; document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('link-btn').classList.add('selected'); }
         function openOfflinePanel() { document.getElementById('offline-panel').classList.add('show'); }
         function closeOfflinePanel() { document.getElementById('offline-panel').classList.remove('show'); }
         function closePanel() { document.getElementById('details-panel').classList.remove('show'); selectedId = null; render(); }
