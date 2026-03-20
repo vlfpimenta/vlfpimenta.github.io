@@ -47,7 +47,12 @@
             border-radius: 50%; cursor: move; box-shadow: 0 0 8px rgba(0,0,0,0.5);
         }
 
-        /* ANIMAÇÃO INVERTIDA: Agora de 0 para 60 */
+        /* Estilo para o ponto do meio (arrastável) */
+        .midpoint-handle {
+            width: 10px; height: 10px; background: rgba(59, 130, 246, 0.5); border: 1px solid white;
+            border-radius: 50%; cursor: crosshair;
+        }
+
         @keyframes flow { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 60; } }
         .data-flow-line { stroke-dasharray: 10, 10; animation: flow 1s linear infinite; }
         .offline-line { stroke-dasharray: 5, 15; opacity: 0.3; stroke: #ef4444 !important; }
@@ -223,13 +228,11 @@
 
     <script>
         const VPS_API_URL = "https://infrasec.vlfp.com.br/api"; 
-
         let nodes = []; let links = []; let map; let selectedId = null;
         let isLinking = false; let isDrawingPath = false; 
         let drawingNodeId = null; let linkSourceId = null; 
         let activeStatuses = {}; let currentMode = null; 
         let isLocked = false; let logoClicks = 0; let isMenuOpen = false;
-
         let individualLayer, linksLayer, handlesLayer;
 
         const CONFIG = {
@@ -311,20 +314,47 @@
         function render() {
             individualLayer.clearLayers(); linksLayer.clearLayers(); handlesLayer.clearLayers();
             const statusMap = {}; nodes.forEach(n => statusMap[n.id] = isNodeOffline(n.id));
+            
             links.forEach((link) => {
                 const n1 = nodes.find(n => n.id === link.a); const n2 = nodes.find(n => n.id === link.b);
                 if (n1 && n2) {
                     const off = (statusMap[n1.id] || statusMap[n2.id]);
-                    const path = [[n1.lat, n1.lng], ...(link.vertices || []), [n2.lat, n2.lng]];
-                    L.polyline(path, { color: off ? '#ef4444' : '#3b82f6', weight: 6, opacity: 0.8, className: off ? 'offline-line' : 'data-flow-line' }).addTo(linksLayer);
+                    const pathCoords = [[n1.lat, n1.lng], ...(link.vertices || []), [n2.lat, n2.lng]];
+                    L.polyline(pathCoords, { color: off ? '#ef4444' : '#3b82f6', weight: 6, opacity: 0.8, className: off ? 'offline-line' : 'data-flow-line' }).addTo(linksLayer);
+                    
                     if (!isLocked && (selectedId === link.a || selectedId === link.b)) {
+                        // Renderiza Vértices Reais
                         (link.vertices || []).forEach((v, vIdx) => {
                             const handle = L.marker(v, { draggable: true, icon: L.divIcon({ className: 'vertex-handle', iconSize: [12, 12] }) }).addTo(handlesLayer);
-                            handle.on('drag', (e) => { link.vertices[vIdx] = [e.target.getLatLng().lat, e.target.getLatLng().lng]; render(); saveData(); });
+                            handle.on('drag', (e) => {
+                                link.vertices[vIdx] = [e.target.getLatLng().lat, e.target.getLatLng().lng];
+                                render(); saveData();
+                            });
                         });
+
+                        // --- GHOST MIDPOINTS (Arrastar para criar novo ponto) ---
+                        for (let i = 0; i < pathCoords.length - 1; i++) {
+                            const p1 = pathCoords[i]; const p2 = pathCoords[i+1];
+                            const mid = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
+                            const ghost = L.marker(mid, { draggable: true, icon: L.divIcon({ className: 'midpoint-handle', iconSize: [10, 10] }) }).addTo(handlesLayer);
+                            
+                            ghost.on('dragstart', () => {
+                                // Transforma ghost em vértice real ao começar arrastar
+                                if (!link.vertices) link.vertices = [];
+                                link.vertices.splice(i, 0, mid); // 'i' funciona pois ignora o n1 inicial
+                            });
+
+                            ghost.on('drag', (e) => {
+                                link.vertices[i] = [e.target.getLatLng().lat, e.target.getLatLng().lng];
+                                render();
+                            });
+
+                            ghost.on('dragend', () => { saveData(); render(); });
+                        }
                     }
                 }
             });
+            
             nodes.forEach(node => {
                 const isSelected = (selectedId === node.id); const isOff = statusMap[node.id];
                 let color = CONFIG[node.type].color; if (isOff) color = '#ef4444';
@@ -348,30 +378,16 @@
             } else { fab.style.display = 'none'; closeOfflinePanel(); }
         }
 
-        // --- CORREÇÃO: BLOQUEIO DE CONEXÃO CAMERA-CAMERA ---
         function handleNodeClick(id) { 
             if (isDrawingPath) return; 
             if (isLinking) { 
-                if (!linkSourceId) { 
-                    linkSourceId = id; 
-                    showToast(`Origem: ${nodes.find(n => n.id === id).name}`); 
-                } else if (linkSourceId !== id) { 
-                    const n1 = nodes.find(n => n.id === linkSourceId);
-                    const n2 = nodes.find(n => n.id === id);
-
-                    // Validação de tipo: Câmera não conecta em Câmera
-                    if (n1.type === 'camera' && n2.type === 'camera') {
-                        showToast("Erro: Câmeras não podem se conectar diretamente.");
-                        linkSourceId = null;
-                        render();
-                        return;
-                    }
-
+                if (!linkSourceId) { linkSourceId = id; showToast(`Origem: ${nodes.find(n => n.id === id).name}`); } 
+                else if (linkSourceId !== id) { 
+                    const n1 = nodes.find(n => n.id === linkSourceId); const n2 = nodes.find(n => n.id === id);
+                    if (n1.type === 'camera' && n2.type === 'camera') { showToast("Erro: Câmeras não podem se conectar diretamente."); linkSourceId = null; render(); return; }
                     let parentId, childId;
-                    if (CONFIG[n1.type].rank <= CONFIG[n2.type].rank) { parentId = n1.id; childId = n2.id; } 
-                    else { parentId = n2.id; childId = n1.id; }
-                    links.push({ id: 'l'+Date.now(), a: parentId, b: childId, vertices: [] }); 
-                    saveData(); linkSourceId = null; render(); showToast("Conectado conforme hierarquia."); 
+                    if (CONFIG[n1.type].rank <= CONFIG[n2.type].rank) { parentId = n1.id; childId = n2.id; } else { parentId = n2.id; childId = n1.id; }
+                    links.push({ id: 'l'+Date.now(), a: parentId, b: childId, vertices: [] }); saveData(); linkSourceId = null; render(); showToast("Conectado conforme hierarquia."); 
                 } 
                 return; 
             } 
@@ -394,16 +410,38 @@
             const bar = document.getElementById('mode-indicator-bar'); const actions = document.getElementById('mode-actions');
             bar.style.display = 'flex'; document.getElementById('mode-text').innerText = "Editando Traçado";
             actions.innerHTML = `<button onclick="resetTools()" class="mode-btn">Concluir Edição</button><button onclick="resetNodePath('${nodeId}')" class="mode-btn" style="background:#ef4444; color:white">Restaurar Traçado</button>`;
-            document.getElementById('fab-main').classList.add('active'); showToast("Clique no mapa para criar pontos.");
+            document.getElementById('fab-main').classList.add('active'); showToast("Clique na linha ou no mapa.");
         }
 
-        function addNode(type, latlng) { 
-            const id = 'n'+Date.now(); 
-            const count = nodes.filter(n => n.type === type).length + 1;
-            nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${count}`, ip: CONFIG[type].hasIp ? '192.168.1.100' : null }); 
-            saveData(); render(); showToast(`${CONFIG[type].label} adicionado.`);
+        // --- INSERÇÃO INTELIGENTE (Detecta o segmento mais próximo) ---
+        function addVertexToPath(latlng) { 
+            const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId)); 
+            if (!link) return;
+            if (!link.vertices) link.vertices = [];
+
+            const n1 = nodes.find(n => n.id === link.a);
+            const n2 = nodes.find(n => n.id === link.b);
+            const pathPoints = [[n1.lat, n1.lng], ...link.vertices, [n2.lat, n2.lng]];
+
+            let minDistance = Infinity;
+            let insertIndex = link.vertices.length; // Default no fim
+
+            for (let i = 0; i < pathPoints.length - 1; i++) {
+                const dist = L.LineUtil.pointToSegmentDistance(
+                    map.latLngToLayerPoint(latlng),
+                    map.latLngToLayerPoint(pathPoints[i]),
+                    map.latLngToLayerPoint(pathPoints[i+1])
+                );
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    insertIndex = i;
+                }
+            }
+            link.vertices.splice(insertIndex, 0, [latlng.lat, latlng.lng]);
+            render();
         }
 
+        function addNode(type, latlng) { const id = 'n'+Date.now(); const count = nodes.filter(n => n.type === type).length + 1; nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${count}`, ip: CONFIG[type].hasIp ? '192.168.1.100' : null }); saveData(); render(); showToast(`${CONFIG[type].label} adicionado.`); }
         function toggleFab() { if (isLocked) return; if (currentMode || isLinking || isDrawingPath) { resetTools(); return; } isMenuOpen = !isMenuOpen; document.getElementById('fab-items').classList.toggle('open', isMenuOpen); document.getElementById('fab-main').classList.toggle('active', isMenuOpen); }
         function setMode(m) { currentMode = m; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = `Inserindo: ${CONFIG[m].label}`; document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('tool-' + m).classList.add('selected'); }
         function toggleLinking() { isLinking = true; currentMode = null; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = "Criando Conexões"; document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('link-btn').classList.add('selected'); }
@@ -412,7 +450,6 @@
         function closePanel() { document.getElementById('details-panel').classList.remove('show'); selectedId = null; render(); }
         function toggleAppLock() { isLocked = true; resetTools(); document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; document.getElementById('logo-menu').classList.remove('show'); closePanel(); showToast("MODO OPERAÇÃO"); }
         function checkUnlock() { if (document.getElementById('unlock-pass').value === '12345') { isLocked = false; document.body.classList.remove('locked-mode'); document.getElementById('fab-container').style.display = 'flex'; document.getElementById('password-modal').classList.add('hidden'); render(); } }
-        function addVertexToPath(latlng) { const link = links.find(l => (l.a === drawingNodeId || l.b === drawingNodeId)); if (link) { if (!link.vertices) link.vertices = []; link.vertices.push([latlng.lat, latlng.lng]); render(); } }
         function resetNodePath(id) { const l = links.find(li => li.a === id || li.b === id); if (l) { l.vertices = []; render(); showToast("Linha restaurada."); } }
         function updateName(id, v) { nodes.find(n => n.id === id).name = v; saveData(); render(); }
         function updateIp(id, v) { nodes.find(n => n.id === id).ip = v; saveData(); render(); }
