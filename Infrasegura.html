@@ -1,24 +1,32 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>InfraSegura v8.0 - Gestão Avançada</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {} }
+        }
+    </script>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
         :root { --header-h: 64px; }
-        body { background: #020617; color: #f1f5f9; font-family: ui-sans-serif, system-ui, sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
-        #map { height: calc(100vh - var(--header-h)); width: 100%; margin-top: var(--header-h); position: absolute; top: 0; left: 0; z-index: 1; background: #000; }
+        body { font-family: ui-sans-serif, system-ui, sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
+        
+        #map { height: calc(100vh - var(--header-h)); width: 100%; margin-top: var(--header-h); position: absolute; top: 0; left: 0; z-index: 1; background: #e5e7eb; }
+        .dark #map { background: #000000; }
         
         /* Ajuste do List View */
         #list-view { 
             position: fixed; right: 24px; top: calc(var(--header-h) + 16px); bottom: 24px; width: 450px; 
-            background: #0f172a; z-index: 4000; overflow-y: auto; padding: 2rem;
-            border: 2px solid #1e293b; border-radius: 3rem; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+            z-index: 4000; overflow-y: auto; padding: 2rem;
+            border-radius: 3rem; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
             transition: transform 0.3s ease, opacity 0.3s ease; transform: translateX(110%); opacity: 0; pointer-events: none;
         }
         #list-view.show { transform: translateX(0); opacity: 1; pointer-events: auto; }
@@ -28,7 +36,8 @@
 
         .marker-pin { width: 44px; height: 44px; border-radius: 50% 50% 50% 0; position: absolute; transform: rotate(-45deg); left: 50%; top: 50%; margin: -22px 0 0 -22px; border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 1000 !important; transition: all 0.2s ease; }
         .marker-pin svg { transform: rotate(45deg); color: white; }
-        .marker-pin.selected { border-color: #3b82f6; box-shadow: 0 0 25px #3b82f6; transform: rotate(-45deg) scale(1.1); }
+        .marker-pin.selected { border-color: #52525b; box-shadow: 0 0 25px #52525b; transform: rotate(-45deg) scale(1.1); }
+        .dark .marker-pin.selected { border-color: #a1a1aa; box-shadow: 0 0 25px #a1a1aa; }
         
         /* Animação de Piscar */
         @keyframes blink-red {
@@ -38,39 +47,46 @@
         .blink-offline { animation: blink-red 1.5s infinite ease-in-out; }
 
         .online-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 2px 5px rgba(0,0,0,0.5); transition: all 0.2s ease; }
-        .online-dot.selected { border-color: #3b82f6; box-shadow: 0 0 12px #3b82f6; transform: scale(1.4); }
-        .vertex-handle { width: 12px; height: 12px; background: #3b82f6; border: 2px solid white; border-radius: 50%; cursor: move; box-shadow: 0 0 8px rgba(0,0,0,0.5); }
-        .midpoint-handle { width: 10px; height: 10px; background: rgba(59, 130, 246, 0.5); border: 1px solid white; border-radius: 50%; cursor: crosshair; }
+        .online-dot.selected { border-color: #52525b; box-shadow: 0 0 12px #52525b; transform: scale(1.4); }
+        .dark .online-dot.selected { border-color: #a1a1aa; box-shadow: 0 0 12px #a1a1aa; }
+
+        .vertex-handle { width: 12px; height: 12px; background: #71717a; border: 2px solid white; border-radius: 50%; cursor: move; box-shadow: 0 0 8px rgba(0,0,0,0.5); }
+        .midpoint-handle { width: 10px; height: 10px; background: rgba(113, 113, 122, 0.5); border: 1px solid white; border-radius: 50%; cursor: crosshair; }
 
         @keyframes flow { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 60; } }
         .data-flow-line { stroke-dasharray: 10, 10; animation: flow 1s linear infinite; }
         .offline-line { stroke-dasharray: 5, 15; opacity: 0.3; stroke: #ef4444 !important; }
 
         /* Estilos da Árvore */
-        .tree-node { border-left: 2px solid #334155; margin-left: 0.75rem; padding-left: 0.75rem; margin-top: 0.5rem; }
+        .tree-node { margin-left: 0.75rem; padding-left: 0.75rem; margin-top: 0.5rem; }
         .tree-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; border-radius: 0.75rem; transition: background 0.2s; cursor: pointer; }
-        .tree-item:hover { background: rgba(255,255,255,0.05); }
 
-        #logo-menu { position: absolute; top: 60px; left: 16px; width: 260px; background-color: #0f172a; border: 2px solid #334155; border-radius: 1.5rem; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8); z-index: 3000; display: none; }
+        #logo-menu { position: absolute; top: 60px; left: 16px; width: 260px; border-radius: 1.5rem; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8); z-index: 3000; display: none; }
         #logo-menu.show { display: block; animation: slideIn 0.2s ease-out; }
+        
         .fab-container { position: fixed; right: 24px; bottom: 24px; z-index: 5000; display: flex; flex-direction: column-reverse; align-items: center; gap: 12px; }
-        .fab-main { width: 64px; height: 64px; border-radius: 50%; background-color: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4); cursor: pointer; border: 3px solid #60a5fa; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .fab-main.active { transform: rotate(135deg); background-color: #ef4444; border-color: #f87171; }
+        .fab-main { width: 64px; height: 64px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .fab-main.active { transform: rotate(135deg); background-color: #ef4444 !important; border-color: #f87171 !important; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4) !important; }
+        
         .fab-items { display: flex; flex-direction: column-reverse; gap: 12px; pointer-events: none; opacity: 0; transform: translateY(15px); transition: 0.3s ease; }
         .fab-items.open { pointer-events: auto; opacity: 1; transform: translateY(0); }
-        .fab-item-btn { width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: #1e293b; border: 2px solid #334155; position: relative; transition: all 0.2s; }
-        .fab-item-btn.selected { border-color: #3b82f6; background-color: #0f172a; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); transform: scale(1.1); }
+        .fab-item-btn { width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; transition: all 0.2s; }
+        
+        .fab-item-btn.selected { border-color: #52525b !important; background-color: #f4f4f5 !important; box-shadow: 0 0 15px rgba(82, 82, 91, 0.4); transform: scale(1.1); }
+        .dark .fab-item-btn.selected { border-color: #71717a !important; background-color: #000000 !important; box-shadow: 0 0 15px rgba(113, 113, 122, 0.4); }
+
         .alert-fab { position: fixed; left: 24px; bottom: 24px; z-index: 5000; width: 64px; height: 64px; border-radius: 50%; background-color: #ef4444; color: white; display: none; align-items: center; justify-content: center; box-shadow: 0 8px 30px rgba(239, 68, 68, 0.6); cursor: pointer; border: 3px solid #f87171; }
-        #mode-indicator-bar { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 4500; background: #3b82f6; color: white; padding: 10px 24px; border-radius: 9999px; font-size: 11px; font-weight: 900; display: none; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5); border: 2px solid rgba(255,255,255,0.3); text-transform: uppercase; align-items: center; gap: 15px; }
-        .mode-btn { background: white; color: #3b82f6; padding: 4px 12px; border-radius: 999px; font-size: 9px; font-weight: 900; text-transform: uppercase; transition: all 0.2s; }
+        
+        #mode-indicator-bar { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 4500; color: white; padding: 10px 24px; border-radius: 9999px; font-size: 11px; font-weight: 900; display: none; border: 2px solid rgba(255,255,255,0.3); text-transform: uppercase; align-items: center; gap: 15px; }
+        .mode-btn { background: white; padding: 4px 12px; border-radius: 999px; font-size: 9px; font-weight: 900; text-transform: uppercase; transition: all 0.2s; }
         .mode-btn:hover { background: #f1f5f9; transform: scale(1.05); }
+
         #details-panel, #offline-panel { transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none; transform: translateX(110%); z-index: 4000; }
         #details-panel.show, #offline-panel.show { opacity: 1; transform: translateX(0); pointer-events: auto; }
         
         .locked-mode #settings-btn-container { display: none !important; }
 
         @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .pulse-orange { animation: pulse-orange 2s infinite; }
 
         /* Ajustes Estruturais e de Eventos para Mobile */
         @media (max-width: 640px) {
@@ -95,10 +111,10 @@
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 overflow-hidden font-sans">
+<body class="bg-gray-100 dark:bg-black text-gray-900 dark:text-slate-100 transition-colors duration-300">
 
     <div id="app-container">
-        <div id="mode-indicator-bar">
+        <div id="mode-indicator-bar" class="bg-zinc-600 dark:bg-zinc-800 shadow-lg">
             <span id="mode-text">Modo Ativo</span>
             <div id="mode-actions" class="flex gap-2"></div>
         </div>
@@ -108,157 +124,183 @@
             <div id="alert-count" class="absolute -top-1 -right-1 bg-white text-red-600 w-7 h-7 rounded-full flex items-center justify-center font-black text-xs border-2 border-red-600">0</div>
         </div>
 
-        <header class="fixed top-0 left-0 right-0 h-[var(--header-h)] bg-[#0f172a] border-b-2 border-slate-800 z-[2000] flex items-center justify-between px-4 sm:px-8 shadow-2xl">
+        <!-- HEADER TOTALMENTE PRETO NO MODO ESCURO -->
+        <header class="fixed top-0 left-0 right-0 h-[var(--header-h)] bg-white dark:bg-black border-b-2 border-gray-200 dark:border-zinc-900 z-[2000] flex items-center justify-between px-4 sm:px-8 shadow-md dark:shadow-2xl transition-colors duration-300">
             <div class="flex items-center relative">
-                <button onclick="handleLogoInteraction(event)" class="flex items-center space-x-3 hover:bg-slate-800/50 p-2 rounded-xl transition-all active:scale-95">
-                    <div class="logo-container p-2.5 bg-blue-600 rounded-xl border border-blue-400">
+                <button onclick="handleLogoInteraction(event)" class="flex items-center space-x-3 hover:bg-gray-100 dark:hover:bg-zinc-900 p-2 rounded-xl transition-all active:scale-95">
+                    <div class="logo-container p-2.5 bg-zinc-600 dark:bg-zinc-800 rounded-xl border border-zinc-400 dark:border-zinc-700 transition-colors">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     </div>
-                    <h1 class="header-title hidden sm:block font-black tracking-tighter text-sm sm:text-2xl uppercase">Infra<span class="text-blue-500">Segura</span> <span class="text-[10px] bg-slate-800 px-2 py-1 rounded ml-2">v8.0</span></h1>
+                    <h1 class="header-title hidden sm:block font-black tracking-tighter text-sm sm:text-2xl uppercase text-gray-900 dark:text-white">Infra<span class="text-zinc-500 dark:text-zinc-400">Segura</span> <span class="text-[10px] bg-gray-200 dark:bg-zinc-900 text-gray-700 dark:text-slate-300 px-2 py-1 rounded ml-2">v8.0</span></h1>
                 </button>
 
-                <div id="logo-menu">
-                    <div class="p-4 border-b border-slate-800 bg-slate-950/50 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Projeto</div>
-                    <div class="p-2 space-y-1 text-white text-[10px] font-bold uppercase">
-                        <button onclick="document.getElementById('import-input').click()" class="w-full p-3 hover:bg-emerald-600 rounded-xl transition-all text-left flex justify-between">Abrir Projeto <span>📂</span></button>
-                        <button onclick="openSaveModal()" class="w-full p-3 hover:bg-blue-600 rounded-xl transition-all text-left flex justify-between">Salvar Projeto <span>💾</span></button>
-                        <button onclick="requestCloseProject()" class="w-full p-3 hover:bg-red-600 rounded-xl transition-all text-left flex justify-between">Fechar Projeto <span>❌</span></button>
-                        <hr class="border-slate-800 my-1">
-                        <button onclick="openProjectSettings()" class="w-full p-3 hover:bg-indigo-600 rounded-xl transition-all text-left flex justify-between">Configurações do Projeto <span>⚙️</span></button>
+                <div id="logo-menu" class="bg-white dark:bg-black border-2 border-gray-200 dark:border-zinc-800 transition-colors duration-300">
+                    <div class="p-4 border-b border-gray-100 dark:border-zinc-900 bg-gray-50 dark:bg-black text-[10px] font-black text-gray-500 dark:text-zinc-500 uppercase tracking-widest text-center rounded-t-xl">Projeto</div>
+                    <div class="p-2 space-y-1 text-gray-700 dark:text-white text-[10px] font-bold uppercase">
+                        <button onclick="document.getElementById('import-input').click()" class="w-full p-3 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-left flex justify-between">Abrir Projeto <span>📂</span></button>
+                        <button onclick="openSaveModal()" class="w-full p-3 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-left flex justify-between">Salvar Projeto <span>💾</span></button>
+                        <button onclick="requestCloseProject()" class="w-full p-3 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-all text-left flex justify-between">Fechar Projeto <span>❌</span></button>
+                        <hr class="border-gray-200 dark:border-zinc-800 my-1">
+                        <button onclick="openProjectSettings()" class="w-full p-3 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-left flex justify-between">Configurações do Projeto <span>⚙️</span></button>
                     </div>
                 </div>
                 <input type="file" id="import-input" class="hidden" accept=".json" onchange="importMap(event)">
                 <input type="file" id="bg-input" class="hidden" accept="image/*" onchange="importBackground(event)">
             </div>
 
-            <div class="flex items-center space-x-1.5 bg-slate-950 border border-slate-800 p-1 rounded-2xl">
-                <button onclick="toggleView('map', event)" id="btn-map" class="px-5 py-2 rounded-xl text-[11px] font-black bg-blue-600 text-white shadow-xl transition-all uppercase">Mapa</button>
-                <button onclick="toggleView('list', event)" id="btn-list" class="px-5 py-2 rounded-xl text-[11px] font-black text-slate-500 hover:text-white transition-all uppercase">Lista</button>
+            <div class="flex items-center space-x-1.5 bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 p-1 rounded-2xl transition-colors duration-300">
+                <button onclick="toggleView('map', event)" id="btn-map" class="px-5 py-2 rounded-xl text-[11px] font-black bg-zinc-600 dark:bg-zinc-700 text-white shadow-md transition-all uppercase">Mapa</button>
+                <button onclick="toggleView('list', event)" id="btn-list" class="px-5 py-2 rounded-xl text-[11px] font-black text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white transition-all uppercase">Lista</button>
             </div>
 
             <div id="settings-btn-container" class="flex gap-2 relative">
-                <button onclick="toggleSettingsMenu(event)" title="Configurações de Segurança" class="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 shadow-lg active:scale-90 transition-transform text-white">
+                <button onclick="toggleSettingsMenu(event)" title="Configurações Gerais" class="p-3 bg-white hover:bg-gray-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm dark:shadow-lg active:scale-90 transition-transform text-gray-700 dark:text-white">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                 </button>
 
-                <div id="settingsMenu" class="absolute top-[55px] right-0 w-52 bg-[#0f172a] border-2 border-slate-700 rounded-2xl shadow-2xl hidden z-[3000] p-2">
-                    <button onclick="initPasswordChange()" class="w-full p-3 hover:bg-slate-800 rounded-xl transition-all text-left flex justify-between text-white text-[10px] font-bold uppercase mb-1">Alterar Senha <span>🔑</span></button>
-                    <button onclick="toggleAppLock()" class="w-full p-3 hover:bg-orange-600 rounded-xl transition-all text-left flex justify-between text-white text-[10px] font-bold uppercase">Bloquear Tela <span>🔒</span></button>
+                <div id="settingsMenu" class="absolute top-[55px] right-0 w-52 bg-white dark:bg-black border-2 border-gray-200 dark:border-zinc-800 rounded-2xl shadow-xl hidden z-[3000] p-2 transition-colors duration-300">
+                    <button onclick="openAppSettings()" class="w-full p-3 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-left flex justify-between text-gray-700 dark:text-white text-[10px] font-bold uppercase mb-1">Config. do Programa <span>🖥️</span></button>
+                    <button onclick="initPasswordChange()" class="w-full p-3 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-left flex justify-between text-gray-700 dark:text-white text-[10px] font-bold uppercase mb-1">Alterar Senha <span>🔑</span></button>
+                    <button onclick="toggleAppLock()" class="w-full p-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-left flex justify-between text-gray-700 dark:text-white text-[10px] font-bold uppercase">Bloquear Tela <span>🔒</span></button>
                 </div>
             </div>
         </header>
 
-        <button id="map-fit-btn" onclick="fitAllNodes(true); if(event) event.stopPropagation();" class="absolute top-[80px] right-4 z-[1000] p-2.5 bg-slate-900/60 hover:bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl shadow-lg transition-all text-white/80 hover:text-white" title="Visão Geral">
+        <!-- Botões Overlay do Mapa -->
+        <button id="map-fit-btn" onclick="fitAllNodes(true); if(event) event.stopPropagation();" class="absolute top-[80px] right-4 z-[1000] p-2.5 bg-white/80 dark:bg-black/60 hover:bg-gray-100 dark:hover:bg-black/90 backdrop-blur border border-gray-300 dark:border-zinc-800 rounded-xl shadow-md transition-all text-gray-700 dark:text-white/80 hover:text-gray-900 dark:hover:text-white" title="Visão Geral">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 15v6h-6M3 9V3h6"/></svg>
         </button>
 
-        <button id="map-locate-btn" onclick="locateMeAndFly(event)" class="absolute top-[135px] right-4 z-[1000] p-2.5 bg-slate-900/60 hover:bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl shadow-lg transition-all text-white/80 hover:text-white" title="Minha Localização">
+        <button id="map-locate-btn" onclick="locateMeAndFly(event)" class="absolute top-[135px] right-4 z-[1000] p-2.5 bg-white/80 dark:bg-black/60 hover:bg-gray-100 dark:hover:bg-black/90 backdrop-blur border border-gray-300 dark:border-zinc-800 rounded-xl shadow-md transition-all text-gray-700 dark:text-white/80 hover:text-gray-900 dark:hover:text-white" title="Minha Localização">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
         </button>
 
-        <button id="map-layer-btn" onclick="toggleMapLayer(event)" class="absolute top-[190px] right-4 z-[1000] p-2.5 bg-slate-900/60 hover:bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl shadow-lg transition-all text-white/80 hover:text-white" title="Alternar Mapa/Satélite">
+        <button id="map-layer-btn" onclick="toggleMapLayer(event)" class="absolute top-[190px] right-4 z-[1000] p-2.5 bg-white/80 dark:bg-black/60 hover:bg-gray-100 dark:hover:bg-black/90 backdrop-blur border border-gray-300 dark:border-zinc-800 rounded-xl shadow-md transition-all text-gray-700 dark:text-white/80 hover:text-gray-900 dark:hover:text-white" title="Alternar Mapa/Satélite">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
         </button>
 
+        <!-- Ferramentas Laterais -->
         <div id="fab-container" class="fab-container">
-            <div id="fab-main" onclick="toggleFab()" class="fab-main">
+            <div id="fab-main" onclick="toggleFab()" class="fab-main border-zinc-400 dark:border-zinc-600 bg-zinc-600 dark:bg-zinc-800 shadow-[0_10px_25px_rgba(82,82,91,0.4)] dark:shadow-[0_10px_25px_rgba(0,0,0,0.6)]">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </div>
             <div id="fab-items" class="fab-items">
-                <button onclick="setMode('core_switch')" id="tool-core_switch" class="fab-item-btn tool-btn" title="Switch Principal" style="color: #6366f1"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2"/></svg></button>
-                <button onclick="setMode('converter')" id="tool-converter" class="fab-item-btn tool-btn" title="Conversor" style="color: #fbbf24"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></button>
-                <button onclick="setMode('switch')" id="tool-switch" class="fab-item-btn tool-btn" title="Switch" style="color: #34d399"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/></svg></button>
-                <button onclick="setMode('camera')" id="tool-camera" class="fab-item-btn tool-btn" title="Câmera" style="color: #60a5fa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>
-                <button onclick="setMode('server')" id="tool-server" class="fab-item-btn tool-btn" title="Servidor" style="color: #a78bfa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/></svg></button>
-                <button onclick="toggleLinking()" id="link-btn" class="fab-item-btn tool-btn" title="Conectar" style="color: #94a3b8"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54"/></svg></button>
+                <button onclick="setMode('core_switch')" id="tool-core_switch" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" title="Switch Principal" style="color: #6366f1"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2"/></svg></button>
+                <button onclick="setMode('converter')" id="tool-converter" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" title="Conversor" style="color: #f59e0b"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></button>
+                <button onclick="setMode('switch')" id="tool-switch" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" title="Switch" style="color: #10b981"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/></svg></button>
+                <button onclick="setMode('camera')" id="tool-camera" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" title="Câmera" style="color: #3b82f6"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>
+                <button onclick="setMode('server')" id="tool-server" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" title="Servidor" style="color: #a78bfa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/></svg></button>
+                <button onclick="toggleLinking()" id="link-btn" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" title="Conectar" style="color: #71717a"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54"/></svg></button>
             </div>
         </div>
 
+        <!-- DIV do Mapa Central -->
         <div id="map"></div>
         
-        <div id="list-view" onclick="if(event) event.stopPropagation()">
-            <div class="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
-                <h2 class="text-xl font-black uppercase tracking-tighter text-blue-500">Hierarquia de Rede</h2>
-                <button onclick="toggleView('map', event)" class="p-2 hover:bg-slate-800 rounded-full transition-colors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+        <!-- List View -->
+        <div id="list-view" onclick="if(event) event.stopPropagation()" class="bg-white dark:bg-black border-gray-200 dark:border-zinc-900 transition-colors duration-300 border-2">
+            <div class="flex justify-between items-center mb-8 border-b border-gray-200 dark:border-zinc-800 pb-4">
+                <h2 class="text-xl font-black uppercase tracking-tighter text-zinc-600 dark:text-zinc-400">Hierarquia de Rede</h2>
+                <button onclick="toggleView('map', event)" class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-full transition-colors text-gray-700 dark:text-white"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
             </div>
             <div id="tree-container"></div>
         </div>
 
+        <!-- MODAIS -->
         <div id="project-settings-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
-            <div class="w-full max-w-sm bg-slate-900 border-2 border-slate-700 rounded-[2.5rem] p-8 text-white shadow-4xl relative">
+            <div class="w-full max-w-sm bg-white dark:bg-black border-2 border-gray-200 dark:border-zinc-800 rounded-[2.5rem] p-8 text-gray-900 dark:text-white shadow-2xl relative transition-colors duration-300">
                 <h3 class="text-xl font-black uppercase mb-6 tracking-tighter text-center">Configurações</h3>
                 
-                <div class="mb-6">
-                    <p class="text-[10px] text-slate-500 uppercase font-black mb-3">Modo de Mapa</p>
+                <div class="mb-5">
+                    <p class="text-[10px] text-gray-500 dark:text-zinc-500 uppercase font-black mb-3">Modo de Mapa</p>
                     <div class="flex gap-2">
-                        <button onclick="document.getElementById('bg-input').click()" class="flex-1 bg-slate-800 hover:bg-indigo-600 py-3 rounded-xl font-black uppercase text-[9px] transition-all border border-slate-700">Planta 🖼️</button>
-                        <button onclick="resetToWorldMap()" class="flex-1 bg-slate-800 hover:bg-indigo-600 py-3 rounded-xl font-black uppercase text-[9px] transition-all border border-slate-700">Mundi 🌍</button>
+                        <button onclick="document.getElementById('bg-input').click()" class="flex-1 bg-gray-100 dark:bg-zinc-900 hover:bg-gray-200 dark:hover:bg-zinc-800 py-3 rounded-xl font-black uppercase text-[9px] transition-all border border-gray-200 dark:border-zinc-800 text-gray-800 dark:text-white">Planta 🖼️</button>
+                        <button onclick="resetToWorldMap()" class="flex-1 bg-gray-100 dark:bg-zinc-900 hover:bg-gray-200 dark:hover:bg-zinc-800 py-3 rounded-xl font-black uppercase text-[9px] transition-all border border-gray-200 dark:border-zinc-800 text-gray-800 dark:text-white">Mundi 🌍</button>
                     </div>
                 </div>
 
                 <div class="mb-8">
-                    <p class="text-[10px] text-slate-500 uppercase font-black mb-3">Automação</p>
-                    <div class="p-4 bg-slate-950 rounded-2xl border border-slate-800 flex justify-between items-center cursor-pointer" onclick="toggleAutoLock()">
-                        <span class="text-[10px] text-slate-300 uppercase font-black tracking-widest">Carregar Bloqueado</span>
-                        <div class="w-10 h-5 rounded-full relative transition-colors bg-slate-700" id="toggle-autolock-bg">
+                    <p class="text-[10px] text-gray-500 dark:text-zinc-500 uppercase font-black mb-3">Automação</p>
+                    <div class="p-4 bg-gray-50 dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 flex justify-between items-center cursor-pointer transition-colors" onclick="toggleAutoLock()">
+                        <span class="text-[10px] text-gray-700 dark:text-zinc-300 uppercase font-black tracking-widest">Carregar Bloqueado</span>
+                        <div class="w-10 h-5 rounded-full relative transition-colors bg-gray-300 dark:bg-zinc-700" id="toggle-autolock-bg">
                             <div class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all left-0.5" id="toggle-autolock-knob"></div>
                         </div>
                     </div>
-                    <p class="text-[8px] text-slate-500 mt-2 text-center">Inicia o "Modo Operação" assim que o arquivo é aberto.</p>
+                    <p class="text-[8px] text-gray-500 dark:text-zinc-500 mt-2 text-center">Inicia o "Modo Operação" assim que o arquivo é aberto.</p>
                 </div>
 
-                <button onclick="closeProjectSettings()" class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs shadow-lg">Concluído</button>
+                <button onclick="closeProjectSettings()" class="w-full bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 py-4 rounded-2xl font-black uppercase text-xs shadow-lg text-white transition-colors">Concluído</button>
+            </div>
+        </div>
+
+        <!-- MODAL DE CONFIGURAÇÕES DO PROGRAMA -->
+        <div id="app-settings-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
+            <div class="w-full max-w-sm bg-white dark:bg-black border-2 border-gray-200 dark:border-zinc-800 rounded-[2.5rem] p-8 text-gray-900 dark:text-white shadow-2xl relative transition-colors duration-300">
+                <h3 class="text-xl font-black uppercase mb-6 tracking-tighter text-center">Config. do Programa</h3>
+                
+                <div class="mb-8">
+                    <p class="text-[10px] text-gray-500 dark:text-zinc-500 uppercase font-black mb-3">Aparência</p>
+                    <div class="p-4 bg-gray-50 dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 flex justify-between items-center cursor-pointer transition-colors" onclick="toggleTheme()">
+                        <span class="text-[10px] text-gray-700 dark:text-zinc-300 uppercase font-black tracking-widest">Modo Escuro</span>
+                        <div class="w-10 h-5 rounded-full relative transition-colors bg-zinc-500 dark:bg-zinc-600" id="toggle-theme-bg">
+                            <div class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all left-0.5" id="toggle-theme-knob"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="closeAppSettings()" class="w-full bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 py-4 rounded-2xl font-black uppercase text-xs shadow-lg text-white transition-colors">Concluído</button>
             </div>
         </div>
 
         <div id="close-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
-            <div class="w-full max-w-sm bg-slate-900 border-2 border-red-500/50 rounded-[2.5rem] p-10 text-white shadow-4xl text-center">
-                <h3 class="text-xl font-black uppercase mb-4 tracking-tighter text-red-500">Fechar Projeto</h3>
-                <p class="text-[10px] text-slate-400 uppercase font-black mb-8">Você possui alterações não salvas. Deseja exportar o projeto antes de fechar e limpar a tela?</p>
+            <div class="w-full max-w-sm bg-white dark:bg-black border-2 border-red-500/50 rounded-[2.5rem] p-10 text-gray-900 dark:text-white shadow-2xl text-center transition-colors duration-300">
+                <h3 class="text-xl font-black uppercase mb-4 tracking-tighter text-red-600 dark:text-red-500">Fechar Projeto</h3>
+                <p class="text-[10px] text-gray-600 dark:text-zinc-400 uppercase font-black mb-8">Você possui alterações não salvas. Deseja exportar o projeto antes de fechar e limpar a tela?</p>
                 <div class="flex flex-col gap-3">
-                    <button onclick="closeCloseModal(); openSaveModal();" class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs shadow-lg">Salvar Projeto</button>
-                    <button onclick="closeProject()" class="w-full bg-red-600/20 text-red-500 hover:bg-red-600 hover:text-white py-4 rounded-2xl font-black uppercase text-xs border border-red-500/30 transition-colors">Fechar Sem Salvar</button>
-                    <button onclick="closeCloseModal()" class="w-full bg-slate-800 py-4 rounded-2xl font-black uppercase text-xs mt-2">Cancelar</button>
+                    <button onclick="closeCloseModal(); openSaveModal();" class="w-full bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 py-4 rounded-2xl font-black uppercase text-xs shadow-lg text-white">Salvar Projeto</button>
+                    <button onclick="closeProject()" class="w-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-500 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white py-4 rounded-2xl font-black uppercase text-xs border border-red-200 dark:border-red-500/30 transition-colors">Fechar Sem Salvar</button>
+                    <button onclick="closeCloseModal()" class="w-full bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-white py-4 rounded-2xl font-black uppercase text-xs mt-2 hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors">Cancelar</button>
                 </div>
             </div>
         </div>
 
         <div id="save-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
-            <div class="w-full max-w-sm bg-slate-900 border-2 border-slate-700 rounded-[2.5rem] p-10 text-white shadow-4xl">
+            <div class="w-full max-w-sm bg-white dark:bg-black border-2 border-gray-200 dark:border-zinc-800 rounded-[2.5rem] p-10 text-gray-900 dark:text-white shadow-2xl transition-colors duration-300">
                 <h3 class="text-xl font-black uppercase mb-6 tracking-tighter text-center">Salvar Projeto</h3>
-                <p class="text-[10px] text-slate-500 uppercase font-black mb-2 text-center">Nome do Arquivo</p>
-                <input type="text" id="save-filename" class="w-full bg-slate-950 border-2 border-slate-800 rounded-2xl p-5 text-center text-xl mb-6 outline-none focus:border-blue-500 text-white font-bold" value="Projeto_Rede_v8">
+                <p class="text-[10px] text-gray-500 dark:text-zinc-500 uppercase font-black mb-2 text-center">Nome do Arquivo</p>
+                <input type="text" id="save-filename" class="w-full bg-gray-50 dark:bg-zinc-900 border-2 border-gray-200 dark:border-zinc-800 rounded-2xl p-5 text-center text-xl mb-6 outline-none focus:border-zinc-500 text-gray-900 dark:text-white font-bold transition-colors" value="Projeto_Rede_v8">
                 <div class="flex gap-4">
-                    <button onclick="closeSaveModal()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-black uppercase text-xs">Cancelar</button>
-                    <button onclick="confirmExport()" class="flex-1 bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs shadow-lg">Baixar</button>
+                    <button onclick="closeSaveModal()" class="flex-1 bg-gray-100 dark:bg-zinc-900 hover:bg-gray-200 dark:hover:bg-zinc-800 py-4 rounded-2xl font-black uppercase text-xs text-gray-800 dark:text-white transition-colors">Cancelar</button>
+                    <button onclick="confirmExport()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 py-4 rounded-2xl font-black uppercase text-xs shadow-lg text-white transition-colors">Baixar</button>
                 </div>
             </div>
         </div>
 
-        <div id="offline-panel" onclick="if(event) event.stopPropagation()" class="fixed right-6 top-24 bottom-24 w-96 bg-slate-900 border-2 border-red-500/40 rounded-[3rem] p-8 flex flex-col shadow-4xl text-white">
+        <div id="offline-panel" onclick="if(event) event.stopPropagation()" class="fixed right-6 top-24 bottom-24 w-96 bg-white dark:bg-black border-2 border-red-500/40 rounded-[3rem] p-8 flex flex-col shadow-2xl text-gray-900 dark:text-white transition-colors duration-300">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-sm font-black uppercase text-red-500 tracking-widest italic">Falhas Detectadas</h3>
-                <button onclick="closeOfflinePanel(event)" class="p-2 hover:bg-slate-800 rounded-full transition-colors"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+                <h3 class="text-sm font-black uppercase text-red-600 dark:text-red-500 tracking-widest italic">Falhas Detectadas</h3>
+                <button onclick="closeOfflinePanel(event)" class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-full transition-colors"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
             </div>
             <div id="offline-list" class="flex-1 overflow-y-auto space-y-3 pr-2"></div>
         </div>
 
-        <div id="details-panel" onclick="if(event) event.stopPropagation()" class="fixed right-6 top-24 bottom-24 w-80 bg-slate-900 border-2 border-slate-800 rounded-[3rem] p-8 flex flex-col shadow-4xl text-white overflow-hidden">
+        <div id="details-panel" onclick="if(event) event.stopPropagation()" class="fixed right-6 top-24 bottom-24 w-80 bg-white dark:bg-black border-2 border-gray-200 dark:border-zinc-800 rounded-[3rem] p-8 flex flex-col shadow-2xl text-gray-900 dark:text-white overflow-hidden transition-colors duration-300">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Ativo</h3>
-                <button onclick="closePanel(event)" class="p-2 hover:bg-slate-800 rounded-full transition-colors"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+                <h3 class="text-[10px] font-black uppercase text-gray-500 dark:text-zinc-500 tracking-widest">Ativo</h3>
+                <button onclick="closePanel(event)" class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-full transition-colors"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
             </div>
             <div id="details-content" class="flex-1 overflow-y-auto space-y-6"></div>
         </div>
 
         <div id="password-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
-            <div class="w-full max-w-xs bg-slate-900 border-2 border-slate-700 rounded-[2.5rem] p-10 text-center text-white shadow-4xl">
+            <div class="w-full max-w-xs bg-white dark:bg-black border-2 border-gray-200 dark:border-zinc-800 rounded-[2.5rem] p-10 text-center text-gray-900 dark:text-white shadow-2xl transition-colors duration-300">
                 <h3 id="pass-modal-title" class="text-xl font-black uppercase mb-8 tracking-tighter">Segurança</h3>
-                <p id="pass-modal-msg" class="text-[10px] text-slate-400 mb-4 uppercase hidden"></p>
-                <input type="password" id="unlock-pass" onkeypress="if(event.key === 'Enter') handlePasswordAction()" class="w-full bg-slate-950 border-2 border-slate-800 rounded-2xl p-5 text-center text-2xl tracking-[0.5em] mb-6 outline-none focus:border-blue-500 text-white" placeholder="•••••">
+                <p id="pass-modal-msg" class="text-[10px] text-gray-500 dark:text-zinc-400 mb-4 uppercase hidden"></p>
+                <input type="password" id="unlock-pass" onkeypress="if(event.key === 'Enter') handlePasswordAction()" class="w-full bg-gray-50 dark:bg-zinc-900 border-2 border-gray-200 dark:border-zinc-800 rounded-2xl p-5 text-center text-2xl tracking-[0.5em] mb-6 outline-none focus:border-zinc-500 text-gray-900 dark:text-white transition-colors" placeholder="•••••">
                 <div class="flex gap-2">
-                    <button id="pass-cancel-btn" onclick="closePasswordModal()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-black uppercase shadow-lg text-xs hidden">Cancelar</button>
-                    <button id="pass-action-btn" onclick="handlePasswordAction()" class="flex-1 bg-blue-600 py-4 rounded-2xl font-black uppercase shadow-lg text-xs">Ação</button>
+                    <button id="pass-cancel-btn" onclick="closePasswordModal()" class="flex-1 bg-gray-100 dark:bg-zinc-900 py-4 rounded-2xl font-black uppercase text-gray-800 dark:text-white shadow-lg text-xs hidden transition-colors hover:bg-gray-200 dark:hover:bg-zinc-800">Cancelar</button>
+                    <button id="pass-action-btn" onclick="handlePasswordAction()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 py-4 rounded-2xl font-black uppercase shadow-lg text-white text-xs transition-colors">Ação</button>
                 </div>
             </div>
         </div>
@@ -272,8 +314,8 @@
         let isLocked = false; let logoClicks = 0; let isMenuOpen = false;
         
         let individualLayer, linksLayer, handlesLayer, bgImageLayer;
-        let darkMapLayer, satelliteLayer;
-        let currentMapLayer = 'dark';
+        let darkMapLayer, lightMapLayer, satelliteLayer;
+        let currentMapLayer = 'base';
         let currentBackgroundBase64 = null; let minZoomLimit = 15;
         let previousMapView = null;
         let userLocationMarker = null;
@@ -281,7 +323,8 @@
         let appPasswordHash = null;
         let passwordModalMode = 'unlock';
         let autoLockOnLoad = false; 
-        let hasUnsavedChanges = false; // Controle de Memória de Alterações
+        let hasUnsavedChanges = false;
+        let isDarkMode = true;
 
         const CONFIG = {
             core_switch: { label: 'Switch Principal', color: '#6366f1', hasIp: true, icon: '<rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2"/>', rank: 0 },
@@ -290,6 +333,44 @@
             camera: { label: 'Câmera', color: '#3b82f6', hasIp: true, icon: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>', rank: 3 },
             server: { label: 'Servidor', color: '#a78bfa', hasIp: true, icon: '<rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/>', rank: 4 }
         };
+
+        // --- SISTEMA DE TEMA ---
+        function applyThemeToMap() {
+            if(currentMapLayer !== 'base') return; 
+            if (isDarkMode) {
+                if (map.hasLayer(lightMapLayer)) map.removeLayer(lightMapLayer);
+                if (!map.hasLayer(darkMapLayer)) darkMapLayer.addTo(map);
+            } else {
+                if (map.hasLayer(darkMapLayer)) map.removeLayer(darkMapLayer);
+                if (!map.hasLayer(lightMapLayer)) lightMapLayer.addTo(map);
+            }
+        }
+
+        function updateThemeUI() {
+            const html = document.documentElement;
+            if(isDarkMode) html.classList.add('dark');
+            else html.classList.remove('dark');
+
+            const bg = document.getElementById('toggle-theme-bg');
+            const knob = document.getElementById('toggle-theme-knob');
+            if (bg && knob) {
+                if (isDarkMode) {
+                    knob.classList.replace('left-0.5', 'left-5');
+                    if(!knob.classList.contains('left-5')) knob.classList.add('left-5');
+                } else {
+                    knob.classList.replace('left-5', 'left-0.5');
+                    if(!knob.classList.contains('left-0.5')) knob.classList.add('left-0.5');
+                }
+            }
+            if(map) applyThemeToMap();
+            render(); 
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            updateThemeUI();
+            localStorage.setItem('infrasegura_theme', isDarkMode);
+        }
 
         // --- SISTEMA DE SENHA ---
         async function hashPassword(msg) {
@@ -403,6 +484,16 @@
         }
 
         // --- SISTEMA DE MODAIS E CONFIGURAÇÕES ---
+        function openAppSettings() {
+            document.getElementById('settingsMenu').classList.add('hidden');
+            updateThemeUI();
+            document.getElementById('app-settings-modal').classList.remove('hidden');
+        }
+
+        function closeAppSettings() {
+            document.getElementById('app-settings-modal').classList.add('hidden');
+        }
+
         function openProjectSettings() {
             document.getElementById('logo-menu').classList.remove('show');
             document.getElementById('settingsMenu').classList.add('hidden');
@@ -419,13 +510,14 @@
             const knob = document.getElementById('toggle-autolock-knob');
             if (bg && knob) {
                 if (autoLockOnLoad) {
-                    bg.classList.replace('bg-slate-700', 'bg-blue-500');
-                    if(!bg.classList.contains('bg-blue-500')) bg.classList.add('bg-blue-500');
+                    bg.classList.replace('bg-gray-300', 'bg-zinc-500');
+                    bg.classList.replace('bg-slate-700', 'bg-zinc-500');
+                    if(!bg.classList.contains('bg-zinc-500')) bg.classList.add('bg-zinc-500');
                     knob.classList.replace('left-0.5', 'left-5');
                     if(!knob.classList.contains('left-5')) knob.classList.add('left-5');
                 } else {
-                    bg.classList.replace('bg-blue-500', 'bg-slate-700');
-                    if(!bg.classList.contains('bg-slate-700')) bg.classList.add('bg-slate-700');
+                    bg.classList.replace('bg-zinc-500', 'bg-slate-700'); 
+                    if(isDarkMode) bg.classList.add('bg-slate-700'); else bg.classList.add('bg-gray-300');
                     knob.classList.replace('left-5', 'left-0.5');
                     if(!knob.classList.contains('left-0.5')) knob.classList.add('left-0.5');
                 }
@@ -515,12 +607,19 @@
 
         function confirmExport() {
             const filename = document.getElementById('save-filename').value || "Projeto_Rede";
-            const data = JSON.stringify({ nodes, links, background: currentBackgroundBase64, view: { center: map.getCenter(), zoom: map.getZoom() }, passwordHash: appPasswordHash, autoLockOnLoad: autoLockOnLoad });
+            const data = JSON.stringify({ 
+                nodes, 
+                links, 
+                background: currentBackgroundBase64, 
+                view: { center: map.getCenter(), zoom: map.getZoom() }, 
+                passwordHash: appPasswordHash, 
+                autoLockOnLoad: autoLockOnLoad
+            });
             const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `${filename}.json`; a.click();
             
-            hasUnsavedChanges = false; // Memória de alterações zerada!
+            hasUnsavedChanges = false; 
             saveData(false);
             closeSaveModal();
             showToast("Projeto Exportado.");
@@ -535,7 +634,7 @@
                     nodes = data.nodes || []; links = data.links || [];
                     appPasswordHash = data.passwordHash || null; 
                     autoLockOnLoad = data.autoLockOnLoad || false;
-                    
+
                     if (data.background) applyBackground(data.background); else resetToWorldMap();
                     
                     hasUnsavedChanges = false; 
@@ -563,6 +662,7 @@
         function applyBackground(base64) {
             currentBackgroundBase64 = base64;
             if (map.hasLayer(darkMapLayer)) map.removeLayer(darkMapLayer);
+            if (map.hasLayer(lightMapLayer)) map.removeLayer(lightMapLayer);
             if (map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
             if (bgImageLayer) map.removeLayer(bgImageLayer);
             
@@ -592,9 +692,10 @@
         function resetToWorldMap() {
             currentBackgroundBase64 = null;
             if (bgImageLayer) map.removeLayer(bgImageLayer);
+            if (map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
             
-            if (currentMapLayer === 'dark' && !map.hasLayer(darkMapLayer)) darkMapLayer.addTo(map);
-            else if (currentMapLayer === 'satellite' && !map.hasLayer(satelliteLayer)) satelliteLayer.addTo(map);
+            currentMapLayer = 'base';
+            applyThemeToMap(); 
             
             map.setMaxBounds(null); map.setMinZoom(1); map.setMaxZoom(28);
             checkDrag();
@@ -606,6 +707,11 @@
 
         function loadData() {
             try {
+                const localTheme = localStorage.getItem('infrasegura_theme');
+                if (localTheme !== null) {
+                    isDarkMode = (localTheme === 'true');
+                }
+
                 const localData = localStorage.getItem('infrasegura_data');
                 if (localData) {
                     const parsed = JSON.parse(localData);
@@ -618,6 +724,8 @@
             } catch (e) { 
                 console.error("Erro ao carregar dados locais", e);
             }
+            
+            updateThemeUI(); 
             render();
             
             setTimeout(() => {
@@ -668,9 +776,8 @@
             map = L.map('map', { zoomControl: false, tap: false, maxZoom: 28 }).setView([-23.5505, -46.6333], 10);
             
             darkMapLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 28, maxNativeZoom: 18 });
+            lightMapLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 28, maxNativeZoom: 18 });
             satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 28, maxNativeZoom: 19 });
-            
-            darkMapLayer.addTo(map);
             
             linksLayer = L.layerGroup().addTo(map); individualLayer = L.layerGroup().addTo(map); handlesLayer = L.layerGroup().addTo(map);
             
@@ -706,6 +813,10 @@
 
         function locateMeAndFly(e) {
             if(e) e.stopPropagation();
+            if (isLocked) {
+                showToast("Movimentação bloqueada no Modo Operação");
+                return;
+            }
             if (userLocationMarker) {
                 map.flyTo(userLocationMarker.getLatLng(), 18);
             } else {
@@ -721,16 +832,17 @@
                 return; 
             }
 
-            if (currentMapLayer === 'dark') {
-                map.removeLayer(darkMapLayer);
+            if (currentMapLayer === 'base') {
+                if (map.hasLayer(darkMapLayer)) map.removeLayer(darkMapLayer);
+                if (map.hasLayer(lightMapLayer)) map.removeLayer(lightMapLayer);
                 satelliteLayer.addTo(map);
                 currentMapLayer = 'satellite';
                 showToast("Modo Satélite Ativado");
             } else {
                 map.removeLayer(satelliteLayer);
-                darkMapLayer.addTo(map);
-                currentMapLayer = 'dark';
-                showToast("Modo Mapa Escuro Ativado");
+                currentMapLayer = 'base';
+                applyThemeToMap();
+                showToast("Modo Mapa Base Ativado");
             }
         }
 
@@ -925,7 +1037,7 @@
 
                     const off = (statusMap[n1.id] || statusMap[n2.id]);
                     
-                    let lineColor = '#3b82f6'; 
+                    let lineColor = isDarkMode ? '#a1a1aa' : '#52525b'; 
                     if (off) {
                         lineColor = '#ef4444'; 
                     } else {
@@ -933,7 +1045,7 @@
                             case 'converter': lineColor = '#facc15'; break; 
                             case 'switch': lineColor = '#15803d'; break; 
                             case 'core_switch': lineColor = '#dc2626'; break; 
-                            default: lineColor = '#3b82f6'; 
+                            default: lineColor = isDarkMode ? '#a1a1aa' : '#52525b'; 
                         }
                     }
 
@@ -945,7 +1057,7 @@
                         const p2 = path[1] || path[path.length - 1]; 
                         const midPoint = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
 
-                        const globeHtml = `<div class="bg-blue-500 rounded-full border-2 border-slate-900 p-0.5 shadow-[0_0_10px_rgba(59,130,246,0.8)]"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></div>`;
+                        const globeHtml = `<div class="bg-zinc-500 rounded-full border-2 border-white dark:border-slate-900 p-0.5 shadow-[0_0_10px_rgba(113,113,122,0.8)]"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></div>`;
                         const globeIcon = L.divIcon({ html: globeHtml, className: 'custom-div-icon', iconSize: [16, 16], iconAnchor: [8, 8] });
                         L.marker(midPoint, { icon: globeIcon, interactive: false }).addTo(linksLayer);
                     }
@@ -1002,7 +1114,7 @@
             if (rootOfflineNodes.length > 0) {
                 fab.style.display = 'flex'; 
                 count.innerText = rootOfflineNodes.length;
-                document.getElementById('offline-list').innerHTML = rootOfflineNodes.map(n => `<div onclick="if(event) event.stopPropagation(); toggleView('map'); openDetails('${n.id}');" class="p-5 bg-slate-950 border border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-500/10 shadow-xl"><div class="text-[9px] font-black text-red-500 uppercase mb-1 italic tracking-widest">${CONFIG[n.type].label} OFFLINE</div><h4 class="font-black text-sm text-white uppercase">${n.name}</h4></div>`).join('');
+                document.getElementById('offline-list').innerHTML = rootOfflineNodes.map(n => `<div onclick="if(event) event.stopPropagation(); toggleView('map'); openDetails('${n.id}');" class="p-5 bg-red-50 dark:bg-slate-950 border border-red-200 dark:border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-100 dark:hover:bg-red-500/10 shadow-xl transition-colors"><div class="text-[9px] font-black text-red-600 dark:text-red-500 uppercase mb-1 italic tracking-widest">${CONFIG[n.type].label} OFFLINE</div><h4 class="font-black text-sm text-gray-900 dark:text-white uppercase">${n.name}</h4></div>`).join('');
             } else { 
                 fab.style.display = 'none'; 
                 closeOfflinePanel(); 
@@ -1036,9 +1148,9 @@
             const potentialParents = nodes.filter(n => n.id !== id && CONFIG[n.type].rank <= CONFIG[node.type].rank);
 
             let connectionHtml = `
-                <div class="mt-6 p-4 bg-slate-950/50 rounded-2xl border border-slate-800">
-                    <p class="text-[8px] text-slate-500 mb-2 uppercase">Conexão de Entrada (Fonte)</p>
-                    <select onchange="updateConnection('${id}', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-blue-400 outline-none">
+                <div class="mt-6 p-4 bg-gray-50 dark:bg-slate-950/50 rounded-2xl border border-gray-200 dark:border-slate-800 transition-colors">
+                    <p class="text-[8px] text-gray-500 dark:text-slate-500 mb-2 uppercase">Conexão de Entrada (Fonte)</p>
+                    <select onchange="updateConnection('${id}', this.value)" class="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg p-2 text-xs text-zinc-600 dark:text-zinc-400 outline-none transition-colors">
                         <option value="">Nenhum Vínculo</option>
                         ${potentialParents.map(p => `<option value="${p.id}" ${currentLink?.a === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
                     </select>
@@ -1048,12 +1160,12 @@
             let internetToggleHtml = '';
             if (node.type === 'switch' || node.type === 'core_switch') {
                 internetToggleHtml = `
-                    <div class="mt-4 p-4 bg-slate-800/40 rounded-2xl border border-slate-800 flex justify-between items-center cursor-pointer" onclick="toggleInternet('${id}')">
-                        <span class="text-[10px] text-slate-400 uppercase font-black tracking-widest flex items-center gap-2">
+                    <div class="mt-4 p-4 bg-gray-50 dark:bg-slate-800/40 rounded-2xl border border-gray-200 dark:border-slate-800 flex justify-between items-center cursor-pointer transition-colors" onclick="toggleInternet('${id}')">
+                        <span class="text-[10px] text-gray-600 dark:text-slate-400 uppercase font-black tracking-widest flex items-center gap-2">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
                             Gateway de Internet
                         </span>
-                        <div class="w-10 h-5 rounded-full relative transition-colors ${node.isGateway ? 'bg-blue-500' : 'bg-slate-700'}">
+                        <div class="w-10 h-5 rounded-full relative transition-colors ${node.isGateway ? 'bg-zinc-500' : 'bg-gray-300 dark:bg-slate-700'}">
                             <div class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all ${node.isGateway ? 'left-5' : 'left-0.5'}"></div>
                         </div>
                     </div>
@@ -1061,12 +1173,12 @@
             }
 
             document.getElementById('details-content').innerHTML = `
-                <div class="bg-slate-950 p-6 rounded-3xl border-2 border-slate-800 text-center uppercase font-black tracking-tight"><input type="text" value="${node.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0"></div>
-                ${CONFIG[node.type].hasIp ? `<div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-800"><p class="text-[8px] text-slate-500 mb-2 uppercase text-center">Endereço IP</p><input type="text" value="${node.ip || '0.0.0.0'}" onchange="updateIp('${id}', this.value)" class="bg-slate-950 w-full p-2 rounded-lg border border-slate-800 font-mono text-center text-blue-400 outline-none"><button onclick="toggleStatus('${id}')" class="w-full mt-3 py-3 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-xl transition-all">Simular Status</button></div>` : ''}
+                <div class="bg-gray-50 dark:bg-slate-950 p-6 rounded-3xl border-2 border-gray-200 dark:border-slate-800 text-center uppercase font-black tracking-tight transition-colors"><input type="text" value="${node.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0 text-gray-900 dark:text-white"></div>
+                ${CONFIG[node.type].hasIp ? `<div class="p-4 bg-gray-50 dark:bg-slate-800/40 rounded-2xl border border-gray-200 dark:border-slate-800 transition-colors"><p class="text-[8px] text-gray-500 dark:text-slate-500 mb-2 uppercase text-center">Endereço IP</p><input type="text" value="${node.ip || '0.0.0.0'}" onchange="updateIp('${id}', this.value)" class="bg-white dark:bg-slate-950 w-full p-2 rounded-lg border border-gray-300 dark:border-slate-800 font-mono text-center text-zinc-600 dark:text-zinc-400 outline-none focus:border-zinc-500 transition-colors"><button onclick="toggleStatus('${id}')" class="w-full mt-3 py-3 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-md transition-all">Simular Status</button></div>` : ''}
                 ${connectionHtml}
                 ${internetToggleHtml}
-                <button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase shadow-lg mt-4">Editar Traçado</button>
-                <button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-slate-600 hover:text-red-500 uppercase mt-4">Remover Ativo</button>
+                <button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-600 dark:hover:bg-zinc-500 rounded-2xl text-[10px] font-black uppercase shadow-lg mt-4 text-white transition-colors">Editar Traçado</button>
+                <button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-gray-500 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-500 uppercase mt-4 transition-colors">Remover Ativo</button>
             `;
             
             render();
@@ -1083,7 +1195,7 @@
             isDrawingPath = true; drawingNodeId = nodeId; closePanel(); 
             const bar = document.getElementById('mode-indicator-bar'); const actions = document.getElementById('mode-actions');
             bar.style.display = 'flex'; document.getElementById('mode-text').innerText = "Editando Traçado";
-            actions.innerHTML = `<button onclick="resetTools()" class="mode-btn">Concluir</button>`;
+            actions.innerHTML = `<button onclick="resetTools()" class="mode-btn text-zinc-700">Concluir</button>`;
             document.getElementById('fab-main').classList.add('active'); render(); 
         }
 
@@ -1120,7 +1232,7 @@
         function updateIp(id, v) { nodes.find(n => n.id === id).ip = v; saveData(); render(); }
         function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
         function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(); render(); saveData(); }
-        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-slate-950 text-white text-[10px] font-black rounded-full z-[8000] border-2 border-slate-800 shadow-2xl"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-white dark:bg-slate-950 text-gray-900 dark:text-white text-[10px] font-black rounded-full z-[8000] border-2 border-gray-200 dark:border-slate-800 shadow-2xl transition-colors duration-300"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
         
         function toggleView(v, e) { 
             if(e) e.stopPropagation();
@@ -1130,17 +1242,27 @@
             const btnList = document.getElementById('btn-list');
             if(v === 'list') {
                 list.classList.add('show');
-                btnList.classList.add('bg-blue-600', 'text-white');
-                btnList.classList.remove('text-slate-500');
-                btnMap.classList.remove('bg-blue-600', 'text-white');
-                btnMap.classList.add('text-slate-500');
+                btnList.classList.replace('bg-gray-100', 'bg-zinc-600');
+                btnList.classList.replace('dark:bg-slate-950', 'dark:bg-zinc-700');
+                btnList.classList.add('text-white');
+                btnList.classList.remove('text-gray-500', 'dark:text-slate-500');
+                
+                btnMap.classList.replace('bg-zinc-600', 'bg-gray-100');
+                btnMap.classList.replace('dark:bg-zinc-700', 'dark:bg-slate-950');
+                btnMap.classList.remove('text-white');
+                btnMap.classList.add('text-gray-500', 'dark:text-slate-500');
                 renderListView();
             } else {
                 list.classList.remove('show');
-                btnMap.classList.add('bg-blue-600', 'text-white');
-                btnMap.classList.remove('text-slate-500');
-                btnList.classList.remove('bg-blue-600', 'text-white');
-                btnList.classList.add('text-slate-500');
+                btnMap.classList.replace('bg-gray-100', 'bg-zinc-600');
+                btnMap.classList.replace('dark:bg-slate-950', 'dark:bg-zinc-700');
+                btnMap.classList.add('text-white');
+                btnMap.classList.remove('text-gray-500', 'dark:text-slate-500');
+                
+                btnList.classList.replace('bg-zinc-600', 'bg-gray-100');
+                btnList.classList.replace('dark:bg-zinc-700', 'dark:bg-slate-950');
+                btnList.classList.remove('text-white');
+                btnList.classList.add('text-gray-500', 'dark:text-slate-500');
             }
         }
 
@@ -1156,19 +1278,19 @@
             const div = document.createElement('div');
             div.className = "mb-4";
             const item = document.createElement('div');
-            item.className = `tree-item ${isOff ? 'border-l-4 border-red-500 bg-red-500/10 blink-offline' : ''}`;
+            item.className = `tree-item ${isOff ? 'border-l-4 border-red-500 bg-red-50 dark:bg-red-500/10 blink-offline' : ''}`;
             
-            const globeIcon = node.isGateway ? `<svg class="ml-2 inline-block text-blue-400" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>` : '';
+            const globeIcon = node.isGateway ? `<svg class="ml-2 inline-block text-zinc-500 dark:text-zinc-400" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>` : '';
 
             item.innerHTML = `
                 <div class="p-2 rounded-lg" style="background: ${isOff ? '#ef4444' : CONFIG[node.type].color}">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg>
                 </div>
                 <div class="flex-1">
-                    <p class="text-[11px] font-black uppercase text-white">${node.name} ${globeIcon}</p>
-                    <p class="text-[8px] font-mono text-slate-500">${node.ip || 'S/ IP'}</p>
+                    <p class="text-[11px] font-black uppercase text-gray-900 dark:text-white">${node.name} ${globeIcon}</p>
+                    <p class="text-[8px] font-mono text-gray-500 dark:text-slate-500">${node.ip || 'S/ IP'}</p>
                 </div>
-                ${isOff ? '<span class="text-[7px] bg-red-600 px-1.5 py-0.5 rounded uppercase font-black">FAIL</span>' : ''}
+                ${isOff ? '<span class="text-[7px] bg-red-600 px-1.5 py-0.5 rounded uppercase font-black text-white">FAIL</span>' : ''}
             `;
             item.onclick = (e) => { 
                 if(e) e.stopPropagation();
@@ -1189,5 +1311,6 @@
     </script>
 </body>
 </html>
+
 
 
