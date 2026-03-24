@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-br" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,16 +8,7 @@
     <script>
         tailwind.config = {
             darkMode: 'class',
-            theme: { 
-                extend: {
-                    colors: {
-                        zinc: {
-                            950: '#09090b',
-                            1000: '#000000'
-                        }
-                    }
-                } 
-            }
+            theme: { extend: {} }
         }
     </script>
     
@@ -31,6 +22,7 @@
         #map { height: calc(100vh - var(--header-h)); width: 100%; margin-top: var(--header-h); position: absolute; top: 0; left: 0; z-index: 1; background: #e5e7eb; }
         .dark #map { background: #000000; }
         
+        /* Ajuste do List View */
         #list-view { 
             position: fixed; right: 24px; top: calc(var(--header-h) + 16px); bottom: 24px; width: 450px; 
             z-index: 4000; overflow-y: auto; padding: 2rem;
@@ -47,6 +39,7 @@
         .marker-pin.selected { border-color: #52525b; box-shadow: 0 0 25px #52525b; transform: rotate(-45deg) scale(1.1); }
         .dark .marker-pin.selected { border-color: #a1a1aa; box-shadow: 0 0 25px #a1a1aa; }
         
+        /* Animação de Piscar */
         @keyframes blink-red {
             0%, 100% { opacity: 1; filter: drop-shadow(0 0 2px #ef4444); }
             50% { opacity: 0.4; filter: drop-shadow(0 0 15px #ef4444); }
@@ -64,6 +57,7 @@
         .data-flow-line { stroke-dasharray: 10, 10; animation: flow 1s linear infinite; }
         .offline-line { stroke-dasharray: 5, 15; opacity: 0.3; stroke: #ef4444 !important; }
 
+        /* Estilos da Árvore */
         .tree-node { margin-left: 0.75rem; padding-left: 0.75rem; margin-top: 0.5rem; }
         .tree-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; border-radius: 0.75rem; transition: background 0.2s; cursor: pointer; }
 
@@ -90,19 +84,11 @@
         #details-panel, #offline-panel { transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none; transform: translateX(110%); z-index: 4000; }
         #details-panel.show, #offline-panel.show { opacity: 1; transform: translateX(0); pointer-events: auto; }
         
-        /* Legenda - Posição Desktop: Canto Inferior Esquerdo */
-        #map-legend {
-            position: fixed; bottom: 24px; left: 24px; z-index: 4000;
-            width: 190px; border-radius: 1.5rem; padding: 1.25rem;
-            transition: all 0.3s ease; opacity: 0; pointer-events: none; transform: translateY(20px);
-        }
-        #map-legend.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
-
         .locked-mode #settings-btn-container { display: none !important; }
 
         @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Ajustes Mobile */
+        /* Ajustes Estruturais e de Eventos para Mobile */
         @media (max-width: 640px) {
             #list-view {
                 right: 0 !important; left: 0 !important;
@@ -111,7 +97,7 @@
                 padding: 1.5rem !important; transform: translateY(110%) !important;
             }
             #list-view.show { transform: translateY(0) !important; pointer-events: auto !important; opacity: 1 !important; z-index: 6000 !important; }
-            
+
             #details-panel, #offline-panel {
                 right: 0 !important; left: 0 !important;
                 top: auto !important; bottom: 0 !important;
@@ -119,21 +105,16 @@
                 border-radius: 2.5rem 2.5rem 0 0 !important; border-width: 2px 2px 0 2px !important;
                 transform: translateY(110%) !important; padding: 1.5rem !important;
             }
-            #details-panel.show, #offline-panel.show { transform: translateY(0) !important; pointer-events: auto !important; opacity: 1 !important; z-index: 6000 !important; }
-            
-            /* Legenda - Posição Mobile: Canto Superior Esquerdo */
-            #map-legend {
-                bottom: auto; top: calc(var(--header-h) + 16px); left: 16px;
-                transform: translateY(-20px);
+            #details-panel.show, #offline-panel.show {
+                transform: translateY(0) !important; pointer-events: auto !important; opacity: 1 !important; z-index: 6000 !important;
             }
-            #map-legend.show { transform: translateY(0); }
         }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-black text-gray-900 dark:text-slate-100 transition-colors duration-300">
 
     <div id="app-container">
-        <div id="mode-indicator-bar" class="bg-zinc-600 dark:bg-zinc-800 shadow-lg text-white">
+        <div id="mode-indicator-bar" class="bg-zinc-600 dark:bg-zinc-800 shadow-lg">
             <span id="mode-text">Modo Ativo</span>
             <div id="mode-actions" class="flex gap-2"></div>
         </div>
@@ -143,6 +124,7 @@
             <div id="alert-count" class="absolute -top-1 -right-1 bg-white text-red-600 w-7 h-7 rounded-full flex items-center justify-center font-black text-xs border-2 border-red-600">0</div>
         </div>
 
+        <!-- HEADER TOTALMENTE PRETO NO MODO ESCURO -->
         <header class="fixed top-0 left-0 right-0 h-[var(--header-h)] bg-white dark:bg-black border-b-2 border-gray-200 dark:border-zinc-900 z-[2000] flex items-center justify-between px-4 sm:px-8 shadow-md dark:shadow-2xl transition-colors duration-300">
             <div class="flex items-center relative">
                 <button onclick="handleLogoInteraction(event)" class="flex items-center space-x-3 hover:bg-gray-100 dark:hover:bg-zinc-900 p-2 rounded-xl transition-all active:scale-95">
@@ -153,11 +135,11 @@
                 </button>
 
                 <div id="logo-menu" class="bg-white dark:bg-black border-2 border-gray-200 dark:border-zinc-800 transition-colors duration-300">
-                    <div class="p-4 border-b border-gray-100 dark:border-zinc-900 bg-gray-50 dark:bg-black text-[10px] font-black uppercase tracking-widest text-center rounded-t-xl text-zinc-900 dark:text-white">Projeto</div>
+                    <div class="p-4 border-b border-gray-100 dark:border-zinc-900 bg-gray-50 dark:bg-black text-[10px] font-black text-gray-500 dark:text-zinc-500 uppercase tracking-widest text-center rounded-t-xl">Projeto</div>
                     <div class="p-2 space-y-1 text-gray-700 dark:text-white text-[10px] font-bold uppercase">
                         <button onclick="document.getElementById('import-input').click()" class="w-full p-3 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-left flex justify-between">Abrir Projeto <span>📂</span></button>
                         <button onclick="openSaveModal()" class="w-full p-3 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-left flex justify-between">Salvar Projeto <span>💾</span></button>
-                        <button onclick="requestCloseProject()" class="w-full p-3 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/40 dark:hover:text-red-400 rounded-xl transition-all text-left flex justify-between">Fechar Projeto <span>❌</span></button>
+                        <button onclick="requestCloseProject()" class="w-full p-3 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-all text-left flex justify-between">Fechar Projeto <span>❌</span></button>
                         <hr class="border-gray-200 dark:border-zinc-800 my-1">
                         <button onclick="openProjectSettings()" class="w-full p-3 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-left flex justify-between">Configurações do Projeto <span>⚙️</span></button>
                     </div>
@@ -172,12 +154,12 @@
             </div>
 
             <div id="settings-btn-container" class="flex gap-2 relative">
-                <button onclick="toggleSettingsMenu(event)" title="Configurações" class="p-3 bg-white hover:bg-gray-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm dark:shadow-lg active:scale-90 transition-transform text-gray-700 dark:text-white">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <button onclick="toggleSettingsMenu(event)" title="Configurações Gerais" class="p-3 bg-white hover:bg-gray-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm dark:shadow-lg active:scale-90 transition-transform text-gray-700 dark:text-white">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                 </button>
 
                 <div id="settingsMenu" class="absolute top-[55px] right-0 w-52 bg-white dark:bg-black border-2 border-gray-200 dark:border-zinc-800 rounded-2xl shadow-xl hidden z-[3000] p-2 transition-colors duration-300">
-                    <button onclick="openAppSettings()" class="w-full p-3 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-left flex justify-between text-gray-700 dark:text-white text-[10px] font-bold uppercase mb-1">Config. do Programa <span>⚙️</span></button>
+                    <button onclick="openAppSettings()" class="w-full p-3 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-left flex justify-between text-gray-700 dark:text-white text-[10px] font-bold uppercase mb-1">Config. do Programa <span>🖥️</span></button>
                     <button onclick="initPasswordChange()" class="w-full p-3 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-left flex justify-between text-gray-700 dark:text-white text-[10px] font-bold uppercase mb-1">Alterar Senha <span>🔑</span></button>
                     <button onclick="toggleAppLock()" class="w-full p-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-left flex justify-between text-gray-700 dark:text-white text-[10px] font-bold uppercase">Bloquear Tela <span>🔒</span></button>
                 </div>
@@ -185,62 +167,38 @@
         </header>
 
         <!-- Botões Overlay do Mapa -->
-        <button onclick="fitAllNodes(true); if(event) event.stopPropagation();" class="absolute top-[80px] right-4 z-[1000] p-2.5 bg-white/80 dark:bg-black/60 hover:bg-gray-100 dark:hover:bg-black/90 backdrop-blur border border-gray-300 dark:border-zinc-800 rounded-xl shadow-md transition-all text-gray-700 dark:text-white/80 hover:text-gray-900 dark:hover:text-white" title="Visão Geral">
+        <button id="map-fit-btn" onclick="fitAllNodes(true); if(event) event.stopPropagation();" class="absolute top-[80px] right-4 z-[1000] p-2.5 bg-white/80 dark:bg-black/60 hover:bg-gray-100 dark:hover:bg-black/90 backdrop-blur border border-gray-300 dark:border-zinc-800 rounded-xl shadow-md transition-all text-gray-700 dark:text-white/80 hover:text-gray-900 dark:hover:text-white" title="Visão Geral">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 15v6h-6M3 9V3h6"/></svg>
         </button>
 
-        <button onclick="locateMeAndFly(event)" class="absolute top-[135px] right-4 z-[1000] p-2.5 bg-white/80 dark:bg-black/60 hover:bg-gray-100 dark:hover:bg-black/90 backdrop-blur border border-gray-300 dark:border-zinc-800 rounded-xl shadow-md transition-all text-gray-700 dark:text-white/80 hover:text-gray-900 dark:hover:text-white" title="Minha Localização">
+        <button id="map-locate-btn" onclick="locateMeAndFly(event)" class="absolute top-[135px] right-4 z-[1000] p-2.5 bg-white/80 dark:bg-black/60 hover:bg-gray-100 dark:hover:bg-black/90 backdrop-blur border border-gray-300 dark:border-zinc-800 rounded-xl shadow-md transition-all text-gray-700 dark:text-white/80 hover:text-gray-900 dark:hover:text-white" title="Minha Localização">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
         </button>
 
-        <button onclick="toggleMapLayer(event)" class="absolute top-[190px] right-4 z-[1000] p-2.5 bg-white/80 dark:bg-black/60 hover:bg-gray-100 dark:hover:bg-black/90 backdrop-blur border border-gray-300 dark:border-zinc-800 rounded-xl shadow-md transition-all text-gray-700 dark:text-white/80 hover:text-gray-900 dark:hover:text-white" title="Alternar Mapa/Satélite">
+        <button id="map-layer-btn" onclick="toggleMapLayer(event)" class="absolute top-[190px] right-4 z-[1000] p-2.5 bg-white/80 dark:bg-black/60 hover:bg-gray-100 dark:hover:bg-black/90 backdrop-blur border border-gray-300 dark:border-zinc-800 rounded-xl shadow-md transition-all text-gray-700 dark:text-white/80 hover:text-gray-900 dark:hover:text-white" title="Alternar Mapa/Satélite">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
         </button>
 
-        <button onclick="toggleLegend(event)" class="absolute top-[245px] right-4 z-[1000] p-2.5 bg-white/80 dark:bg-black/60 hover:bg-gray-100 dark:hover:bg-black/90 backdrop-blur border border-gray-300 dark:border-zinc-800 rounded-xl shadow-md transition-all text-gray-700 dark:text-white/80 hover:text-gray-900 dark:hover:text-white" title="Exibir Legenda">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-        </button>
-
-        <!-- Legenda Container -->
-        <div id="map-legend" class="bg-white/95 dark:bg-zinc-900/95 border border-gray-200 dark:border-zinc-800 backdrop-blur shadow-2xl transition-colors duration-300">
-            <p class="text-[9px] font-black uppercase text-gray-500 dark:text-zinc-500 mb-4 tracking-widest border-b border-gray-200 dark:border-zinc-800 pb-2">Legenda</p>
-            <div class="space-y-3">
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-[#6366f1]"></div>
-                    <span class="text-[10px] font-bold uppercase text-zinc-800 dark:text-zinc-200">Switch Principal</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-[#10b981]"></div>
-                    <span class="text-[10px] font-bold uppercase text-zinc-800 dark:text-zinc-200">Switch</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-[#f59e0b]"></div>
-                    <span class="text-[10px] font-bold uppercase text-zinc-800 dark:text-zinc-200">Conversor</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-[#3b82f6]"></div>
-                    <span class="text-[10px] font-bold uppercase text-zinc-800 dark:text-zinc-200">Câmera / Serv</span>
-                </div>
-                <hr class="border-gray-200 dark:border-zinc-800">
-                <div class="flex items-center gap-2">
-                    <div class="w-4 h-1 bg-zinc-500"></div>
-                    <span class="text-[9px] uppercase text-gray-700 dark:text-gray-300">Link Normal</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-4 h-1 bg-blue-500"></div>
-                    <span class="text-[9px] uppercase text-gray-700 dark:text-gray-300">Com Internet</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-4 h-1 border-t-2 border-red-500 border-dashed"></div>
-                    <span class="text-[9px] uppercase text-red-500">Falha</span>
-                </div>
+        <!-- Ferramentas Laterais -->
+        <div id="fab-container" class="fab-container">
+            <div id="fab-main" onclick="toggleFab()" class="fab-main border-zinc-400 dark:border-zinc-600 bg-zinc-600 dark:bg-zinc-800 shadow-[0_10px_25px_rgba(82,82,91,0.4)] dark:shadow-[0_10px_25px_rgba(0,0,0,0.6)]">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </div>
+            <div id="fab-items" class="fab-items">
+                <button onclick="setMode('core_switch')" id="tool-core_switch" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" title="Switch Principal" style="color: #6366f1"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2"/></svg></button>
+                <button onclick="setMode('converter')" id="tool-converter" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" title="Conversor" style="color: #f59e0b"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></button>
+                <button onclick="setMode('switch')" id="tool-switch" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" title="Switch" style="color: #10b981"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/></svg></button>
+                <button onclick="setMode('camera')" id="tool-camera" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" title="Câmera" style="color: #3b82f6"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>
+                <button onclick="setMode('server')" id="tool-server" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" title="Servidor" style="color: #a78bfa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/></svg></button>
+                <button onclick="toggleLinking()" id="link-btn" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" title="Conectar" style="color: #71717a"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54"/></svg></button>
             </div>
         </div>
 
+        <!-- DIV do Mapa Central -->
         <div id="map"></div>
-
-        <!-- Ferramentas e Visão em Lista -->
-        <div id="list-view" onclick="if(event && typeof event.stopPropagation === 'function') event.stopPropagation()" class="bg-white dark:bg-black border-gray-200 dark:border-zinc-900 transition-colors duration-300 border-2">
+        
+        <!-- List View -->
+        <div id="list-view" onclick="if(event) event.stopPropagation()" class="bg-white dark:bg-black border-gray-200 dark:border-zinc-900 transition-colors duration-300 border-2">
             <div class="flex justify-between items-center mb-8 border-b border-gray-200 dark:border-zinc-800 pb-4">
                 <h2 class="text-xl font-black uppercase tracking-tighter text-zinc-600 dark:text-zinc-400">Hierarquia de Rede</h2>
                 <button onclick="toggleView('map', event)" class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-full transition-colors text-gray-700 dark:text-white"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
@@ -248,31 +206,19 @@
             <div id="tree-container"></div>
         </div>
 
-        <div id="fab-container" class="fab-container">
-            <div id="fab-main" onclick="toggleFab()" class="fab-main border-zinc-400 dark:border-zinc-600 bg-zinc-600 dark:bg-zinc-800 shadow-lg">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            </div>
-            <div id="fab-items" class="fab-items">
-                <button onclick="setMode('core_switch')" id="tool-core_switch" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" style="color: #6366f1"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2"/></svg></button>
-                <button onclick="setMode('converter')" id="tool-converter" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" style="color: #f59e0b"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></button>
-                <button onclick="setMode('switch')" id="tool-switch" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" style="color: #10b981"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><path d="M14 18h.01"/><path d="M18 18h.01"/></svg></button>
-                <button onclick="setMode('camera')" id="tool-camera" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" style="color: #3b82f6"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>
-                <button onclick="setMode('server')" id="tool-server" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" style="color: #a78bfa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/></svg></button>
-                <button onclick="toggleLinking()" id="link-btn" class="fab-item-btn tool-btn bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700" style="color: #71717a"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54"/></svg></button>
-            </div>
-        </div>
-
-        <!-- MODAIS E PAINEIS -->
+        <!-- MODAIS -->
         <div id="project-settings-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
             <div class="w-full max-w-sm bg-white dark:bg-black border-2 border-gray-200 dark:border-zinc-800 rounded-[2.5rem] p-8 text-gray-900 dark:text-white shadow-2xl relative transition-colors duration-300">
                 <h3 class="text-xl font-black uppercase mb-6 tracking-tighter text-center">Configurações</h3>
+                
                 <div class="mb-5">
                     <p class="text-[10px] text-gray-500 dark:text-zinc-500 uppercase font-black mb-3">Modo de Mapa</p>
                     <div class="flex gap-2">
-                        <button onclick="document.getElementById('bg-input').click()" class="flex-1 bg-gray-100 dark:bg-zinc-900 hover:bg-gray-200 dark:hover:bg-zinc-800 py-3 rounded-xl font-black uppercase text-[9px] border border-gray-200 dark:border-zinc-800 text-gray-800 dark:text-white transition-all">Planta 🖼️</button>
-                        <button onclick="resetToWorldMap()" class="flex-1 bg-gray-100 dark:bg-zinc-900 hover:bg-gray-200 dark:hover:bg-zinc-800 py-3 rounded-xl font-black uppercase text-[9px] border border-gray-200 dark:border-zinc-800 text-gray-800 dark:text-white transition-all">Mundi 🌍</button>
+                        <button onclick="document.getElementById('bg-input').click()" class="flex-1 bg-gray-100 dark:bg-zinc-900 hover:bg-gray-200 dark:hover:bg-zinc-800 py-3 rounded-xl font-black uppercase text-[9px] transition-all border border-gray-200 dark:border-zinc-800 text-gray-800 dark:text-white">Planta 🖼️</button>
+                        <button onclick="resetToWorldMap()" class="flex-1 bg-gray-100 dark:bg-zinc-900 hover:bg-gray-200 dark:hover:bg-zinc-800 py-3 rounded-xl font-black uppercase text-[9px] transition-all border border-gray-200 dark:border-zinc-800 text-gray-800 dark:text-white">Mundi 🌍</button>
                     </div>
                 </div>
+
                 <div class="mb-8">
                     <p class="text-[10px] text-gray-500 dark:text-zinc-500 uppercase font-black mb-3">Automação</p>
                     <div class="p-4 bg-gray-50 dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 flex justify-between items-center cursor-pointer transition-colors" onclick="toggleAutoLock()">
@@ -281,14 +227,18 @@
                             <div class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all left-0.5" id="toggle-autolock-knob"></div>
                         </div>
                     </div>
+                    <p class="text-[8px] text-gray-500 dark:text-zinc-500 mt-2 text-center">Inicia o "Modo Operação" assim que o arquivo é aberto.</p>
                 </div>
+
                 <button onclick="closeProjectSettings()" class="w-full bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 py-4 rounded-2xl font-black uppercase text-xs shadow-lg text-white transition-colors">Concluído</button>
             </div>
         </div>
 
+        <!-- MODAL DE CONFIGURAÇÕES DO PROGRAMA -->
         <div id="app-settings-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
             <div class="w-full max-w-sm bg-white dark:bg-black border-2 border-gray-200 dark:border-zinc-800 rounded-[2.5rem] p-8 text-gray-900 dark:text-white shadow-2xl relative transition-colors duration-300">
                 <h3 class="text-xl font-black uppercase mb-6 tracking-tighter text-center">Config. do Programa</h3>
+                
                 <div class="mb-8">
                     <p class="text-[10px] text-gray-500 dark:text-zinc-500 uppercase font-black mb-3">Aparência</p>
                     <div class="p-4 bg-gray-50 dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 flex justify-between items-center cursor-pointer transition-colors" onclick="toggleTheme()">
@@ -298,8 +248,49 @@
                         </div>
                     </div>
                 </div>
+
                 <button onclick="closeAppSettings()" class="w-full bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 py-4 rounded-2xl font-black uppercase text-xs shadow-lg text-white transition-colors">Concluído</button>
             </div>
+        </div>
+
+        <div id="close-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
+            <div class="w-full max-w-sm bg-white dark:bg-black border-2 border-red-500/50 rounded-[2.5rem] p-10 text-gray-900 dark:text-white shadow-2xl text-center transition-colors duration-300">
+                <h3 class="text-xl font-black uppercase mb-4 tracking-tighter text-red-600 dark:text-red-500">Fechar Projeto</h3>
+                <p class="text-[10px] text-gray-600 dark:text-zinc-400 uppercase font-black mb-8">Você possui alterações não salvas. Deseja exportar o projeto antes de fechar e limpar a tela?</p>
+                <div class="flex flex-col gap-3">
+                    <button onclick="closeCloseModal(); openSaveModal();" class="w-full bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 py-4 rounded-2xl font-black uppercase text-xs shadow-lg text-white">Salvar Projeto</button>
+                    <button onclick="closeProject()" class="w-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-500 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white py-4 rounded-2xl font-black uppercase text-xs border border-red-200 dark:border-red-500/30 transition-colors">Fechar Sem Salvar</button>
+                    <button onclick="closeCloseModal()" class="w-full bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-white py-4 rounded-2xl font-black uppercase text-xs mt-2 hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="save-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
+            <div class="w-full max-w-sm bg-white dark:bg-black border-2 border-gray-200 dark:border-zinc-800 rounded-[2.5rem] p-10 text-gray-900 dark:text-white shadow-2xl transition-colors duration-300">
+                <h3 class="text-xl font-black uppercase mb-6 tracking-tighter text-center">Salvar Projeto</h3>
+                <p class="text-[10px] text-gray-500 dark:text-zinc-500 uppercase font-black mb-2 text-center">Nome do Arquivo</p>
+                <input type="text" id="save-filename" class="w-full bg-gray-50 dark:bg-zinc-900 border-2 border-gray-200 dark:border-zinc-800 rounded-2xl p-5 text-center text-xl mb-6 outline-none focus:border-zinc-500 text-gray-900 dark:text-white font-bold transition-colors" value="Projeto_Rede_v8">
+                <div class="flex gap-4">
+                    <button onclick="closeSaveModal()" class="flex-1 bg-gray-100 dark:bg-zinc-900 hover:bg-gray-200 dark:hover:bg-zinc-800 py-4 rounded-2xl font-black uppercase text-xs text-gray-800 dark:text-white transition-colors">Cancelar</button>
+                    <button onclick="confirmExport()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 py-4 rounded-2xl font-black uppercase text-xs shadow-lg text-white transition-colors">Baixar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="offline-panel" onclick="if(event) event.stopPropagation()" class="fixed right-6 top-24 bottom-24 w-96 bg-white dark:bg-black border-2 border-red-500/40 rounded-[3rem] p-8 flex flex-col shadow-2xl text-gray-900 dark:text-white transition-colors duration-300">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-sm font-black uppercase text-red-600 dark:text-red-500 tracking-widest italic">Falhas Detectadas</h3>
+                <button onclick="closeOfflinePanel(event)" class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-full transition-colors"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+            </div>
+            <div id="offline-list" class="flex-1 overflow-y-auto space-y-3 pr-2"></div>
+        </div>
+
+        <div id="details-panel" onclick="if(event) event.stopPropagation()" class="fixed right-6 top-24 bottom-24 w-80 bg-white dark:bg-black border-2 border-gray-200 dark:border-zinc-800 rounded-[3rem] p-8 flex flex-col shadow-2xl text-gray-900 dark:text-white overflow-hidden transition-colors duration-300">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-[10px] font-black uppercase text-gray-500 dark:text-zinc-500 tracking-widest">Ativo</h3>
+                <button onclick="closePanel(event)" class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-full transition-colors"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+            </div>
+            <div id="details-content" class="flex-1 overflow-y-auto space-y-6"></div>
         </div>
 
         <div id="password-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
@@ -309,48 +300,18 @@
                 <input type="password" id="unlock-pass" onkeypress="if(event.key === 'Enter') handlePasswordAction()" class="w-full bg-gray-50 dark:bg-zinc-900 border-2 border-gray-200 dark:border-zinc-800 rounded-2xl p-5 text-center text-2xl tracking-[0.5em] mb-6 outline-none focus:border-zinc-500 text-gray-900 dark:text-white transition-colors" placeholder="•••••">
                 <div class="flex gap-2">
                     <button id="pass-cancel-btn" onclick="closePasswordModal()" class="flex-1 bg-gray-100 dark:bg-zinc-900 py-4 rounded-2xl font-black uppercase text-gray-800 dark:text-white shadow-lg text-xs hidden transition-colors hover:bg-gray-200 dark:hover:bg-zinc-800">Cancelar</button>
-                    <button id="pass-action-btn" onclick="handlePasswordAction()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-600 dark:hover:bg-zinc-500 py-4 rounded-2xl font-black uppercase shadow-lg text-white text-xs transition-colors">Ação</button>
+                    <button id="pass-action-btn" onclick="handlePasswordAction()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 py-4 rounded-2xl font-black uppercase shadow-lg text-white text-xs transition-colors">Ação</button>
                 </div>
             </div>
-        </div>
-
-        <div id="close-modal" class="fixed inset-0 z-[7000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
-            <div class="w-full max-w-sm bg-white dark:bg-black border-2 border-red-500/50 rounded-[2.5rem] p-10 text-gray-900 dark:text-white shadow-2xl text-center transition-colors duration-300">
-                <h3 class="text-xl font-black uppercase mb-4 tracking-tighter text-red-600 dark:text-red-500">Fechar Projeto</h3>
-                <p class="text-[10px] text-gray-600 dark:text-zinc-400 uppercase font-black mb-8">Possui alterações não salvas. Deseja exportar o projeto antes de fechar?</p>
-                <div class="flex flex-col gap-3">
-                    <button onclick="closeCloseModal(); openSaveModal();" class="w-full bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 py-4 rounded-2xl font-black uppercase text-xs shadow-lg text-white">Salvar Projeto</button>
-                    <button onclick="closeProject()" class="w-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-500 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white py-4 rounded-2xl font-black uppercase text-xs border border-red-200 dark:border-red-500/30 transition-colors">Fechar Sem Salvar</button>
-                    <button onclick="closeCloseModal()" class="w-full bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-white py-4 rounded-2xl font-black uppercase text-xs mt-2 hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors">Cancelar</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="offline-panel" onclick="if(event && typeof event.stopPropagation === 'function') event.stopPropagation()" class="fixed right-6 top-24 bottom-24 w-96 bg-white dark:bg-black border-2 border-red-500/40 rounded-[3rem] p-8 flex flex-col shadow-2xl text-gray-900 dark:text-white transition-colors duration-300">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-sm font-black uppercase text-red-600 dark:text-red-500 tracking-widest italic">Falhas Detectadas</h3>
-                <button onclick="closeOfflinePanel(event)" class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-full transition-colors"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-            </div>
-            <div id="offline-list" class="flex-1 overflow-y-auto space-y-3 pr-2"></div>
-        </div>
-
-        <div id="details-panel" onclick="if(event && typeof event.stopPropagation === 'function') event.stopPropagation()" class="fixed right-6 top-24 bottom-24 w-80 bg-white dark:bg-black border-2 border-gray-200 dark:border-zinc-900 rounded-[3rem] p-8 flex flex-col shadow-2xl text-gray-900 dark:text-white overflow-hidden transition-colors duration-300">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-[10px] font-black uppercase text-gray-500 dark:text-zinc-500 tracking-widest">Ativo</h3>
-                <button onclick="closePanel(event)" class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-full transition-colors"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-            </div>
-            <div id="details-content" class="flex-1 overflow-y-auto space-y-6 text-gray-900 dark:text-white"></div>
         </div>
     </div>
 
     <script>
-        // --- VARIÁVEIS GLOBAIS ---
         let nodes = []; let links = []; let map; let selectedId = null;
         let isLinking = false; let isDrawingPath = false; 
         let drawingNodeId = null; let linkSourceId = null; 
         let activeStatuses = {}; let currentMode = null; 
         let isLocked = false; let logoClicks = 0; let isMenuOpen = false;
-        let isLegendVisible = false;
         
         let individualLayer, linksLayer, handlesLayer, bgImageLayer;
         let darkMapLayer, lightMapLayer, satelliteLayer;
@@ -373,39 +334,9 @@
             server: { label: 'Servidor', color: '#a78bfa', hasIp: true, icon: '<rect width="20" height="10" x="2" y="2" rx="2"/><rect width="20" height="10" x="2" y="12" rx="2"/><path d="M6 6h.01"/><path d="M10 6h.01"/>', rank: 4 }
         };
 
-        // --- FUNÇÕES BASE E ESTADO ---
-        function getStatusMap() {
-            let statusMap = {};
-            nodes.forEach(n => statusMap[n.id] = (CONFIG[n.type].hasIp && activeStatuses[n.id] === 'offline'));
-            let changed = true;
-            while(changed) {
-                changed = false;
-                nodes.forEach(n => {
-                    if (!statusMap[n.id]) {
-                        const parentLink = links.find(l => l.b === n.id);
-                        if (parentLink && statusMap[parentLink.a]) { statusMap[n.id] = true; changed = true; }
-                        if (!CONFIG[n.type].hasIp) {
-                            const childrenIds = links.filter(l => l.a === n.id).map(l => l.b);
-                            if (childrenIds.length > 0 && childrenIds.every(cid => statusMap[cid])) { statusMap[n.id] = true; changed = true; }
-                        }
-                    }
-                });
-            }
-            return statusMap;
-        }
-
-        function getPathLinkIds(nodeId) {
-            let pathIds = new Set(); if (!nodeId) return pathIds;
-            let qUp = [nodeId]; let vUp = new Set([nodeId]);
-            while (qUp.length > 0) { let curr = qUp.shift(); links.forEach(l => { if (l.b === curr) { pathIds.add(l.id); if (!vUp.has(l.a)) { vUp.add(l.a); qUp.push(l.a); } } }); }
-            let qDown = [nodeId]; let vDown = new Set([nodeId]);
-            while (qDown.length > 0) { let curr = qDown.shift(); links.forEach(l => { if (l.a === curr) { pathIds.add(l.id); if (!vDown.has(l.b)) { vDown.add(l.b); qDown.push(l.b); } } }); }
-            return pathIds;
-        }
-
-        // --- TEMA E UI ---
+        // --- SISTEMA DE TEMA ---
         function applyThemeToMap() {
-            if(currentMapLayer !== 'base' || !map) return; 
+            if(currentMapLayer !== 'base') return; 
             if (isDarkMode) {
                 if (map.hasLayer(lightMapLayer)) map.removeLayer(lightMapLayer);
                 if (!map.hasLayer(darkMapLayer)) darkMapLayer.addTo(map);
@@ -419,53 +350,29 @@
             const html = document.documentElement;
             if(isDarkMode) html.classList.add('dark');
             else html.classList.remove('dark');
-            
+
             const bg = document.getElementById('toggle-theme-bg');
             const knob = document.getElementById('toggle-theme-knob');
             if (bg && knob) {
-                if (isDarkMode) { knob.classList.replace('left-0.5', 'left-5'); if(!knob.classList.contains('left-5')) knob.classList.add('left-5'); }
-                else { knob.classList.replace('left-5', 'left-0.5'); if(!knob.classList.contains('left-0.5')) knob.classList.add('left-0.5'); }
-            }
-            
-            if(map && currentMapLayer === 'base') {
                 if (isDarkMode) {
-                    if (map.hasLayer(lightMapLayer)) map.removeLayer(lightMapLayer);
-                    if (!map.hasLayer(darkMapLayer)) darkMapLayer.addTo(map);
+                    knob.classList.replace('left-0.5', 'left-5');
+                    if(!knob.classList.contains('left-5')) knob.classList.add('left-5');
                 } else {
-                    if (map.hasLayer(darkMapLayer)) map.removeLayer(darkMapLayer);
-                    if (!map.hasLayer(lightMapLayer)) lightMapLayer.addTo(map);
+                    knob.classList.replace('left-5', 'left-0.5');
+                    if(!knob.classList.contains('left-0.5')) knob.classList.add('left-0.5');
                 }
             }
+            if(map) applyThemeToMap();
             render(); 
         }
 
-        function toggleTheme() { isDarkMode = !isDarkMode; updateThemeUI(); localStorage.setItem('infrasegura_theme', isDarkMode); }
-        function toggleLegend(e) { if(e && typeof e.stopPropagation === 'function') e.stopPropagation(); isLegendVisible = !isLegendVisible; document.getElementById('map-legend').classList.toggle('show', isLegendVisible); }
-        
-        // --- EVENTOS GERAIS ---
-        function closePanel(e) { if(e && typeof e.stopPropagation === 'function') e.stopPropagation(); document.getElementById('details-panel').classList.remove('show'); selectedId = null; render(); restoreMapView(); }
-        function closeOfflinePanel(e) { if(e && typeof e.stopPropagation === 'function') e.stopPropagation(); document.getElementById('offline-panel').classList.remove('show'); restoreMapView(); }
-        function toggleMapLayer(e) { if(e && typeof e.stopPropagation === 'function') e.stopPropagation(); if (currentBackgroundBase64) { showToast("Em modo Planta de Fundo"); return; } if (currentMapLayer === 'base') { if (map.hasLayer(darkMapLayer)) map.removeLayer(darkMapLayer); if (map.hasLayer(lightMapLayer)) map.removeLayer(lightMapLayer); satelliteLayer.addTo(map); currentMapLayer = 'satellite'; showToast("Modo Satélite Ativado"); } else { map.removeLayer(satelliteLayer); currentMapLayer = 'base'; applyThemeToMap(); showToast("Modo Mapa Base Ativado"); } }
-        function locateMeAndFly(e) { if(e && typeof e.stopPropagation === 'function') e.stopPropagation(); if (isLocked) { showToast("Ação bloqueada no Modo Operação"); return; } if (userLocationMarker) map.flyTo(userLocationMarker.getLatLng(), 18); else showToast("Buscando localização..."); }
-        function toggleSettingsMenu(e) { if(e && typeof e.stopPropagation === 'function') e.stopPropagation(); document.getElementById('settingsMenu').classList.toggle('hidden'); document.getElementById('logo-menu').classList.remove('show'); }
-        function handleLogoInteraction(e) { if(e && typeof e.stopPropagation === 'function') e.stopPropagation(); if (isLocked) { logoClicks++; if (logoClicks >= 3) { logoClicks = 0; openPasswordModal('unlock'); } } else { document.getElementById('logo-menu').classList.toggle('show'); document.getElementById('settingsMenu').classList.add('hidden'); } }
-
-        function handleNodeClick(id) { 
-            if (isDrawingPath) return; 
-            if (isLinking) { 
-                if (!linkSourceId) { linkSourceId = id; showToast(`Origem: ${nodes.find(n => n.id === id).name}`); } 
-                else if (linkSourceId !== id) { 
-                    const n1 = nodes.find(n => n.id === linkSourceId); const n2 = nodes.find(n => n.id === id);
-                    if (n1.type === 'camera' && n2.type === 'camera') { showToast("Erro."); linkSourceId = null; render(); return; }
-                    let pId = (CONFIG[n1.type].rank <= CONFIG[n2.type].rank) ? n1.id : n2.id;
-                    links.push({ id: 'l'+Date.now(), a: pId, b: (pId === n1.id ? n2.id : n1.id), vertices: [] }); saveData(); linkSourceId = null; render();
-                } 
-                return; 
-            } 
-            openDetails(id); 
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            updateThemeUI();
+            localStorage.setItem('infrasegura_theme', isDarkMode);
         }
 
-        // --- SENHAS E MODAIS ---
+        // --- SISTEMA DE SENHA ---
         async function hashPassword(msg) {
             const encoder = new TextEncoder();
             const data = encoder.encode(msg);
@@ -486,83 +393,236 @@
             msg.classList.remove('hidden');
             cancelBtn.classList.remove('hidden');
 
-            if (mode === 'setup') { title.innerText = 'Nova Senha'; msg.innerText = 'Defina uma senha para bloquear'; actionBtn.innerText = 'Salvar'; }
-            else if (mode === 'unlock') { title.innerText = 'Bloqueado'; msg.innerText = 'Insira a senha para acessar'; actionBtn.innerText = 'Desbloquear'; cancelBtn.classList.add('hidden'); }
-            else if (mode === 'change_current') { title.innerText = 'Segurança'; msg.innerText = 'Insira a senha atual'; actionBtn.innerText = 'Avançar'; }
-            else if (mode === 'change_new') { title.innerText = 'Nova Senha'; msg.innerText = 'Digite a nova senha'; actionBtn.innerText = 'Salvar'; }
+            if (mode === 'setup') {
+                title.innerText = 'Nova Senha';
+                msg.innerText = 'Defina uma senha para bloquear';
+                actionBtn.innerText = 'Salvar';
+            } else if (mode === 'unlock') {
+                title.innerText = 'Bloqueado';
+                msg.innerText = 'Insira a senha para acessar';
+                actionBtn.innerText = 'Desbloquear';
+                cancelBtn.classList.add('hidden');
+            } else if (mode === 'change_current') {
+                title.innerText = 'Segurança';
+                msg.innerText = 'Insira a senha atual';
+                actionBtn.innerText = 'Avançar';
+            } else if (mode === 'change_new') {
+                title.innerText = 'Nova Senha';
+                msg.innerText = 'Digite a nova senha';
+                actionBtn.innerText = 'Salvar';
+            }
             
             modal.classList.remove('hidden');
             setTimeout(() => input.focus(), 100);
         }
 
-        function closePasswordModal() { document.getElementById('password-modal').classList.add('hidden'); }
+        function closePasswordModal() {
+            document.getElementById('password-modal').classList.add('hidden');
+        }
 
         async function handlePasswordAction() {
             const inputVal = document.getElementById('unlock-pass').value;
             if (!inputVal) { showToast("Insira uma senha!"); return; }
+
             const hashed = await hashPassword(inputVal);
+
             if (passwordModalMode === 'setup') {
-                appPasswordHash = hashed; saveData(); closePasswordModal();
-                if (document.getElementById('project-settings-modal').classList.contains('hidden') === false) { autoLockOnLoad = true; updateAutoLockUI(); saveData(); }
-                else { executeLock(); }
+                appPasswordHash = hashed;
+                saveData();
+                closePasswordModal();
+                
+                if (document.getElementById('project-settings-modal').classList.contains('hidden') === false) {
+                    autoLockOnLoad = true;
+                    updateAutoLockUI();
+                    saveData();
+                } else {
+                    executeLock();
+                }
             } else if (passwordModalMode === 'unlock') {
                 if (hashed === appPasswordHash) {
-                    isLocked = false; document.body.classList.remove('locked-mode'); document.getElementById('fab-container').style.display = 'flex'; 
-                    map.touchZoom.enable(); map.doubleClickZoom.enable(); map.scrollWheelZoom.enable(); map.boxZoom.enable(); map.keyboard.enable(); checkDrag(); 
-                    closePasswordModal(); showToast("Desbloqueado"); logoClicks = 0; render();
-                } else { showToast("Senha Incorreta!"); document.getElementById('unlock-pass').value = ''; }
+                    isLocked = false; 
+                    document.body.classList.remove('locked-mode'); 
+                    document.getElementById('fab-container').style.display = 'flex'; 
+                    
+                    map.touchZoom.enable();
+                    map.doubleClickZoom.enable();
+                    map.scrollWheelZoom.enable();
+                    map.boxZoom.enable();
+                    map.keyboard.enable();
+                    checkDrag(); 
+
+                    closePasswordModal();
+                    showToast("Desbloqueado");
+                    logoClicks = 0;
+                    render();
+                } else {
+                    showToast("Senha Incorreta!");
+                    document.getElementById('unlock-pass').value = '';
+                }
             } else if (passwordModalMode === 'change_current') {
-                if (hashed === appPasswordHash) openPasswordModal('change_new');
-                else { showToast("Senha atual incorreta!"); document.getElementById('unlock-pass').value = ''; }
+                if (hashed === appPasswordHash) {
+                    openPasswordModal('change_new');
+                } else {
+                    showToast("Senha atual incorreta!");
+                    document.getElementById('unlock-pass').value = '';
+                }
             } else if (passwordModalMode === 'change_new') {
-                appPasswordHash = hashed; saveData(); closePasswordModal(); showToast("Senha alterada com sucesso!");
+                appPasswordHash = hashed;
+                saveData();
+                closePasswordModal();
+                showToast("Senha alterada com sucesso!");
             }
         }
 
-        function initPasswordChange() { document.getElementById('settingsMenu').classList.add('hidden'); if (!appPasswordHash) openPasswordModal('setup'); else openPasswordModal('change_current'); }
-        
-        // --- MODAIS E CONFIG ---
-        function openProjectSettings() { document.getElementById('logo-menu').classList.remove('show'); document.getElementById('settingsMenu').classList.add('hidden'); updateAutoLockUI(); document.getElementById('project-settings-modal').classList.remove('hidden'); }
-        function closeProjectSettings() { document.getElementById('project-settings-modal').classList.add('hidden'); }
-        function openAppSettings() { document.getElementById('settingsMenu').classList.add('hidden'); updateThemeUI(); document.getElementById('app-settings-modal').classList.remove('hidden'); }
-        function closeAppSettings() { document.getElementById('app-settings-modal').classList.add('hidden'); }
-        
+        function initPasswordChange() {
+            document.getElementById('settingsMenu').classList.add('hidden');
+            if (!appPasswordHash) {
+                openPasswordModal('setup');
+            } else {
+                openPasswordModal('change_current');
+            }
+        }
+
+        // --- SISTEMA DE MODAIS E CONFIGURAÇÕES ---
+        function openAppSettings() {
+            document.getElementById('settingsMenu').classList.add('hidden');
+            updateThemeUI();
+            document.getElementById('app-settings-modal').classList.remove('hidden');
+        }
+
+        function closeAppSettings() {
+            document.getElementById('app-settings-modal').classList.add('hidden');
+        }
+
+        function openProjectSettings() {
+            document.getElementById('logo-menu').classList.remove('show');
+            document.getElementById('settingsMenu').classList.add('hidden');
+            updateAutoLockUI();
+            document.getElementById('project-settings-modal').classList.remove('hidden');
+        }
+
+        function closeProjectSettings() {
+            document.getElementById('project-settings-modal').classList.add('hidden');
+        }
+
         function updateAutoLockUI() {
             const bg = document.getElementById('toggle-autolock-bg');
             const knob = document.getElementById('toggle-autolock-knob');
             if (bg && knob) {
-                if (autoLockOnLoad) { bg.classList.replace('bg-gray-300', 'bg-zinc-500'); bg.classList.replace('bg-slate-700', 'bg-zinc-500'); knob.classList.replace('left-0.5', 'left-5'); }
-                else { bg.classList.replace('bg-zinc-500', 'bg-slate-700'); if(!isDarkMode) { bg.classList.replace('bg-slate-700', 'bg-gray-300'); } knob.classList.replace('left-5', 'left-0.5'); }
+                if (autoLockOnLoad) {
+                    bg.classList.replace('bg-gray-300', 'bg-zinc-500');
+                    bg.classList.replace('bg-slate-700', 'bg-zinc-500');
+                    if(!bg.classList.contains('bg-zinc-500')) bg.classList.add('bg-zinc-500');
+                    knob.classList.replace('left-0.5', 'left-5');
+                    if(!knob.classList.contains('left-5')) knob.classList.add('left-5');
+                } else {
+                    bg.classList.replace('bg-zinc-500', 'bg-slate-700'); 
+                    if(isDarkMode) bg.classList.add('bg-slate-700'); else bg.classList.add('bg-gray-300');
+                    knob.classList.replace('left-5', 'left-0.5');
+                    if(!knob.classList.contains('left-0.5')) knob.classList.add('left-0.5');
+                }
             }
         }
 
-        function toggleAutoLock() { if (!autoLockOnLoad && !appPasswordHash) { showToast("Defina uma senha primeiro!"); openPasswordModal('setup'); return; } autoLockOnLoad = !autoLockOnLoad; updateAutoLockUI(); saveData(); }
-        function toggleAppLock() { resetTools(); closePanel(null); document.getElementById('logo-menu').classList.remove('show'); document.getElementById('settingsMenu').classList.add('hidden'); if (!appPasswordHash) { openPasswordModal('setup'); return; } executeLock(); }
-        
-        function executeLock() {
-            isLocked = true; document.body.classList.add('locked-mode'); document.getElementById('fab-container').style.display = 'none'; 
-            map.dragging.disable(); map.touchZoom.disable(); map.doubleClickZoom.disable(); map.scrollWheelZoom.disable(); map.boxZoom.disable(); map.keyboard.disable();
-            fitAllNodes(true); showToast("MODO OPERAÇÃO ATIVADO"); 
+        function toggleAutoLock() {
+            if (!autoLockOnLoad && !appPasswordHash) {
+                showToast("Defina uma senha de segurança primeiro!");
+                openPasswordModal('setup');
+                return;
+            }
+            autoLockOnLoad = !autoLockOnLoad;
+            updateAutoLockUI();
+            saveData();
         }
 
-        function requestCloseProject() { document.getElementById('logo-menu').classList.remove('show'); document.getElementById('settingsMenu').classList.add('hidden'); if (hasUnsavedChanges && nodes.length > 0) document.getElementById('close-modal').classList.remove('hidden'); else closeProject(); }
-        function closeCloseModal() { document.getElementById('close-modal').classList.add('hidden'); }
-        function closeProject() {
-            nodes = []; links = []; appPasswordHash = null; autoLockOnLoad = false; hasUnsavedChanges = false;
-            localStorage.removeItem('infrasegura_data'); resetToWorldMap(); render();
-            closeCloseModal(); closePanel(null); closeOfflinePanel(null); map.setView([-23.5505, -46.6333], 10); showToast("Projeto Fechado.");
+        function toggleAppLock() { 
+            resetTools(); 
+            closePanel(null); 
+            document.getElementById('logo-menu').classList.remove('show'); 
+            document.getElementById('settingsMenu').classList.add('hidden');
+            
+            if (!appPasswordHash) {
+                openPasswordModal('setup');
+                return;
+            }
+            executeLock(); 
         }
-        
-        function openSaveModal() { document.getElementById('save-modal').classList.remove('hidden'); document.getElementById('logo-menu').classList.remove('show'); document.getElementById('settingsMenu').classList.add('hidden'); }
-        function closeSaveModal() { document.getElementById('save-modal').classList.add('hidden'); }
+
+        function executeLock() {
+            isLocked = true; 
+            document.body.classList.add('locked-mode'); 
+            document.getElementById('fab-container').style.display = 'none'; 
+            
+            map.dragging.disable();
+            map.touchZoom.disable();
+            map.doubleClickZoom.disable();
+            map.scrollWheelZoom.disable();
+            map.boxZoom.disable();
+            map.keyboard.disable();
+
+            fitAllNodes(true);
+            showToast("MODO OPERAÇÃO ATIVADO"); 
+        }
+
+        // --- FECHAR PROJETO E EXPORTAR ---
+        function requestCloseProject() {
+            document.getElementById('logo-menu').classList.remove('show');
+            document.getElementById('settingsMenu').classList.add('hidden');
+            if (hasUnsavedChanges && nodes.length > 0) {
+                document.getElementById('close-modal').classList.remove('hidden');
+            } else {
+                closeProject();
+            }
+        }
+
+        function closeCloseModal() {
+            document.getElementById('close-modal').classList.add('hidden');
+        }
+
+        function closeProject() {
+            nodes = []; links = [];
+            appPasswordHash = null; autoLockOnLoad = false;
+            hasUnsavedChanges = false;
+            localStorage.removeItem('infrasegura_data');
+            
+            resetToWorldMap();
+            render();
+            
+            closeCloseModal();
+            closePanel(null);
+            closeOfflinePanel(null);
+            map.setView([-23.5505, -46.6333], 10);
+            showToast("Projeto Fechado.");
+        }
+
+        function openSaveModal() {
+            document.getElementById('save-modal').classList.remove('hidden');
+            document.getElementById('logo-menu').classList.remove('show');
+            document.getElementById('settingsMenu').classList.add('hidden');
+        }
+
+        function closeSaveModal() {
+            document.getElementById('save-modal').classList.add('hidden');
+        }
 
         function confirmExport() {
             const filename = document.getElementById('save-filename').value || "Projeto_Rede";
-            const data = JSON.stringify({ nodes, links, background: currentBackgroundBase64, view: { center: map.getCenter(), zoom: map.getZoom() }, passwordHash: appPasswordHash, autoLockOnLoad: autoLockOnLoad, isDarkMode: isDarkMode });
+            const data = JSON.stringify({ 
+                nodes, 
+                links, 
+                background: currentBackgroundBase64, 
+                view: { center: map.getCenter(), zoom: map.getZoom() }, 
+                passwordHash: appPasswordHash, 
+                autoLockOnLoad: autoLockOnLoad
+            });
             const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `${filename}.json`; a.click();
-            hasUnsavedChanges = false; saveData(false); closeSaveModal(); showToast("Projeto Exportado.");
+            
+            hasUnsavedChanges = false; 
+            saveData(false);
+            closeSaveModal();
+            showToast("Projeto Exportado.");
         }
 
         function importMap(event) {
@@ -571,11 +631,21 @@
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    nodes = data.nodes || []; links = data.links || []; appPasswordHash = data.passwordHash || null; 
-                    autoLockOnLoad = data.autoLockOnLoad || false; isDarkMode = data.isDarkMode !== undefined ? data.isDarkMode : true;
-                    updateThemeUI(); if (data.background) applyBackground(data.background); else resetToWorldMap();
-                    hasUnsavedChanges = false; saveData(false); render(); 
-                    setTimeout(() => { fitAllNodes(false); if (autoLockOnLoad && appPasswordHash) executeLock(); }, 300);
+                    nodes = data.nodes || []; links = data.links || [];
+                    appPasswordHash = data.passwordHash || null; 
+                    autoLockOnLoad = data.autoLockOnLoad || false;
+
+                    if (data.background) applyBackground(data.background); else resetToWorldMap();
+                    
+                    hasUnsavedChanges = false; 
+                    saveData(false); 
+                    render(); 
+                    
+                    setTimeout(() => {
+                        fitAllNodes(false);
+                        if (autoLockOnLoad && appPasswordHash) executeLock();
+                    }, 300);
+                    
                     showToast("Projeto Carregado.");
                 } catch (err) { showToast("Erro no arquivo."); }
             };
@@ -598,282 +668,108 @@
             
             const bounds = map.getBounds();
             bgImageLayer = L.imageOverlay(base64, bounds, { zIndex: 0 }).addTo(map);
-            map.setMaxBounds(bounds); minZoomLimit = map.getZoom(); map.setMinZoom(minZoomLimit); map.setMaxZoom(28);
+            map.setMaxBounds(bounds); minZoomLimit = map.getZoom();
+            map.setMinZoom(minZoomLimit); map.setMaxZoom(28);
             checkDrag(); showToast("Planta Aplicada.");
-            document.getElementById('logo-menu').classList.remove('show'); document.getElementById('settingsMenu').classList.add('hidden'); closeProjectSettings(); saveData();
+            document.getElementById('logo-menu').classList.remove('show');
+            document.getElementById('settingsMenu').classList.add('hidden');
+            closeProjectSettings();
+            saveData();
         }
 
         function checkDrag() { 
-            if (isLocked) { map.dragging.disable(); return; }
-            if (currentBackgroundBase64 && map.getZoom() <= minZoomLimit) map.dragging.disable(); else map.dragging.enable(); 
+            if (isLocked) {
+                map.dragging.disable();
+                return;
+            }
+            if (currentBackgroundBase64 && map.getZoom() <= minZoomLimit) {
+                map.dragging.disable(); 
+            } else {
+                map.dragging.enable(); 
+            }
         }
         
         function resetToWorldMap() {
             currentBackgroundBase64 = null;
             if (bgImageLayer) map.removeLayer(bgImageLayer);
             if (map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
-            currentMapLayer = 'base'; applyThemeToMap(); 
-            map.setMaxBounds(null); map.setMinZoom(1); map.setMaxZoom(28); checkDrag();
-            document.getElementById('logo-menu').classList.remove('show'); document.getElementById('settingsMenu').classList.add('hidden'); closeProjectSettings(); saveData();
+            
+            currentMapLayer = 'base';
+            applyThemeToMap(); 
+            
+            map.setMaxBounds(null); map.setMinZoom(1); map.setMaxZoom(28);
+            checkDrag();
+            document.getElementById('logo-menu').classList.remove('show');
+            document.getElementById('settingsMenu').classList.add('hidden');
+            closeProjectSettings();
+            saveData();
         }
 
         function loadData() {
             try {
                 const localTheme = localStorage.getItem('infrasegura_theme');
-                if (localTheme !== null) isDarkMode = (localTheme === 'true');
+                if (localTheme !== null) {
+                    isDarkMode = (localTheme === 'true');
+                }
+
                 const localData = localStorage.getItem('infrasegura_data');
                 if (localData) {
                     const parsed = JSON.parse(localData);
-                    nodes = parsed.nodes || []; links = parsed.links || [];
-                    appPasswordHash = parsed.passwordHash || null; autoLockOnLoad = parsed.autoLockOnLoad || false;
+                    nodes = parsed.nodes || [];
+                    links = parsed.links || [];
+                    appPasswordHash = parsed.passwordHash || null;
+                    autoLockOnLoad = parsed.autoLockOnLoad || false;
                     hasUnsavedChanges = parsed.hasUnsavedChanges || false;
                 }
-            } catch (e) { console.error("Erro ao carregar dados locais", e); }
+            } catch (e) { 
+                console.error("Erro ao carregar dados locais", e);
+            }
             
             updateThemeUI(); 
-            setTimeout(() => { if(nodes.length > 0) fitAllNodes(false); if(autoLockOnLoad && appPasswordHash) executeLock(); }, 300);
+            render();
+            
+            setTimeout(() => {
+                if(nodes.length > 0) fitAllNodes(false);
+                if(autoLockOnLoad && appPasswordHash) executeLock();
+            }, 300);
         }
 
         function saveData(changed = true) {
             try {
                 if(changed) hasUnsavedChanges = true;
-                localStorage.setItem('infrasegura_data', JSON.stringify({ nodes, links, passwordHash: appPasswordHash, autoLockOnLoad: autoLockOnLoad, hasUnsavedChanges: hasUnsavedChanges }));
-            } catch (e) { console.error("Erro ao salvar dados locais", e); }
-        }
-
-        // --- FERRAMENTAS E RENDER ---
-        function resetTools() {
-            currentMode = null; isLinking = false; isDrawingPath = false; drawingNodeId = null; linkSourceId = null; isMenuOpen = false;
-            const indBar = document.getElementById('mode-indicator-bar'); if (indBar) indBar.style.display = 'none';
-            const actions = document.getElementById('mode-actions'); if (actions) actions.innerHTML = '';
-            const fabItems = document.getElementById('fab-items'); if (fabItems) fabItems.classList.remove('open');
-            const fabMain = document.getElementById('fab-main'); if (fabMain) fabMain.classList.remove('active');
-            document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected'));
-            render();
-        }
-
-        function toggleFab() { 
-            if (isLocked) return; 
-            if (currentMode || isLinking || isDrawingPath) { resetTools(); return; } 
-            isMenuOpen = !isMenuOpen; 
-            document.getElementById('fab-items').classList.toggle('open', isMenuOpen); 
-            document.getElementById('fab-main').classList.toggle('active', isMenuOpen); 
-            render(); 
-        }
-
-        function setMode(m) { 
-            currentMode = m; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = `Inserindo: ${CONFIG[m].label}`; 
-            document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); 
-            const toolBtn = document.getElementById('tool-' + m); if(toolBtn) toolBtn.classList.add('selected'); 
-            render(); 
-        }
-
-        function toggleLinking() { 
-            isLinking = true; currentMode = null; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = "Criando Conexões"; 
-            document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); 
-            const linkBtn = document.getElementById('link-btn'); if(linkBtn) linkBtn.classList.add('selected'); 
-            render(); 
-        }
-        
-        function addNode(type, latlng) {
-            const id = 'n' + Date.now();
-            const count = nodes.filter(n => n.type === type).length + 1;
-            nodes.push({ 
-                id: id, 
-                type: type, 
-                lat: latlng.lat, 
-                lng: latlng.lng, 
-                name: `${CONFIG[type].label} ${count}`, 
-                ip: CONFIG[type].hasIp ? '192.168.1.100' : null, 
-                isGateway: false 
-            });
-            saveData();
-            render();
-            showToast(`${CONFIG[type].label} adicionado.`);
-        }
-
-        function updateName(id, v) { nodes.find(n => n.id === id).name = v; saveData(); render(); }
-        function updateIp(id, v) { nodes.find(n => n.id === id).ip = v; saveData(); render(); }
-        function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
-        function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(null); render(); saveData(); }
-        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-white dark:bg-zinc-900 text-gray-900 dark:text-white text-[10px] font-black rounded-full z-[8000] border-2 border-gray-200 dark:border-zinc-800 shadow-2xl transition-colors duration-300"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
-
-        function focusNodePath(nodeId) {
-            let pathLinkIds = getPathLinkIds(nodeId);
-            let coords = [];
-            const mainNode = nodes.find(n => n.id === nodeId);
-            if (mainNode) coords.push([mainNode.lat, mainNode.lng]);
-
-            links.forEach(l => {
-                if (pathLinkIds.has(l.id)) {
-                    let n1 = nodes.find(n => n.id === l.a);
-                    let n2 = nodes.find(n => n.id === l.b);
-                    if (n1) coords.push([n1.lat, n1.lng]);
-                    if (n2) coords.push([n2.lat, n2.lng]);
-                    if (l.vertices) l.vertices.forEach(v => coords.push(v));
-                }
-            });
-
-            if (coords.length > 0) {
-                const bounds = L.latLngBounds(coords);
-                const isMobile = window.innerWidth <= 640;
-                map.flyToBounds(bounds, {
-                    paddingBottomRight: isMobile ? [0, window.innerHeight * 0.55] : [400, 0],
-                    paddingTopLeft: [40, 40],
-                    maxZoom: 19,
-                    duration: 1
-                });
+                localStorage.setItem('infrasegura_data', JSON.stringify({ 
+                    nodes, 
+                    links, 
+                    passwordHash: appPasswordHash, 
+                    autoLockOnLoad: autoLockOnLoad,
+                    hasUnsavedChanges: hasUnsavedChanges
+                }));
+            } catch (e) { 
+                console.error("Erro ao salvar dados locais", e);
             }
         }
 
         function fitAllNodes(animate = true) {
-            if(!map) return;
             let targetBounds = null;
-            if (nodes.length > 0) { const coords = nodes.map(n => [n.lat, n.lng]); targetBounds = L.latLngBounds(coords); }
-            else if (bgImageLayer) { targetBounds = bgImageLayer.getBounds(); }
+            
+            if (nodes.length > 0) {
+                const coords = nodes.map(n => [n.lat, n.lng]);
+                targetBounds = L.latLngBounds(coords);
+            } else if (bgImageLayer) {
+                targetBounds = bgImageLayer.getBounds();
+            }
 
             if (targetBounds && targetBounds.isValid()) {
-                if (animate) map.flyToBounds(targetBounds, { padding: [50, 50], duration: 1 });
-                else map.fitBounds(targetBounds, { padding: [50, 50] });
+                if (animate) {
+                    map.flyToBounds(targetBounds, { padding: [50, 50], duration: 1 });
+                } else {
+                    map.fitBounds(targetBounds, { padding: [50, 50] });
+                }
                 if(animate) showToast("Visão Ajustada");
             } else {
-                if(animate) map.flyTo([-23.5505, -46.6333], 10); else map.setView([-23.5505, -46.6333], 10);
+                if(animate) map.flyTo([-23.5505, -46.6333], 10);
+                else map.setView([-23.5505, -46.6333], 10);
             }
-        }
-
-        function updateAlertBadge(statusMap) {
-            const rootOff = nodes.filter(n => statusMap[n.id] && (!links.find(l => l.b === n.id) || !statusMap[links.find(l => l.b === n.id).a]));
-            const fab = document.getElementById('alert-fab');
-            if (rootOff.length > 0) {
-                fab.style.display = 'flex'; document.getElementById('alert-count').innerText = rootOff.length;
-                document.getElementById('offline-list').innerHTML = rootOff.map(n => `<div onclick="if(event && typeof event.stopPropagation === 'function') event.stopPropagation(); toggleView('map'); openDetails('${n.id}');" class="p-5 bg-red-50 dark:bg-slate-950 border border-red-200 dark:border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-100 dark:hover:bg-red-500/10 shadow-xl transition-colors"><div class="text-[9px] font-black text-red-600 dark:text-red-500 uppercase mb-1 italic tracking-widest">${CONFIG[n.type].label} OFFLINE</div><h4 class="font-black text-sm text-gray-900 dark:text-white uppercase">${n.name}</h4></div>`).join('');
-            } else { fab.style.display = 'none'; closeOfflinePanel(null); }
-        }
-
-        function openDetails(id) {
-            saveMapView(); document.getElementById('offline-panel').classList.remove('show'); document.getElementById('settingsMenu').classList.add('hidden');
-            selectedId = id; const node = nodes.find(it => it.id === id); const curL = links.find(l => l.b === id);
-            const panel = document.getElementById('details-panel'); panel.classList.add('show');
-            const parents = nodes.filter(n => n.id !== id && CONFIG[n.type].rank <= CONFIG[node.type].rank);
-            let connHtml = `<div class="mt-6 p-4 bg-gray-50 dark:bg-slate-950/50 rounded-2xl border border-gray-200 dark:border-slate-800 transition-colors"><p class="text-[8px] text-gray-500 dark:text-slate-500 mb-2 uppercase">Conexão de Entrada (Fonte)</p><select onchange="updateConnection('${id}', this.value)" class="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg p-2 text-xs text-zinc-600 dark:text-zinc-400 outline-none transition-colors"><option value="">Nenhum Vínculo</option>${parents.map(p => `<option value="${p.id}" ${curL?.a === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}</select></div>`;
-            let intHtml = (node.type === 'switch' || node.type === 'core_switch') ? `<div class="mt-4 p-4 bg-gray-50 dark:bg-slate-800/40 rounded-2xl border border-gray-200 dark:border-slate-800 flex justify-between items-center cursor-pointer transition-colors" onclick="toggleInternet('${id}')"><span class="text-[10px] text-gray-600 dark:text-slate-400 uppercase font-black tracking-widest flex items-center gap-2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>Gateway de Internet</span><div class="w-10 h-5 rounded-full relative transition-colors ${node.isGateway ? 'bg-zinc-500' : 'bg-gray-300 dark:bg-slate-700'}"><div class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all ${node.isGateway ? 'left-5' : 'left-0.5'}"></div></div></div>` : '';
-            document.getElementById('details-content').innerHTML = `<div class="bg-gray-50 dark:bg-slate-950 p-6 rounded-3xl border-2 border-gray-200 dark:border-slate-800 text-center uppercase font-black tracking-tight transition-colors"><input type="text" value="${node.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0 text-gray-900 dark:text-white"></div>${CONFIG[node.type].hasIp ? `<div class="p-4 bg-gray-50 dark:bg-slate-800/40 rounded-2xl border border-gray-200 dark:border-slate-800 transition-colors"><p class="text-[8px] text-gray-500 dark:text-slate-500 mb-2 uppercase text-center">Endereço IP</p><input type="text" value="${node.ip || '0.0.0.0'}" onchange="updateIp('${id}', this.value)" class="bg-white dark:bg-slate-950 w-full p-2 rounded-lg border border-gray-300 dark:border-slate-800 font-mono text-center text-zinc-600 dark:text-zinc-400 outline-none transition-colors"><button onclick="toggleStatus('${id}')" class="w-full mt-3 py-3 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-md transition-all">Simular Estado</button></div>` : ''}${connHtml}${intHtml}<button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-2xl text-[10px] font-black uppercase shadow-lg mt-4 text-white transition-colors">Editar Traçado</button><button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-gray-500 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-500 uppercase mt-4 transition-colors">Remover Ativo</button>`;
-            render(); focusNodePath(id); 
-        }
-
-        function updateConnection(childId, newParentId) { links = links.filter(l => l.b !== childId); if (newParentId) { links.push({ id: 'l'+Date.now(), a: newParentId, b: childId, vertices: [] }); } saveData(); render(); openDetails(childId); }
-        function startDrawingPath(nodeId) { isDrawingPath = true; drawingNodeId = nodeId; closePanel(null); const bar = document.getElementById('mode-indicator-bar'); const actions = document.getElementById('mode-actions'); bar.style.display = 'flex'; document.getElementById('mode-text').innerText = "Editando Traçado"; actions.innerHTML = `<button onclick="resetTools()" class="mode-btn text-zinc-700">Concluir</button>`; document.getElementById('fab-main').classList.add('active'); render(); }
-        function addVertexToPath(latlng) { const l = links.find(li => (li.a === drawingNodeId || li.b === drawingNodeId)); if (!l) return; if (!l.vertices) l.vertices = []; const n1 = nodes.find(n => n.id === l.a), n2 = nodes.find(n => n.id === l.b); const pts = [[n1.lat, n1.lng], ...l.vertices, [n2.lat, n2.lng]]; let minDist = Infinity, idx = l.vertices.length; for (let i = 0; i < pts.length - 1; i++) { const d = L.LineUtil.pointToSegmentDistance(map.latLngToLayerPoint(latlng), map.latLngToLayerPoint(pts[i]), map.latLngToLayerPoint(points[i+1])); if (d < minDist) { minDist = d; idx = i; } } l.vertices.splice(idx, 0, [latlng.lat, latlng.lng]); render(); }
-        function toggleInternet(id) { const node = nodes.find(n => n.id === id); if(node) { node.isGateway = !node.isGateway; saveData(); openDetails(id); render(); } }
-        function saveMapView() { if (!document.getElementById('details-panel').classList.contains('show') && !document.getElementById('offline-panel').classList.contains('show')) { previousMapView = { center: map.getCenter(), zoom: map.getZoom() }; } }
-        function restoreMapView() { setTimeout(() => { if (!document.getElementById('details-panel').classList.contains('show') && !document.getElementById('offline-panel').classList.contains('show') && previousMapView) { map.flyTo(previousMapView.center, previousMapView.zoom, { duration: 0.8 }); previousMapView = null; } }, 50); }
-
-        function toggleView(v, e) { 
-            if(e && typeof e.stopPropagation === 'function') e.stopPropagation(); 
-            document.getElementById('settingsMenu').classList.add('hidden'); 
-            
-            const list = document.getElementById('list-view');
-            const btnMap = document.getElementById('btn-map');
-            const btnList = document.getElementById('btn-list');
-            
-            if(!list || !btnMap || !btnList) return; 
-
-            if(v === 'list') { 
-                list.classList.add('show'); 
-                btnList.classList.replace('bg-gray-100', 'bg-zinc-600'); btnList.classList.replace('dark:bg-zinc-900', 'dark:bg-zinc-700'); btnList.classList.add('text-white'); btnList.classList.remove('text-gray-500', 'dark:text-zinc-400'); 
-                btnMap.classList.replace('bg-zinc-600', 'bg-gray-100'); btnMap.classList.replace('dark:bg-zinc-700', 'dark:bg-zinc-900'); btnMap.classList.remove('text-white'); btnMap.classList.add('text-gray-500', 'dark:text-zinc-400'); 
-                renderListView(); 
-            } else { 
-                list.classList.remove('show'); 
-                btnMap.classList.replace('bg-gray-100', 'bg-zinc-600'); btnMap.classList.replace('dark:bg-zinc-900', 'dark:bg-zinc-700'); btnMap.classList.add('text-white'); btnMap.classList.remove('text-gray-500', 'dark:text-zinc-400'); 
-                btnList.classList.replace('bg-zinc-600', 'bg-gray-100'); btnList.classList.replace('dark:bg-zinc-700', 'dark:bg-zinc-900'); btnList.classList.remove('text-white'); btnList.classList.add('text-gray-500', 'dark:text-zinc-400'); 
-            } 
-        }
-
-        function renderListView() { 
-            const container = document.getElementById('tree-container'); 
-            if(!container) return; container.innerHTML = ''; 
-            const statusMap = getStatusMap(); 
-            const roots = nodes.filter(n => !links.some(l => l.b === n.id)); 
-            roots.forEach(root => { container.appendChild(buildTreeElement(root, statusMap)); }); 
-        }
-
-        function buildTreeElement(node, statusMap) { 
-            const isOff = statusMap[node.id]; 
-            const div = document.createElement('div'); div.className = "mb-4"; 
-            const item = document.createElement('div'); item.className = `tree-item ${isOff ? 'border-l-4 border-red-500 bg-red-50 dark:bg-red-500/10 blink-offline' : ''}`; 
-            const globeIcon = node.isGateway ? `<svg class="ml-2 inline-block text-zinc-500 dark:text-zinc-400" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>` : ''; 
-            item.innerHTML = `<div class="p-2 rounded-lg" style="background: ${isOff ? '#ef4444' : CONFIG[node.type].color}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg></div><div class="flex-1"><p class="text-[11px] font-black uppercase text-gray-900 dark:text-white">${node.name} ${globeIcon}</p><p class="text-[8px] font-mono text-gray-500 dark:text-zinc-400">${node.ip || 'S/ IP'}</p></div>${isOff ? '<span class="text-[7px] bg-red-600 px-1.5 py-0.5 rounded uppercase font-black text-white">FAIL</span>' : ''}`; 
-            item.onclick = (e) => { if(e && typeof e.stopPropagation === 'function') e.stopPropagation(); if(window.innerWidth <= 640) toggleView('map', e); openDetails(node.id); }; 
-            div.appendChild(item); 
-            const children = links.filter(l => l.a === node.id).map(l => nodes.find(n => n.id === l.b)).filter(n => n); 
-            if (children.length > 0) { 
-                const childContainer = document.createElement('div'); childContainer.className = "tree-node"; 
-                children.forEach(child => { childContainer.appendChild(buildTreeElement(child, statusMap)); }); 
-                div.appendChild(childContainer); 
-            } 
-            return div; 
-        }
-
-        function render() {
-            if(!map || !individualLayer) return;
-            individualLayer.clearLayers(); linksLayer.clearLayers(); handlesLayer.clearLayers();
-            const statusMap = getStatusMap();
-            const isEditingMode = !!(currentMode || isLinking || isDrawingPath || isMenuOpen);
-            let pathIds = selectedId ? getPathLinkIds(selectedId) : null;
-            
-            let internetLinks = new Set(); 
-            let queue = nodes.filter(n => n.isGateway).map(n => n.id); 
-            let visitedNodes = new Set(queue);
-            while (queue.length > 0) { 
-                let curr = queue.shift(); 
-                links.forEach(l => { if (l.b === curr) { internetLinks.add(l.id); if (!visitedNodes.has(l.a)) { visitedNodes.add(l.a); queue.push(l.a); } } }); 
-            }
-
-            links.forEach((link) => {
-                const n1 = nodes.find(n => n.id === link.a); const n2 = nodes.find(n => n.id === link.b);
-                if (n1 && n2) {
-                    if (pathIds && !pathIds.has(link.id)) return;
-                    const off = (statusMap[n1.id] || statusMap[n2.id]);
-                    let lineColor = isDarkMode ? '#a1a1aa' : '#52525b';
-                    if (off) lineColor = '#ef4444';
-                    else { switch(n2.type) { case 'converter': lineColor = '#facc15'; break; case 'switch': lineColor = '#15803d'; break; case 'core_switch': lineColor = '#dc2626'; break; case 'camera': case 'server': lineColor = '#3b82f6'; break; } }
-                    const path = [[n1.lat, n1.lng], ...(link.vertices || []), [n2.lat, n2.lng]];
-                    L.polyline(path, { color: lineColor, weight: 6, opacity: 0.8, className: off ? 'offline-line' : 'data-flow-line' }).addTo(linksLayer);
-                    
-                    if (internetLinks.has(link.id) && !off) {
-                        const mid = [(path[0][0] + (path[1]||path[path.length-1])[0])/2, (path[0][1] + (path[1]||path[path.length-1])[1])/2];
-                        const globeHtml = `<div class="bg-zinc-500 rounded-full border-2 border-white dark:border-slate-900 p-0.5 shadow-md"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></div>`;
-                        L.marker(mid, { icon: L.divIcon({ html: globeHtml, className: 'custom-div-icon', iconSize: [16, 16], iconAnchor: [8, 8] }), interactive: false }).addTo(linksLayer);
-                    }
-                    
-                    if (!isLocked && (selectedId === link.a || selectedId === link.b)) {
-                        (link.vertices || []).forEach((v, i) => { L.marker(v, { draggable: true, icon: L.divIcon({ className: 'vertex-handle', iconSize: [12, 12] }) }).addTo(handlesLayer).on('drag', (e) => { link.vertices[i] = [e.target.getLatLng().lat, e.target.getLatLng().lng]; render(); saveData(); }); });
-                        for (let i = 0; i < path.length - 1; i++) {
-                            const mid = [(path[i][0] + path[i+1][0]) / 2, (path[i][1] + path[i+1][1]) / 2];
-                            L.marker(mid, { draggable: true, icon: L.divIcon({ className: 'midpoint-handle', iconSize: [10, 10] }) }).addTo(handlesLayer).on('dragstart', () => { if (!link.vertices) link.vertices = []; link.vertices.splice(i, 0, mid); }).on('drag', (e) => { link.vertices[i] = [e.target.getLatLng().lat, e.target.getLatLng().lng]; render(); }).on('dragend', () => { saveData(); render(); });
-                        }
-                    }
-                }
-            });
-
-            nodes.forEach(node => {
-                const isSelected = (selectedId === node.id); const isOff = statusMap[node.id];
-                let html, isPin = isOff || isEditingMode;
-                if (isPin) html = `<div class="marker-pin ${isSelected ? 'selected' : ''} ${isOff ? 'blink-offline' : ''}" style="background-color: ${isOff ? '#ef4444' : CONFIG[node.type].color}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg></div>`;
-                else html = `<div class="online-dot ${isSelected ? 'selected' : ''}" style="background-color: ${CONFIG[node.type].color}"></div>`;
-                const m = L.marker([node.lat, node.lng], { icon: L.divIcon({ html, iconSize: isPin ? [44, 44] : [14, 14], iconAnchor: isPin ? [22, 44] : [7, 7] }), draggable: !isLocked }).addTo(individualLayer);
-                
-                m.on('click', (e) => { 
-                    if(e && e.originalEvent && typeof e.originalEvent.stopPropagation === 'function') e.originalEvent.stopPropagation(); 
-                    if(isLocked) return; 
-                    handleNodeClick(node.id); 
-                });
-                
-                m.on('dragend', (e) => { node.lat = e.target.getLatLng().lat; node.lng = e.target.getLatLng().lng; render(); saveData(); });
-            });
-            
-            updateAlertBadge(statusMap);
         }
 
         window.onload = () => {
@@ -882,8 +778,6 @@
             darkMapLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 28, maxNativeZoom: 18 });
             lightMapLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 28, maxNativeZoom: 18 });
             satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 28, maxNativeZoom: 19 });
-            
-            darkMapLayer.addTo(map);
             
             linksLayer = L.layerGroup().addTo(map); individualLayer = L.layerGroup().addTo(map); handlesLayer = L.layerGroup().addTo(map);
             
@@ -896,12 +790,9 @@
                     closeOfflinePanel(e); 
                     document.getElementById('logo-menu').classList.remove('show'); 
                     document.getElementById('settingsMenu').classList.add('hidden'); 
-                    isLegendVisible = false;
-                    document.getElementById('map-legend').classList.remove('show');
                     toggleView('map', e); 
                 } 
             });
-            
             map.on('zoomend', checkDrag);
 
             map.on('locationfound', function(e) {
@@ -919,6 +810,503 @@
 
             loadData();
         };
+
+        function locateMeAndFly(e) {
+            if(e) e.stopPropagation();
+            if (isLocked) {
+                showToast("Movimentação bloqueada no Modo Operação");
+                return;
+            }
+            if (userLocationMarker) {
+                map.flyTo(userLocationMarker.getLatLng(), 18);
+            } else {
+                showToast("Buscando localização...");
+            }
+        }
+
+        function toggleMapLayer(e) {
+            if(e) e.stopPropagation();
+            
+            if (currentBackgroundBase64) {
+                showToast("Em modo Planta de Fundo");
+                return; 
+            }
+
+            if (currentMapLayer === 'base') {
+                if (map.hasLayer(darkMapLayer)) map.removeLayer(darkMapLayer);
+                if (map.hasLayer(lightMapLayer)) map.removeLayer(lightMapLayer);
+                satelliteLayer.addTo(map);
+                currentMapLayer = 'satellite';
+                showToast("Modo Satélite Ativado");
+            } else {
+                map.removeLayer(satelliteLayer);
+                currentMapLayer = 'base';
+                applyThemeToMap();
+                showToast("Modo Mapa Base Ativado");
+            }
+        }
+
+        function toggleSettingsMenu(e) {
+            if(e) e.stopPropagation();
+            document.getElementById('settingsMenu').classList.toggle('hidden');
+            document.getElementById('logo-menu').classList.remove('show');
+        }
+
+        function handleLogoInteraction(e) { 
+            if(e) e.stopPropagation();
+            if (isLocked) { 
+                logoClicks++; 
+                if (logoClicks >= 3) { 
+                    logoClicks = 0; 
+                    openPasswordModal('unlock');
+                } 
+            } else {
+                document.getElementById('logo-menu').classList.toggle('show');
+                document.getElementById('settingsMenu').classList.add('hidden');
+            }
+        }
+
+        function resetTools() {
+            currentMode = null; isLinking = false; isDrawingPath = false; drawingNodeId = null; linkSourceId = null; isMenuOpen = false;
+            document.getElementById('mode-indicator-bar').style.display = 'none';
+            document.getElementById('mode-actions').innerHTML = '';
+            document.getElementById('fab-items').classList.remove('open');
+            document.getElementById('fab-main').classList.remove('active');
+            document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected'));
+            render();
+        }
+
+        function getStatusMap() {
+            let statusMap = {};
+            nodes.forEach(n => statusMap[n.id] = (CONFIG[n.type].hasIp && activeStatuses[n.id] === 'offline'));
+
+            let changed = true;
+            while(changed) {
+                changed = false;
+                nodes.forEach(n => {
+                    if (!statusMap[n.id]) {
+                        const parentLink = links.find(l => l.b === n.id);
+                        if (parentLink && statusMap[parentLink.a]) {
+                            statusMap[n.id] = true;
+                            changed = true;
+                        }
+                        
+                        if (!CONFIG[n.type].hasIp) {
+                            const childrenIds = links.filter(l => l.a === n.id).map(l => l.b);
+                            if (childrenIds.length > 0) {
+                                const allChildrenOffline = childrenIds.every(cid => statusMap[cid]);
+                                if (allChildrenOffline) {
+                                    statusMap[n.id] = true;
+                                    changed = true;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            return statusMap;
+        }
+
+        function getPathLinkIds(nodeId) {
+            let pathIds = new Set();
+            if (!nodeId) return pathIds;
+            
+            let queueUp = [nodeId];
+            let visitedUp = new Set([nodeId]);
+            while (queueUp.length > 0) {
+                let curr = queueUp.shift();
+                links.forEach(l => {
+                    if (l.b === curr) {
+                        pathIds.add(l.id);
+                        if (!visitedUp.has(l.a)) {
+                            visitedUp.add(l.a);
+                            queueUp.push(l.a);
+                        }
+                    }
+                });
+            }
+
+            let queueDown = [nodeId];
+            let visitedDown = new Set([nodeId]);
+            while (queueDown.length > 0) {
+                let curr = queueDown.shift();
+                links.forEach(l => {
+                    if (l.a === curr) {
+                        pathIds.add(l.id);
+                        if (!visitedDown.has(l.b)) {
+                            visitedDown.add(l.b);
+                            queueDown.push(l.b);
+                        }
+                    }
+                });
+            }
+
+            return pathIds;
+        }
+
+        function saveMapView() {
+            const isDetailsOpen = document.getElementById('details-panel').classList.contains('show');
+            const isOfflineOpen = document.getElementById('offline-panel').classList.contains('show');
+            if (!isDetailsOpen && !isOfflineOpen) {
+                previousMapView = { center: map.getCenter(), zoom: map.getZoom() };
+            }
+        }
+
+        function restoreMapView() {
+            setTimeout(() => {
+                const isDetailsOpen = document.getElementById('details-panel').classList.contains('show');
+                const isOfflineOpen = document.getElementById('offline-panel').classList.contains('show');
+                if (!isDetailsOpen && !isOfflineOpen && previousMapView) {
+                    map.flyTo(previousMapView.center, previousMapView.zoom, { duration: 0.8 });
+                    previousMapView = null;
+                }
+            }, 50);
+        }
+
+        function focusNodePath(nodeId) {
+            let pathLinkIds = getPathLinkIds(nodeId);
+            let coords = [];
+            
+            const mainNode = nodes.find(n => n.id === nodeId);
+            if(mainNode) coords.push([mainNode.lat, mainNode.lng]);
+
+            links.forEach(l => {
+                if (pathLinkIds.has(l.id)) {
+                    let n1 = nodes.find(n => n.id === l.a);
+                    let n2 = nodes.find(n => n.id === l.b);
+                    if(n1) coords.push([n1.lat, n1.lng]);
+                    if(n2) coords.push([n2.lat, n2.lng]);
+                    if(l.vertices) l.vertices.forEach(v => coords.push(v));
+                }
+            });
+
+            if(coords.length > 0) {
+                const bounds = L.latLngBounds(coords);
+                const isMobile = window.innerWidth <= 640;
+                
+                const paddingOpts = {
+                    paddingBottomRight: isMobile ? [0, window.innerHeight * 0.55] : [400, 0],
+                    paddingTopLeft: [40, 40],
+                    maxZoom: 19,
+                    duration: 1
+                };
+                
+                map.flyToBounds(bounds, paddingOpts);
+            }
+        }
+
+        function toggleInternet(id) {
+            const node = nodes.find(n => n.id === id);
+            if(node) {
+                node.isGateway = !node.isGateway;
+                saveData();
+                openDetails(id); 
+                render(); 
+            }
+        }
+
+        function render() {
+            individualLayer.clearLayers(); linksLayer.clearLayers(); handlesLayer.clearLayers();
+            const statusMap = getStatusMap();
+            const isEditingMode = !!(currentMode || isLinking || isDrawingPath || isMenuOpen);
+
+            let pathIds = selectedId ? getPathLinkIds(selectedId) : null;
+
+            let internetLinks = new Set();
+            let queue = nodes.filter(n => n.isGateway).map(n => n.id);
+            let visitedNodes = new Set(queue);
+
+            while (queue.length > 0) {
+                let curr = queue.shift();
+                links.forEach(l => {
+                    if (l.b === curr) {
+                        internetLinks.add(l.id);
+                        if (!visitedNodes.has(l.a)) {
+                            visitedNodes.add(l.a);
+                            queue.push(l.a);
+                        }
+                    }
+                });
+            }
+
+            links.forEach((link) => {
+                const n1 = nodes.find(n => n.id === link.a); const n2 = nodes.find(n => n.id === link.b);
+                if (n1 && n2) {
+                    const isVisible = !pathIds || pathIds.has(link.id);
+                    if (!isVisible) return; 
+
+                    const off = (statusMap[n1.id] || statusMap[n2.id]);
+                    
+                    let lineColor = isDarkMode ? '#a1a1aa' : '#52525b'; 
+                    if (off) {
+                        lineColor = '#ef4444'; 
+                    } else {
+                        switch(n2.type) {
+                            case 'converter': lineColor = '#facc15'; break; 
+                            case 'switch': lineColor = '#15803d'; break; 
+                            case 'core_switch': lineColor = '#dc2626'; break; 
+                            default: lineColor = isDarkMode ? '#a1a1aa' : '#52525b'; 
+                        }
+                    }
+
+                    const path = [[n1.lat, n1.lng], ...(link.vertices || []), [n2.lat, n2.lng]];
+                    L.polyline(path, { color: lineColor, weight: 6, opacity: 0.8, className: off ? 'offline-line' : 'data-flow-line' }).addTo(linksLayer);
+                    
+                    if (internetLinks.has(link.id) && !off) {
+                        const p1 = path[0];
+                        const p2 = path[1] || path[path.length - 1]; 
+                        const midPoint = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
+
+                        const globeHtml = `<div class="bg-zinc-500 rounded-full border-2 border-white dark:border-slate-900 p-0.5 shadow-[0_0_10px_rgba(113,113,122,0.8)]"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></div>`;
+                        const globeIcon = L.divIcon({ html: globeHtml, className: 'custom-div-icon', iconSize: [16, 16], iconAnchor: [8, 8] });
+                        L.marker(midPoint, { icon: globeIcon, interactive: false }).addTo(linksLayer);
+                    }
+
+                    if (!isLocked && (selectedId === link.a || selectedId === link.b)) {
+                        (link.vertices || []).forEach((v, vIdx) => {
+                            const h = L.marker(v, { draggable: true, icon: L.divIcon({ className: 'vertex-handle', iconSize: [12, 12] }) }).addTo(handlesLayer);
+                            h.on('drag', (e) => { link.vertices[vIdx] = [e.target.getLatLng().lat, e.target.getLatLng().lng]; render(); saveData(); });
+                        });
+                        for (let i = 0; i < path.length - 1; i++) {
+                            const p1 = path[i]; const p2 = path[i+1];
+                            const mid = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
+                            const g = L.marker(mid, { draggable: true, icon: L.divIcon({ className: 'midpoint-handle', iconSize: [10, 10] }) }).addTo(handlesLayer);
+                            g.on('dragstart', () => { if (!link.vertices) link.vertices = []; link.vertices.splice(i, 0, mid); });
+                            g.on('drag', (e) => { link.vertices[i] = [e.target.getLatLng().lat, e.target.getLatLng().lng]; render(); });
+                            g.on('dragend', () => { saveData(); render(); });
+                        }
+                    }
+                }
+            });
+            
+            nodes.forEach(node => {
+                const isSelected = (selectedId === node.id); const isOff = statusMap[node.id];
+                let color = CONFIG[node.type].color; let html, iconSize, iconAnchor;
+                
+                const animClass = isOff ? 'blink-offline' : '';
+
+                if (isOff || isEditingMode) {
+                    html = `<div class="marker-pin ${isSelected ? 'selected' : ''} ${animClass}" style="background-color: ${isOff ? '#ef4444' : color}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg></div>`;
+                    iconSize = [44, 44]; iconAnchor = [22, 44];
+                } else {
+                    html = `<div class="online-dot ${isSelected ? 'selected' : ''}" style="background-color: ${color}"></div>`;
+                    iconSize = [14, 14]; iconAnchor = [7, 7];
+                }
+                const icon = L.divIcon({ html, iconSize, iconAnchor });
+                const m = L.marker([node.lat, node.lng], { icon, draggable: !isLocked }).addTo(individualLayer);
+                
+                m.on('click', (e) => { L.DomEvent.stopPropagation(e); if(isLocked) return; handleNodeClick(node.id); });
+                m.on('dragend', (e) => { const p = e.target.getLatLng(); node.lat = p.lat; node.lng = p.lng; render(); saveData(); });
+            });
+            updateAlertBadge(statusMap);
+        }
+
+        function updateAlertBadge(statusMap) {
+            const fab = document.getElementById('alert-fab'); 
+            const count = document.getElementById('alert-count');
+            
+            const rootOfflineNodes = nodes.filter(n => {
+                if (!statusMap[n.id]) return false;
+                const parentLink = links.find(l => l.b === n.id);
+                return !parentLink || !statusMap[parentLink.a];
+            });
+
+            if (rootOfflineNodes.length > 0) {
+                fab.style.display = 'flex'; 
+                count.innerText = rootOfflineNodes.length;
+                document.getElementById('offline-list').innerHTML = rootOfflineNodes.map(n => `<div onclick="if(event) event.stopPropagation(); toggleView('map'); openDetails('${n.id}');" class="p-5 bg-red-50 dark:bg-slate-950 border border-red-200 dark:border-red-500/30 rounded-3xl cursor-pointer hover:bg-red-100 dark:hover:bg-red-500/10 shadow-xl transition-colors"><div class="text-[9px] font-black text-red-600 dark:text-red-500 uppercase mb-1 italic tracking-widest">${CONFIG[n.type].label} OFFLINE</div><h4 class="font-black text-sm text-gray-900 dark:text-white uppercase">${n.name}</h4></div>`).join('');
+            } else { 
+                fab.style.display = 'none'; 
+                closeOfflinePanel(); 
+            }
+        }
+
+        function handleNodeClick(id) { 
+            if (isDrawingPath) return; 
+            if (isLinking) { 
+                if (!linkSourceId) { linkSourceId = id; showToast(`Origem: ${nodes.find(n => n.id === id).name}`); } 
+                else if (linkSourceId !== id) { 
+                    const n1 = nodes.find(n => n.id === linkSourceId); const n2 = nodes.find(n => n.id === id);
+                    if (n1.type === 'camera' && n2.type === 'camera') { showToast("Erro."); linkSourceId = null; render(); return; }
+                    let pId = (CONFIG[n1.type].rank <= CONFIG[n2.type].rank) ? n1.id : n2.id;
+                    links.push({ id: 'l'+Date.now(), a: pId, b: (pId === n1.id ? n2.id : n1.id), vertices: [] }); saveData(); linkSourceId = null; render();
+                } 
+                return; 
+            } 
+            openDetails(id); 
+        }
+
+        function openDetails(id) {
+            saveMapView();
+            document.getElementById('offline-panel').classList.remove('show');
+            document.getElementById('settingsMenu').classList.add('hidden');
+
+            selectedId = id; const node = nodes.find(it => it.id === id);
+            const panel = document.getElementById('details-panel'); panel.classList.add('show');
+            const currentLink = links.find(l => l.b === id);
+            
+            const potentialParents = nodes.filter(n => n.id !== id && CONFIG[n.type].rank <= CONFIG[node.type].rank);
+
+            let connectionHtml = `
+                <div class="mt-6 p-4 bg-gray-50 dark:bg-slate-950/50 rounded-2xl border border-gray-200 dark:border-slate-800 transition-colors">
+                    <p class="text-[8px] text-gray-500 dark:text-slate-500 mb-2 uppercase">Conexão de Entrada (Fonte)</p>
+                    <select onchange="updateConnection('${id}', this.value)" class="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg p-2 text-xs text-zinc-600 dark:text-zinc-400 outline-none transition-colors">
+                        <option value="">Nenhum Vínculo</option>
+                        ${potentialParents.map(p => `<option value="${p.id}" ${currentLink?.a === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                    </select>
+                </div>
+            `;
+
+            let internetToggleHtml = '';
+            if (node.type === 'switch' || node.type === 'core_switch') {
+                internetToggleHtml = `
+                    <div class="mt-4 p-4 bg-gray-50 dark:bg-slate-800/40 rounded-2xl border border-gray-200 dark:border-slate-800 flex justify-between items-center cursor-pointer transition-colors" onclick="toggleInternet('${id}')">
+                        <span class="text-[10px] text-gray-600 dark:text-slate-400 uppercase font-black tracking-widest flex items-center gap-2">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                            Gateway de Internet
+                        </span>
+                        <div class="w-10 h-5 rounded-full relative transition-colors ${node.isGateway ? 'bg-zinc-500' : 'bg-gray-300 dark:bg-slate-700'}">
+                            <div class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all ${node.isGateway ? 'left-5' : 'left-0.5'}"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('details-content').innerHTML = `
+                <div class="bg-gray-50 dark:bg-slate-950 p-6 rounded-3xl border-2 border-gray-200 dark:border-slate-800 text-center uppercase font-black tracking-tight transition-colors"><input type="text" value="${node.name}" onchange="updateName('${id}', this.value)" class="bg-transparent w-full text-center border-none focus:ring-0 text-gray-900 dark:text-white"></div>
+                ${CONFIG[node.type].hasIp ? `<div class="p-4 bg-gray-50 dark:bg-slate-800/40 rounded-2xl border border-gray-200 dark:border-slate-800 transition-colors"><p class="text-[8px] text-gray-500 dark:text-slate-500 mb-2 uppercase text-center">Endereço IP</p><input type="text" value="${node.ip || '0.0.0.0'}" onchange="updateIp('${id}', this.value)" class="bg-white dark:bg-slate-950 w-full p-2 rounded-lg border border-gray-300 dark:border-slate-800 font-mono text-center text-zinc-600 dark:text-zinc-400 outline-none focus:border-zinc-500 transition-colors"><button onclick="toggleStatus('${id}')" class="w-full mt-3 py-3 rounded-xl text-[10px] font-black ${activeStatuses[id] === 'offline' ? 'bg-emerald-600' : 'bg-red-600'} text-white uppercase shadow-md transition-all">Simular Status</button></div>` : ''}
+                ${connectionHtml}
+                ${internetToggleHtml}
+                <button onclick="startDrawingPath('${id}')" class="w-full py-4 bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-600 dark:hover:bg-zinc-500 rounded-2xl text-[10px] font-black uppercase shadow-lg mt-4 text-white transition-colors">Editar Traçado</button>
+                <button onclick="deleteNode('${id}')" class="w-full py-3 text-[10px] font-bold text-gray-500 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-500 uppercase mt-4 transition-colors">Remover Ativo</button>
+            `;
+            
+            render();
+            focusNodePath(id); 
+        }
+
+        function updateConnection(childId, newParentId) {
+            links = links.filter(l => l.b !== childId); 
+            if (newParentId) { links.push({ id: 'l'+Date.now(), a: newParentId, b: childId, vertices: [] }); }
+            saveData(); render(); openDetails(childId);
+        }
+
+        function startDrawingPath(nodeId) { 
+            isDrawingPath = true; drawingNodeId = nodeId; closePanel(); 
+            const bar = document.getElementById('mode-indicator-bar'); const actions = document.getElementById('mode-actions');
+            bar.style.display = 'flex'; document.getElementById('mode-text').innerText = "Editando Traçado";
+            actions.innerHTML = `<button onclick="resetTools()" class="mode-btn text-zinc-700">Concluir</button>`;
+            document.getElementById('fab-main').classList.add('active'); render(); 
+        }
+
+        function addVertexToPath(latlng) { const l = links.find(li => (li.a === drawingNodeId || li.b === drawingNodeId)); if (!l) return; if (!l.vertices) l.vertices = []; const n1 = nodes.find(n => n.id === l.a); const n2 = nodes.find(n => n.id === l.b); const points = [[n1.lat, n1.lng], ...l.vertices, [n2.lat, n2.lng]]; let minDist = Infinity; let idx = l.vertices.length; for (let i = 0; i < points.length - 1; i++) { const d = L.LineUtil.pointToSegmentDistance(map.latLngToLayerPoint(latlng), map.latLngToLayerPoint(points[i]), map.latLngToLayerPoint(points[i+1])); if (d < minDist) { minDist = d; idx = i; } } l.vertices.splice(idx, 0, [latlng.lat, latlng.lng]); render(); }
+        function addNode(type, latlng) { const id = 'n'+Date.now(); const count = nodes.filter(n => n.type === type).length + 1; nodes.push({ id, type, lat: latlng.lat, lng: latlng.lng, name: `${CONFIG[type].label} ${count}`, ip: CONFIG[type].hasIp ? '192.168.1.100' : null, isGateway: false }); saveData(); render(); showToast(`${CONFIG[type].label} adicionado.`); }
+        function toggleFab() { if (isLocked) return; if (currentMode || isLinking || isDrawingPath) { resetTools(); return; } isMenuOpen = !isMenuOpen; document.getElementById('fab-items').classList.toggle('open', isMenuOpen); document.getElementById('fab-main').classList.toggle('active', isMenuOpen); render(); }
+        function setMode(m) { currentMode = m; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = `Inserindo: ${CONFIG[m].label}`; document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('tool-' + m).classList.add('selected'); render(); }
+        function toggleLinking() { isLinking = true; currentMode = null; document.getElementById('mode-indicator-bar').style.display = 'flex'; document.getElementById('mode-text').innerText = "Criando Conexões"; document.querySelectorAll('.fab-item-btn').forEach(btn => btn.classList.remove('selected')); document.getElementById('link-btn').classList.add('selected'); render(); }
+        
+        function openOfflinePanel(e) { 
+            if(e) e.stopPropagation(); 
+            saveMapView();
+            document.getElementById('details-panel').classList.remove('show');
+            document.getElementById('settingsMenu').classList.add('hidden');
+            document.getElementById('offline-panel').classList.add('show'); 
+            selectedId = null; render();
+        }
+        
+        function closeOfflinePanel(e) { 
+            if(e) e.stopPropagation(); 
+            document.getElementById('offline-panel').classList.remove('show'); 
+            restoreMapView();
+        }
+        
+        function closePanel(e) { 
+            if(e) e.stopPropagation(); 
+            document.getElementById('details-panel').classList.remove('show'); 
+            selectedId = null; 
+            render(); 
+            restoreMapView();
+        }
+        
+        function updateName(id, v) { nodes.find(n => n.id === id).name = v; saveData(); render(); }
+        function updateIp(id, v) { nodes.find(n => n.id === id).ip = v; saveData(); render(); }
+        function toggleStatus(id) { activeStatuses[id] = activeStatuses[id] === 'offline' ? 'online' : 'offline'; openDetails(id); render(); }
+        function deleteNode(id) { nodes = nodes.filter(n => n.id !== id); links = links.filter(l => l.a !== id && l.b !== id); closePanel(); render(); saveData(); }
+        function showToast(m) { const t = document.createElement('div'); t.className = "fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-3 bg-white dark:bg-slate-950 text-gray-900 dark:text-white text-[10px] font-black rounded-full z-[8000] border-2 border-gray-200 dark:border-slate-800 shadow-2xl transition-colors duration-300"; t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+        
+        function toggleView(v, e) { 
+            if(e) e.stopPropagation();
+            document.getElementById('settingsMenu').classList.add('hidden');
+            const list = document.getElementById('list-view');
+            const btnMap = document.getElementById('btn-map');
+            const btnList = document.getElementById('btn-list');
+            if(v === 'list') {
+                list.classList.add('show');
+                btnList.classList.replace('bg-gray-100', 'bg-zinc-600');
+                btnList.classList.replace('dark:bg-slate-950', 'dark:bg-zinc-700');
+                btnList.classList.add('text-white');
+                btnList.classList.remove('text-gray-500', 'dark:text-slate-500');
+                
+                btnMap.classList.replace('bg-zinc-600', 'bg-gray-100');
+                btnMap.classList.replace('dark:bg-zinc-700', 'dark:bg-slate-950');
+                btnMap.classList.remove('text-white');
+                btnMap.classList.add('text-gray-500', 'dark:text-slate-500');
+                renderListView();
+            } else {
+                list.classList.remove('show');
+                btnMap.classList.replace('bg-gray-100', 'bg-zinc-600');
+                btnMap.classList.replace('dark:bg-slate-950', 'dark:bg-zinc-700');
+                btnMap.classList.add('text-white');
+                btnMap.classList.remove('text-gray-500', 'dark:text-slate-500');
+                
+                btnList.classList.replace('bg-zinc-600', 'bg-gray-100');
+                btnList.classList.replace('dark:bg-zinc-700', 'dark:bg-slate-950');
+                btnList.classList.remove('text-white');
+                btnList.classList.add('text-gray-500', 'dark:text-slate-500');
+            }
+        }
+
+        function renderListView() {
+            const container = document.getElementById('tree-container'); container.innerHTML = '';
+            const statusMap = getStatusMap();
+            const roots = nodes.filter(n => !links.some(l => l.b === n.id));
+            roots.forEach(root => { container.appendChild(buildTreeElement(root, statusMap)); });
+        }
+
+        function buildTreeElement(node, statusMap) {
+            const isOff = statusMap[node.id];
+            const div = document.createElement('div');
+            div.className = "mb-4";
+            const item = document.createElement('div');
+            item.className = `tree-item ${isOff ? 'border-l-4 border-red-500 bg-red-50 dark:bg-red-500/10 blink-offline' : ''}`;
+            
+            const globeIcon = node.isGateway ? `<svg class="ml-2 inline-block text-zinc-500 dark:text-zinc-400" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>` : '';
+
+            item.innerHTML = `
+                <div class="p-2 rounded-lg" style="background: ${isOff ? '#ef4444' : CONFIG[node.type].color}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">${CONFIG[node.type].icon}</svg>
+                </div>
+                <div class="flex-1">
+                    <p class="text-[11px] font-black uppercase text-gray-900 dark:text-white">${node.name} ${globeIcon}</p>
+                    <p class="text-[8px] font-mono text-gray-500 dark:text-slate-500">${node.ip || 'S/ IP'}</p>
+                </div>
+                ${isOff ? '<span class="text-[7px] bg-red-600 px-1.5 py-0.5 rounded uppercase font-black text-white">FAIL</span>' : ''}
+            `;
+            item.onclick = (e) => { 
+                if(e) e.stopPropagation();
+                if(window.innerWidth <= 640) toggleView('map');
+                openDetails(node.id); 
+            };
+            div.appendChild(item);
+            const children = links.filter(l => l.a === node.id).map(l => nodes.find(n => n.id === l.b)).filter(n => n);
+            if (children.length > 0) {
+                const childContainer = document.createElement('div');
+                childContainer.className = "tree-node";
+                children.forEach(child => { childContainer.appendChild(buildTreeElement(child, statusMap)); });
+                div.appendChild(childContainer);
+            }
+            return div;
+        }
 
     </script>
 </body>
