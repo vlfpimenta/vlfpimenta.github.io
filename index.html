@@ -1,190 +1,202 @@
-```react
-import React, { useState } from 'react';
-import { MessageCircle, Instagram, Mail, ExternalLink, Share2, Check } from 'lucide-react';
+```html
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VLFP Info | Links</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --dark-navy: #0D1128;
+            --navy-mid: #141830;
+            --teal-claro: #1EC8A0;
+            --teal-medio: #1A8A82;
+            --teal-escuro: #1B5E7A;
+            --roxo-medio: #2A1E3A;
+            --azul-navy: #1B3A6B;
+        }
 
-const App = () => {
-  const [copied, setCopied] = useState(false);
+        body {
+            background-color: var(--dark-navy);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: white;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
 
-  // Cores extraídas do moodboard original
-  const colors = {
-    darkNavy: '#0D1128',
-    navyMid: '#141830',
-    white: '#FFFFFF',
-    azulOutline: '#2A3060',
-    tealEscuro: '#1B5E7A',
-    tealMedio: '#1A8A82',
-    tealClaro: '#1EC8A0',
-    navyProfundo: '#1A1F40',
-    azulNavy: '#1B3A6B',
-    roxoEscuro: '#1A1228',
-    roxoMedio: '#2A1E3A',
-  };
+        /* Efeitos Líquidos de Fundo */
+        .liquid-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.3;
+            animation: pulse 10s infinite alternate;
+        }
 
-  const links = [
-    {
-      title: 'WhatsApp',
-      url: 'https://wa.me/5521987330744',
-      icon: <MessageCircle size={24} />,
-      label: 'Fale comigo agora',
-      color: colors.tealClaro
-    },
-    {
-      title: 'Instagram',
-      url: 'https://instagram.com/vlfp.info',
-      icon: <Instagram size={24} />,
-      label: '@vlfp.info',
-      color: colors.tealMedio
-    },
-    {
-      title: 'TikTok',
-      url: 'https://tiktok.com/@vlfp.info',
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
-        </svg>
-      ),
-      label: 'Vídeos e novidades',
-      color: colors.azulNavy
-    },
-    {
-      title: 'E-mail',
-      url: 'mailto:vlfpinfo@gmail.com',
-      icon: <Mail size={24} />,
-      label: 'vlfpinfo@gmail.com',
-      color: colors.roxoMedio
-    },
-  ];
+        @keyframes pulse {
+            0% { transform: scale(1) translate(0, 0); }
+            100% { transform: scale(1.2) translate(5%, 5%); }
+        }
 
-  const handleShare = () => {
-    const tempInput = document.createElement('input');
-    tempInput.value = window.location.href;
-    document.body.appendChild(tempInput);
-    tempInput.select();
-    document.execCommand('copy');
-    document.body.removeChild(tempInput);
-    
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px border rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-  return (
-    <div 
-      className="min-h-screen flex flex-col items-center justify-start p-6 relative overflow-hidden font-sans selection:bg-teal-500/30 text-white"
-      style={{ backgroundColor: colors.darkNavy }}
-    >
-      {/* Background Liquid Effects */}
-      <div 
-        className="absolute top-[-10%] left-[-10%] w-[70%] h-[50%] rounded-full mix-blend-screen filter blur-[120px] opacity-20 animate-pulse"
-        style={{ background: `radial-gradient(circle, ${colors.tealClaro}, transparent)` }}
-      />
-      <div 
-        className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[50%] rounded-full mix-blend-screen filter blur-[120px] opacity-15"
-        style={{ background: `radial-gradient(circle, ${colors.roxoMedio}, transparent)` }}
-      />
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
 
-      {/* Header Area */}
-      <header className="relative z-10 flex flex-col items-center mt-12 mb-10 w-full max-w-xs text-center">
-        {/* Logo Container - Formato Livre */}
-        <div className="mb-8 flex items-center justify-center min-h-[120px] w-full">
-          <img 
-            src="devlogo.png" 
-            alt="Logo VLFP Info" 
-            className="max-w-[200px] max-h-[120px] object-contain drop-shadow-[0_0_15px_rgba(30,200,160,0.3)] transition-transform duration-500 hover:scale-105"
-            onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'block';
-            }}
-          />
-          {/* Texto fallback caso a imagem falhe */}
-          <div className="hidden text-4xl font-black tracking-tighter opacity-80" style={{ color: colors.tealClaro }}>
-            VLFP
-          </div>
+        .logo-container img {
+            max-width: 180px; /* Ajuste conforme necessário */
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            filter: drop-shadow(0 0 15px rgba(30, 200, 160, 0.2));
+        }
+
+        .copy-toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--teal-claro);
+            color: var(--dark-navy);
+            padding: 0.75rem 1.5rem;
+            border-radius: 99px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 50;
+        }
+
+        .copy-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center px-6 py-12">
+
+    <!-- Blobs de Fundo -->
+    <div class="liquid-blob w-[300px] h-[300px] top-[-50px] left-[-100px]" style="background: var(--teal-claro);"></div>
+    <div class="liquid-blob w-[400px] h-[400px] bottom-[-100px] right-[-150px]" style="background: var(--roxo-medio);"></div>
+    <div class="liquid-blob w-[250px] h-[250px] top-[40%] right-[10%]" style="background: var(--azul-navy); opacity: 0.15;"></div>
+
+    <!-- Header -->
+    <header class="w-full max-w-sm flex flex-col items-center text-center mb-10">
+        <div class="logo-container mb-6">
+            <img src="devlogo.png" alt="VLFP Info Logo" onerror="this.src='https://via.placeholder.com/150x80/0D1128/FFFFFF?text=VLFP+Info'">
         </div>
-        
-        <div className="space-y-1 mb-6">
-          <h1 className="text-3xl font-extrabold tracking-tight">VLFP Info</h1>
-          <p className="text-sm font-medium opacity-50 tracking-wide uppercase">Soluções Digitais & Tecnologia</p>
+
+        <div class="mb-6">
+            <h1 class="text-3xl font-extrabold tracking-tight mb-1">VLFP Info</h1>
+            <p class="text-sm font-medium opacity-50 tracking-widest uppercase">Soluções Digitais & Tecnologia</p>
         </div>
-        
-        <button 
-          onClick={handleShare}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-full text-[10px] font-bold tracking-widest border transition-all active:scale-95 backdrop-blur-md hover:bg-white/5"
-          style={{ 
-            borderColor: 'rgba(255,255,255,0.1)', 
-            backgroundColor: 'rgba(255,255,255,0.03)', 
-          }}
-        >
-          {copied ? <Check size={14} className="text-teal-400" /> : <Share2 size={14} className="opacity-60" />}
-          {copied ? 'LINK COPIADO' : 'COMPARTILHAR PERFIL'}
+
+        <button onclick="copyToClipboard()" class="flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] font-bold tracking-widest border border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 active:scale-95 transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-60"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            COMPARTILHAR PERFIL
         </button>
-      </header>
+    </header>
 
-      {/* Main Links List */}
-      <main className="w-full max-w-md space-y-4 relative z-10 mb-16">
-        {links.map((link, index) => (
-          <a
-            key={index}
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block group relative"
-          >
-            {/* Liquid Glow Effect */}
-            <div 
-              className="absolute -inset-0.5 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-lg"
-              style={{ background: `linear-gradient(45deg, ${link.color}30, transparent, ${link.color}20)` }}
-            />
-            
-            <div 
-              className="relative flex items-center p-4 rounded-2xl border backdrop-blur-2xl transition-all duration-300 group-hover:-translate-y-1"
-              style={{ 
-                backgroundColor: 'rgba(255, 255, 255, 0.02)', 
-                borderColor: 'rgba(255, 255, 255, 0.06)',
-                boxShadow: '0 4px 24px -1px rgba(0, 0, 0, 0.3)'
-              }}
-            >
-              <div 
-                className="w-12 h-12 rounded-xl flex items-center justify-center mr-4 transition-all duration-300 group-hover:shadow-[0_0_20px_-5px_currentColor]"
-                style={{ backgroundColor: `${link.color}15`, color: link.color }}
-              >
-                {link.icon}
-              </div>
-              
-              <div className="flex-1">
-                <h3 className="font-bold text-lg leading-tight transition-colors group-hover:text-white">
-                  {link.title}
-                </h3>
-                <p className="text-xs opacity-40 font-medium">
-                  {link.label}
-                </p>
-              </div>
-
-              <div className="opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
-                <ExternalLink size={16} />
-              </div>
+    <!-- Links List -->
+    <main class="w-full max-w-md space-y-4">
+        
+        <!-- WhatsApp -->
+        <a href="https://wa.me/5521987330744" target="_blank" class="block group">
+            <div class="glass-card flex items-center p-4 rounded-2xl">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform" style="background: rgba(30, 200, 160, 0.1); color: var(--teal-claro);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-lg">WhatsApp</h3>
+                    <p class="text-xs opacity-40 font-medium">Fale comigo agora</p>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             </div>
-          </a>
-        ))}
-      </main>
+        </a>
 
-      {/* Footer - Apenas decorativo */}
-      <footer className="mt-auto py-10 relative z-10">
-        <div className="flex gap-3">
-          <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
-          <div className="w-1.5 h-1.5 rounded-full bg-white/20 animate-pulse" />
-          <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+        <!-- Instagram -->
+        <a href="https://instagram.com/vlfp.info" target="_blank" class="block group">
+            <div class="glass-card flex items-center p-4 rounded-2xl">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform" style="background: rgba(26, 138, 130, 0.1); color: var(--teal-medio);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-lg">Instagram</h3>
+                    <p class="text-xs opacity-40 font-medium">@vlfp.info</p>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </div>
+        </a>
+
+        <!-- TikTok -->
+        <a href="https://tiktok.com/@vlfp.info" target="_blank" class="block group">
+            <div class="glass-card flex items-center p-4 rounded-2xl">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform" style="background: rgba(27, 58, 107, 0.15); color: var(--azul-navy);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" /></svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-lg">TikTok</h3>
+                    <p class="text-xs opacity-40 font-medium">Vídeos e novidades</p>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </div>
+        </a>
+
+        <!-- E-mail -->
+        <a href="mailto:vlfpinfo@gmail.com" class="block group">
+            <div class="glass-card flex items-center p-4 rounded-2xl">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform" style="background: rgba(42, 30, 58, 0.2); color: #8A64FF;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-lg">E-mail</h3>
+                    <p class="text-xs opacity-40 font-medium">vlfpinfo@gmail.com</p>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </div>
+        </a>
+
+    </main>
+
+    <!-- Footer Decorativo -->
+    <footer class="mt-auto pt-16 pb-8">
+        <div class="flex gap-3">
+            <div class="w-1.5 h-1.5 rounded-full bg-white/10"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-white/20 animate-pulse"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-white/10"></div>
         </div>
-      </footer>
+    </footer>
 
-      <style>{`
-        @keyframes pulse-slow {
-          0%, 100% { transform: scale(1); opacity: 0.2; }
-          50% { transform: scale(1.1); opacity: 0.3; }
+    <!-- Toast de Feedback -->
+    <div id="toast" class="copy-toast">LINK COPIADO!</div>
+
+    <script>
+        function copyToClipboard() {
+            const url = window.location.href;
+            const el = document.createElement('textarea');
+            el.value = url;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
         }
-        .animate-pulse {
-          animation: pulse-slow 6s ease-in-out infinite;
-        }
-      `}</style>
-    </div>
-  );
-};
+    </script>
+</body>
+</html>
