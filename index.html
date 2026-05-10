@@ -10,12 +10,31 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.400.0/dist/umd/lucide.js"></script>
     <style>
+        /* Variáveis de cores baseadas no Moodboard */
         :root {
-            --bg-color: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.5);
-            --card-border: rgba(255, 255, 255, 0.1);
-            --accent-primary: #3b82f6;
-            --accent-secondary: #8b5cf6;
+            /* Modo Claro (Default) */
+            --bg-color: #F8FAFC;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(42, 48, 96, 0.1);
+            --text-primary: #0D1128;
+            --text-secondary: #475569;
+            --blob-1: #1EC8A0; /* Teal Claro */
+            --blob-2: #1B3A6B; /* Azul Navy */
+            --icon-bg: rgba(0, 0, 0, 0.05);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Modo Escuro */
+                --bg-color: #0D1128; /* Dark Navy */
+                --card-bg: rgba(20, 24, 48, 0.6); /* Navy Mid com transparência */
+                --card-border: rgba(42, 48, 96, 0.5); /* Azul Outline */
+                --text-primary: #FFFFFF;
+                --text-secondary: #94a3b8;
+                --blob-1: #1A8A82; /* Teal Médio */
+                --blob-2: #2A1E3A; /* Roxo Médio */
+                --icon-bg: rgba(255, 255, 255, 0.05);
+            }
         }
 
         * {
@@ -27,12 +46,13 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
-            color: white;
+            color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow-x: hidden;
+            transition: background-color 0.4s ease, color 0.4s ease;
         }
 
         /* Efeito de Fundo Líquido Dinâmico */
@@ -43,60 +63,66 @@
             width: 100%;
             height: 100%;
             z-index: -1;
-            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+            overflow: hidden;
         }
 
         .blob {
             position: absolute;
             border-radius: 50%;
             filter: blur(80px);
-            opacity: 0.4;
-            animation: float 20s infinite alternate;
+            opacity: 0.5;
+            animation: float 25s infinite alternate ease-in-out;
         }
 
         .blob-1 {
-            width: 400px;
-            height: 400px;
-            background: var(--accent-primary);
-            top: -100px;
+            width: 450px;
+            height: 450px;
+            background: var(--blob-1);
+            top: -150px;
             right: -100px;
         }
 
         .blob-2 {
-            width: 500px;
-            height: 500px;
-            background: var(--accent-secondary);
-            bottom: -150px;
+            width: 550px;
+            height: 550px;
+            background: var(--blob-2);
+            bottom: -200px;
             left: -150px;
-            animation-delay: -5s;
+            animation-delay: -7s;
         }
 
         @keyframes float {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(100px, 50px) scale(1.1); }
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            100% { transform: translate(120px, 80px) scale(1.2) rotate(15deg); }
         }
 
         /* Vidro (Glassmorphism) */
         .glass-card {
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--card-border);
             border-radius: 24px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .glass-card:hover {
-            border-color: rgba(255, 255, 255, 0.2);
-            background: rgba(30, 41, 59, 0.7);
-            transform: translateY(-2px);
+            border-color: var(--blob-1);
+            background: var(--card-bg);
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
         }
 
         /* Logo dinâmico */
         .logo-box {
             width: 100%;
-            max-width: 120px;
+            max-width: 140px;
             margin: 0 auto;
+            transition: transform 0.3s ease;
+        }
+        
+        .logo-box:hover {
+            transform: scale(1.05);
         }
 
         .logo-box img {
@@ -113,22 +139,33 @@
         }
 
         .icon-wrapper {
-            width: 48px;
-            height: 48px;
+            width: 52px;
+            height: 52px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            background: var(--icon-bg);
+            transition: transform 0.3s ease;
         }
 
-        /* Correção de centralização total */
+        .glass-card:hover .icon-wrapper {
+            transform: scale(1.1);
+        }
+
+        /* Container Principal */
         .main-container {
             width: 100%;
-            max-width: 420px;
-            padding: 2rem 1.5rem;
+            max-width: 440px;
+            padding: 3rem 1.5rem;
             margin: auto;
             text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .text-secondary-themed {
+            color: var(--text-secondary);
         }
     </style>
 </head>
@@ -141,12 +178,12 @@
 
     <main class="main-container">
         <!-- Cabeçalho -->
-        <header class="mb-10 space-y-4">
+        <header class="mb-12 space-y-4">
             <div class="logo-box mb-6">
-                <img src="devlogo.png" alt="VLFP Info Logo" onerror="this.src='https://via.placeholder.com/150/3b82f6/ffffff?text=WP'">
+                <img src="devlogo.png" alt="VLFP Info Logo" onerror="this.src='https://via.placeholder.com/150/1EC8A0/ffffff?text=VLFP'">
             </div>
             <h1 class="text-3xl font-bold tracking-tight">VLFP Info</h1>
-            <p class="text-gray-400 text-sm font-light">Soluções inteligentes para o seu negócio</p>
+            <p class="text-secondary-themed text-sm font-medium opacity-80">Soluções inteligentes para o seu negócio</p>
         </header>
 
         <!-- Lista de Links -->
@@ -159,10 +196,10 @@
                     </svg>
                 </div>
                 <div class="flex-1 text-left">
-                    <h3 class="font-medium text-sm">WhatsApp</h3>
-                    <p class="text-xs text-gray-400">Fale connosco agora</p>
+                    <h3 class="font-semibold text-base">WhatsApp</h3>
+                    <p class="text-xs text-secondary-themed">Fale connosco agora</p>
                 </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500"></i>
+                <i data-lucide="chevron-right" class="w-5 h-5 text-secondary-themed opacity-50"></i>
             </a>
 
             <!-- Instagram -->
@@ -171,63 +208,62 @@
                     <i data-lucide="instagram" class="w-6 h-6 text-pink-500"></i>
                 </div>
                 <div class="flex-1 text-left">
-                    <h3 class="font-medium text-sm">Instagram</h3>
-                    <p class="text-xs text-gray-400">@vlfp.info</p>
+                    <h3 class="font-semibold text-base">Instagram</h3>
+                    <p class="text-xs text-secondary-themed">@vlfp.info</p>
                 </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500"></i>
+                <i data-lucide="chevron-right" class="w-5 h-5 text-secondary-themed opacity-50"></i>
             </a>
 
             <!-- TikTok -->
             <a href="https://tiktok.com/@vlfp.info" target="_blank" class="glass-card flex items-center p-4 group">
                 <div class="icon-wrapper mr-4">
-                    <svg class="brand-icon text-white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg class="brand-icon text-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12.525.02c1.31-.036 2.612-.012 3.914-.012.63 1.585 1.778 2.903 3.303 3.61 1.226.564 2.558.846 3.9.846v4.026a8.09 8.09 0 01-4.703-1.616c-.28-.212-.539-.447-.775-.705v6.505c0 1.341-.302 2.663-.883 3.868a8.217 8.217 0 01-2.4 3.09 8.358 8.358 0 01-8.156 1.205 8.318 8.318 0 01-4.992-5.58 8.24 8.24 0 011.666-7.53 8.318 8.318 0 015.688-3.088c.328-.028.656-.044.985-.044v4.03c-2.336.012-4.225 1.914-4.212 4.25a4.23 4.23 0 004.225 4.213c2.324-.012 4.201-1.9 4.212-4.225V.02Z"/>
                     </svg>
                 </div>
                 <div class="flex-1 text-left">
-                    <h3 class="font-medium text-sm">TikTok</h3>
-                    <p class="text-xs text-gray-400">@vlfp.info</p>
+                    <h3 class="font-semibold text-base">TikTok</h3>
+                    <p class="text-xs text-secondary-themed">@vlfp.info</p>
                 </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500"></i>
+                <i data-lucide="chevron-right" class="w-5 h-5 text-secondary-themed opacity-50"></i>
             </a>
 
             <!-- E-mail -->
             <a href="mailto:vlfpinfo@gmail.com" class="glass-card flex items-center p-4 group">
                 <div class="icon-wrapper mr-4">
-                    <i data-lucide="mail" class="w-6 h-6 text-blue-400"></i>
+                    <i data-lucide="mail" class="w-6 h-6 text-blue-500"></i>
                 </div>
                 <div class="flex-1 text-left">
-                    <h3 class="font-medium text-sm">E-mail</h3>
-                    <p class="text-xs text-gray-400">vlfpinfo@gmail.com</p>
+                    <h3 class="font-semibold text-base">E-mail</h3>
+                    <p class="text-xs text-secondary-themed">vlfpinfo@gmail.com</p>
                 </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500"></i>
+                <i data-lucide="chevron-right" class="w-5 h-5 text-secondary-themed opacity-50"></i>
             </a>
         </div>
 
-        <footer class="mt-12 h-10">
-            <!-- Rodapé vazio conforme pedido -->
+        <!-- Espaçamento inferior -->
+        <footer class="mt-16">
         </footer>
     </main>
 
     <script>
-        // Inicialização de ícones e comportamentos
         document.addEventListener('DOMContentLoaded', () => {
+            // Inicializa ícones Lucide
             if (window.lucide) {
                 lucide.createIcons();
             }
 
-            // Garante que o container esteja sempre centralizado mesmo com resize
-            const adjustCentering = () => {
-                const body = document.body;
-                if (window.innerHeight > document.body.scrollHeight) {
-                    body.style.alignItems = 'center';
+            // Garante centralização vertical dinâmica
+            const checkHeight = () => {
+                if (document.body.scrollHeight > window.innerHeight) {
+                    document.body.style.alignItems = 'flex-start';
                 } else {
-                    body.style.alignItems = 'flex-start';
+                    document.body.style.alignItems = 'center';
                 }
             };
-
-            window.addEventListener('resize', adjustCentering);
-            adjustCentering();
+            
+            window.addEventListener('resize', checkHeight);
+            checkHeight();
         });
     </script>
 </body>
